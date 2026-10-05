@@ -1,0 +1,23 @@
+export const ROLES = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  SCHOOL_ADMIN: 'SCHOOL_ADMIN',
+  TEACHER: 'TEACHER',
+  STUDENT: 'STUDENT',
+  PARENT: 'PARENT',
+  ACCOUNTANT: 'ACCOUNTANT',
+  LIBRARIAN: 'LIBRARIAN',
+  REGISTRAR: 'REGISTRAR',
+  RECEPTIONIST: 'RECEPTIONIST',
+};
+
+export const ATTENDANCE_STATUS = ['PRESENT', 'ABSENT', 'SICK', 'LATE', 'EXCUSED'];
+
+export const EXAM_TYPES = ['CAT', 'MIDTERM', 'FINAL', 'MOCK', 'NATIONAL'];
+
+export const GENDERS = ['MALE', 'FEMALE', 'OTHER'];
+
+export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+export const PAYMENT_METHODS = ['CASH', 'BANK_TRANSFER', 'MOBILE_MONEY', 'CHEQUE', 'CARD'];
+
+export const SIDEBAR_WIDTH = 260;
