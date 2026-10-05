@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  JAVA_VERSION: '25'
+  MVN_OPTS: '-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.client=warn'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: maven-
+
+      - name: Compile backend
+        run: mvn -B -f backend/pom.xml compile $MVN_OPTS
+
+      - name: Run unit tests
+        run: mvn -B -f backend/pom.xml test $MVN_OPTS
+
+      - name: Verify web build
+        run: |
+          if [ -f web/package.json ]; then
+            cd web
+            if command -v npm &>/dev/null; then npm ci && npx tsc --noEmit && npm run build; else echo "npm not installed, skipping"; fi
+            cd ..
+          fi
+
+      - name: Verify mobile build
+        run: |
+          if [ -f mobile/pubspec.yaml ]; then
+            if command -v flutter &>/dev/null; then flutter pub get && flutter analyze; else echo "flutter not installed, skipping"; fi
+          fi
