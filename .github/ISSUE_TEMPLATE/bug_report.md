@@ -24,7 +24,7 @@ If applicable, add screenshots or relevant log excerpts.
 - OS:
 - Browser / device:
 - MtaaFix version/commit:
-- MongoDB/PostgreSQL version:
+- PostgreSQL/PostGIS version:
 
 ## Additional context
 Anything else that helps track it down.

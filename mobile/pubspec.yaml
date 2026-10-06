@@ -1,0 +1,25 @@
+name: mtaafix_mobile
+description: "MtaaFix — cross-platform Flutter mobile app (Android + iOS)."
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  geolocator: ^12.0.0
+  http: ^1.2.2
+  cached_network_image: ^3.4.1
+  carousel_slider: ^5.0.0
+  intl: ^0.19.0
+  boat_dirt_track: ^1.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
