@@ -29,16 +29,10 @@ public record ReportDto(
 
     public static ReportDto from(Report r) {
         return new ReportDto(
-                r.getId(),
-                r.getCode(),
-                r.getSubject(),
-                r.getTitle(),
-                r.getDescription(),
+                r.getId(), null, r.getSubject(), r.getTitle(), r.getDescription(),
                 r.getLocation() != null ? new LocationDto(
                         r.getLocation().getY(), r.getLocation().getX(), null) : null,
-                r.getReportedAt(),
-                r.getStatus(),
-                r.getScore(),
+                r.getReportedAt(), r.getStatus(), r.getScore(),
                 r.getCategory() != null ? r.getCategory().getId() : null,
                 r.getAssignment() != null ? r.getAssignment().getId() : null,
                 r.getOrganisation() != null ? r.getOrganisation().getId() : null,

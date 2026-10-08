@@ -1,11 +1,13 @@
 package com.mtaafix.report.domain;
 
 import com.mtaafix.common.domain.BaseEntity;
+import com.mtaafix.report.domain.Report;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;

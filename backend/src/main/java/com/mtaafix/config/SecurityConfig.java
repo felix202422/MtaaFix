@@ -30,10 +30,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**", "/api/v1/error", "/actuator/health").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMINISTRATOR")
                         .anyRequest().authenticated())
-                .headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
-                        .xssProtection(xss -> xss.headerValue("1"))
-                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'")))
                 .exceptionHandling(ex -> ex
                         .accessDeniedHandler((request, response, accessDeniedException) -> response.setStatus(403))
                         .authenticationEntryPoint((request, response, authException) -> response.setStatus(401)))

@@ -44,10 +44,7 @@ public class AuthController {
     @Operation(summary = "Log in")
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        UserDto user = userService.authenticate(request.email(), request.password());
-        String accessToken = tokenProvider.generateAccessToken(user.id(), user.role().name());
-        String refreshToken = tokenProvider.generateRefreshToken(user.id());
-        return ResponseEntity.ok(AuthResponse.of(accessToken, refreshToken, 900L, user));
+        return ResponseEntity.ok(userService.authenticate(request.email(), request.password()));
     }
 
     @Operation(summary = "Refresh an access token")
@@ -59,7 +56,8 @@ public class AuthController {
         String subject = tokenProvider.getSubject(refreshToken);
         UserDto user = userService.findByEmail(subject);
         String accessToken = tokenProvider.generateAccessToken(user.id(), user.role().name());
-        return ResponseEntity.ok(AuthResponse.of(accessToken, refreshToken, 900L, user));
+        String newRefreshToken = tokenProvider.generateRefreshToken(user.id());
+        return ResponseEntity.ok(AuthResponse.of(accessToken, newRefreshToken, 900L, user));
     }
 
     @Operation(summary = "Log out")

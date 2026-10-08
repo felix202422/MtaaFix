@@ -32,7 +32,7 @@ public class UserService {
         return toDto(user);
     }
 
-    public UserDto authenticate(String email, String password) {
+    public AuthResponse authenticate(String email, String password) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", email));
         if (!BCrypt.checkpw(password, user.getPasswordHash())) {
@@ -43,7 +43,7 @@ public class UserService {
         }
         String accessToken = tokenProvider.generateAccessToken(user.getId(), user.getRole().name());
         String refreshToken = tokenProvider.generateRefreshToken(user.getId());
-        return UserDto.from(toDto(user).user());
+        return AuthResponse.of(accessToken, refreshToken, 900L, toDto(user));
     }
 
     public UserDto findByEmail(String email) {

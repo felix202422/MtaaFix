@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import javax.crypto.SecretKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,14 +56,10 @@ public class JwtTokenProvider {
         }
         return Jwts.builder()
                 .setClaims(claims)
-                .setIssuedAt(DateFromInstant(now))
-                .setExpiration(DateFromInstant(now.plus(validityInMilliseconds, ChronoUnit.MILLIS)))
-                .signWith(key)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(now.plus(validityInMilliseconds, ChronoUnit.MILLIS)))
+                .signWith((javax.crypto.SecretKey) key)
                 .compact();
-    }
-
-    private static Instant DateFromInstant(Instant instant) {
-        return java.util.Date.from(instant);
     }
 
     public boolean validateToken(String token) {
@@ -69,7 +67,7 @@ public class JwtTokenProvider {
             return false;
         }
         try {
-            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
+            Jwts.parser().verifyWith((javax.crypto.SecretKey) key).build().parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException ex) {
             log.debug("Token validation failed: {}", ex.getMessage());
@@ -78,23 +76,23 @@ public class JwtTokenProvider {
     }
 
     public String getSubject(String token) {
-        return parse(token).getPayload().getSubject();
+        return parse(token).getSubject();
     }
 
     public String getRole(String token) {
-        Claims claims = parse(token).getPayload();
+        Claims claims = parse(token);
         return claims.get("role", String.class);
     }
 
     public Instant getIssuedAt(String token) {
-        return parse(token).getPayload().getIssuedAt().toInstant();
+        return parse(token).getIssuedAt().toInstant();
     }
 
     public Instant getExpiration(String token) {
-        return parse(token).getPayload().getExpiration().toInstant();
+        return parse(token).getExpiration().toInstant();
     }
 
     private Claims parse(String token) {
-        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+        return Jwts.parser().verifyWith((javax.crypto.SecretKey) key).build().parseSignedClaims(token).getPayload();
     }
 }
