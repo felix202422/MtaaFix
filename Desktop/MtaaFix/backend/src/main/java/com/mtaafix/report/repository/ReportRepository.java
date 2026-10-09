@@ -1,6 +1,7 @@
 package com.mtaafix.report.repository;
 
 import com.mtaafix.report.domain.Report;
+import com.mtaafix.report.domain.ReportCategory;
 import com.mtaafix.report.domain.ReportMedia;
 import com.mtaafix.report.domain.Organisation;
 import java.util.Optional;
@@ -15,7 +16,7 @@ public interface ReportRepository extends JpaRepository<Report, String> {
     @Query("""
             select r from Report r
             left join fetch r.category
-            left join fetch r.organisations o
+            left join fetch r.organisation o
             where (:status is null or r.status = :status)
             and (:categoryId is null or r.category.id = :categoryId)
             and (:orgId is null or o.id = :orgId)

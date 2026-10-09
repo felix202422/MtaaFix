@@ -13,6 +13,7 @@ import com.mtaafix.report.domain.ReportCategory;
 import com.mtaafix.report.domain.ReportComment;
 import com.mtaafix.report.domain.ReportMedia;
 import com.mtaafix.report.domain.Assignment;
+import com.mtaafix.report.domain.Organisation;
 import com.mtaafix.report.dto.CreateCommentRequest;
 import com.mtaafix.report.dto.CreateMediaRequest;
 import com.mtaafix.report.dto.CreateReportRequest;
@@ -27,7 +28,6 @@ import com.mtaafix.user.domain.User;
 import com.mtaafix.user.domain.User.Role;
 import com.mtaafix.user.repository.UserRepository;
 import java.util.List;
-import org.locationtech.jts.geom.Point;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -73,8 +73,8 @@ public class ReportService {
         List<ReportDto> content = page.getContent().stream()
                 .map(ReportMapper::toDto)
                 .toList();
-        return PagedResponse.of(page.getTotalElements(), page.getTotalPages(), page.getNumber(),
-                page.getSize(), content);
+        return PagedResponse.of((int) page.getTotalElements(), page.getTotalPages(), page.getNumber(),
+                (int) page.getSize(), content);
     }
 
     @Transactional
@@ -212,7 +212,7 @@ public class ReportService {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", id));
         ReportMedia.MediaType mt = ReportMedia.MediaType.valueOf(mediaType.toUpperCase());
-        report.getMedia().add(new ReportMedia(fileName, originalName, contentType, (int) sizeBytes, url, mt, report));
+        report.getMedia().add(new ReportMedia(fileName, originalName, contentType, sizeBytes, url, mt, report));
         report = reportRepository.save(report);
         notificationService.send(Type.REPORT_VERIFIED, user, report,
                 "New evidence", "Evidence was added to the report.");
