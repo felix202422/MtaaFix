@@ -4,6 +4,8 @@ import com.mtaafix.report.domain.Report;
 import com.mtaafix.report.domain.ReportCategory;
 import com.mtaafix.report.domain.ReportMedia;
 import com.mtaafix.report.domain.Organisation;
+import com.mtaafix.report.domain.Report.Status;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,4 +34,20 @@ public interface ReportRepository extends JpaRepository<Report, String> {
 
     @Query("select m from ReportMedia m where m.id = :id")
     Optional<ReportMedia> findMediaById(@Param("id") String id);
+
+    long countByUserId(String userId);
+
+    long countByUserIdAndStatus(String userId, Status status);
+
+    long countByOrganisationId(String organisationId);
+
+    long countByOrganisationIdAndStatus(String organisationId, Status status);
+
+    long countByStatus(Status status);
+
+    @Query("select r from Report r left join fetch r.assignment a where a.assignee.id = :assigneeId")
+    List<Report> findReportsByAssigneeId(@Param("assigneeId") String assigneeId);
+
+    @Query("select r from Report r left join fetch r.assignment a where r.organisation.id = :organisationId")
+    List<Report> findReportsByOrganisationIdWithAssignment(@Param("organisationId") String organisationId);
 }
