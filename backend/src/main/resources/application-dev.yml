@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mtaafix?currentSchema=public&ssl=false
+  flyway:
+    enabled: true

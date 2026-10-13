@@ -1,0 +1,28 @@
+# Flutter
+.dart_tool/
+.packages
+
+# Ignored by Flutter tooling
+.build/
+.build_config/
+.dart_code_coverage/
+
+# Xcode
+ios/DerivedData/
+ios/Pods/
+
+# Android
+android/.gradle/
+android/.idea/
+android/app/gradle.properties
+android/keystore.properties
+
+# OS / editors
+.DS_Store
+*.log
+.idea/
+*.iml
+
+# Secrets / local dev
+.env.*
+!*.env.example

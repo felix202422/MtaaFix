@@ -1,0 +1,14 @@
+# MtaaFix backend ignore
+
+# Build
+target/
+
+# Secrets
+.env
+.env.*
+
+# OS
+.DS_Store
+
+# Logs
+*.log
