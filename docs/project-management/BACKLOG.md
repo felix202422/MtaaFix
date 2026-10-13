@@ -1,6 +1,6 @@
 # MtaaFix — Implementation Backlog
 
-> **Status:** v1.0 — DRAFT FOR APPROVAL · Phase 1 · 2026-10-13
+> **Status:** v1.0 — APPROVED (owner, 2026-10-13) · Phase 1 · 2026-10-13
 > Prioritized work items with acceptance criteria (master spec Part 14.2).
 > Statuses: `BACKLOG` (ready), `BLOCKED` (waiting on dependency/gate).
 > GitHub Projects unavailable; this file + [BOARD.md](BOARD.md) are the local

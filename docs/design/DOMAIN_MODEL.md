@@ -1,6 +1,6 @@
 # MtaaFix — Initial Domain Model
 
-> **Status:** v1.0 — DRAFT FOR APPROVAL · Phase 1 · 2026-10-13
+> **Status:** v1.0 — APPROVED (owner, 2026-10-13) · Phase 1 · 2026-10-13
 > Reconciled against the merged backend entities and Flyway `V1__create_base_tables.sql`
 > (2026-10-13). "Present" = exists in code today. "Planned" = required by the SRS but
 > not yet modeled. Coordinate system: **EPSG:4326** (WGS84 lon/lat); PostGIS geometry

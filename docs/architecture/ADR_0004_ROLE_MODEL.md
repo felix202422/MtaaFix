@@ -1,6 +1,6 @@
 # ADR-0004: Single-Role User Model (No Separate System-Admin Role)
 
-- **Status:** Accepted (Phase 1, 2026-10-13) — pending owner approval of Phase 1 set
+- **Status:** Accepted — approved by owner with Phase 1 set (2026-10-13)
 - **Context:** Master spec Part 3 describes seven role *types* including a distinct
   System Administrator (§3.7). Code stores a single `User.Role` enum with five values.
   Roles may also be org-scoped in future (Part 6.1).

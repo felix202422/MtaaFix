@@ -1,6 +1,6 @@
 # ADR-0002: Report Lifecycle State Model
 
-- **Status:** Accepted (Phase 1, 2026-10-13) — pending owner approval of Phase 1 set
+- **Status:** Accepted — approved by owner with Phase 1 set (2026-10-13)
 - **Context:** Master spec §4.1 requires the exact state model to be finalized in
   Phase 1 before implementing the full workflow. Code implements 8 states; the spec
   proposes a richer set including review-pause, resolution-review, duplicate, and

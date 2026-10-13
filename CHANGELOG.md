@@ -7,7 +7,7 @@ analyzer, or file presence) — not intentions.
 
 ## [0.2.0] — 2026-10-13
 ### Phase 1 — Requirements & system design (docs only; no code changes)
-Established the requirements baseline before further implementation, per master
+**Approved by owner 2026-10-13.** Established the requirements baseline before further implementation, per master
 spec Phase 1. Owner-approved decisions D1–D4 (SRS §1.5): master phase numbering
 0–23 with MVP = Phases 0–7; five-role model with system-admin as scoped
 ADMINISTRATOR; 12-state report lifecycle with CLOSED terminal (CANCELLED deferred);

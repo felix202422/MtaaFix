@@ -1,6 +1,6 @@
 # MtaaFix — Report Lifecycle Specification
 
-> **Status:** v1.0 — DRAFT FOR APPROVAL · Phase 1 · 2026-10-13
+> **Status:** v1.0 — APPROVED (owner, 2026-10-13) · Phase 1 · 2026-10-13
 > Decision D3 (approved): adopt the master spec state set plus CLOSED as the
 > terminal state. CANCELLED as a distinct state is **deferred**; citizen withdrawal
 > before review is represented as REJECTED with reason code `CANCELLED_BY_CITIZEN`.

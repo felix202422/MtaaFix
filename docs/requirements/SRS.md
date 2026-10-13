@@ -1,9 +1,8 @@
 # MtaaFix — Software Requirements Specification (SRS)
 
-> **Status:** **v1.0 — DRAFT FOR APPROVAL** · Phase 1 — Requirements & System Design · 2026-10-13
-> **Approval:** Pending owner review of this Phase 1 deliverable set.
-> All open decisions (D1–D4) are resolved below. Implementation of later phases
-> may proceed on these requirements once approved.
+> **Status:** **v1.0 — APPROVED** · Phase 1 — Requirements & System Design · 2026-10-13
+> **Approval:** ✅ Approved by the owner (2026-10-13). All decisions (D1–D4) are
+> resolved in §1.5. This SRS is the controlling requirements baseline for Phases 2+.
 
 **MtaaFix — See It. Report It. Fix It Together.**
 

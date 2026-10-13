@@ -1,6 +1,6 @@
 # MtaaFix — API Design Outline & Conventions
 
-> **Status:** v1.0 — DRAFT FOR APPROVAL · Phase 1 · 2026-10-13
+> **Status:** v1.0 — APPROVED (owner, 2026-10-13) · Phase 1 · 2026-10-13
 > Reconciled against the merged backend controllers (2026-10-13). This document
 > **supersedes** `docs/api/API.md` for conventions and target design; `API.md` is
 > retained temporarily as a legacy reference and will be rewritten in Phase 3 to

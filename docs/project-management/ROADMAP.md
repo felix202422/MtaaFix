@@ -9,7 +9,7 @@
 ## Version History
 
 - **[0.2.0]** — Phase 1: requirements & system design baseline (SRS, role matrix,
-  lifecycle, domain model, API design, ADRs 0002–0004) — 2026-10-13
+  lifecycle, domain model, API design, ADRs 0002–0004) — **APPROVED** 2026-10-13
 - **[0.1.0]** — Phase 0: repository remediation & verified baseline — 2026-10-13
 
 ---
@@ -19,7 +19,7 @@
 | Phase | Name | Status (2026-10-13) |
 | ----- | ---- | ------------------- |
 | 0 | Project audit and foundation | ✅ Complete |
-| 1 | Requirements and system design | ✅ Complete (awaiting approval) |
+| 1 | Requirements and system design | ✅ Complete (approved 2026-10-13) |
 | 2 | Design system and UI foundation | Not started |
 | 3 | Backend foundation | Partial — builds/tests green on H2; PostGIS runtime unverified |
 | 4 | Authentication and authorization | Partial — JWT flows present; role enforcement not matrix-complete |
@@ -37,7 +37,7 @@ Verified: contaminated-history cleanup; canonical monorepo; merged backend
 (compiles, context-load test green); mobile analyze-clean; guarded CI; root
 .gitignore/.env.example; truth-ified docs. See CHANGELOG 0.1.0 and Phase 0 report.
 
-## Phase 1 — Requirements and System Design (COMPLETE — approval pending)
+## Phase 1 — Requirements and System Design (COMPLETE — approved 2026-10-13)
 
 Deliverables produced 2026-10-13:
 - [x] Requirements specification — [../requirements/SRS.md](../requirements/SRS.md)
@@ -190,7 +190,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | Phase | Status |
 | ----- | ------ |
 | 0 | Complete |
-| 1 | Complete (approval pending) |
+| 1 | Complete (approved) |
 | 2 | Not started |
 | 3 | Partial |
 | 4 | Partial |

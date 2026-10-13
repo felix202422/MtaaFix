@@ -1,6 +1,6 @@
 # MtaaFix — Role-Permission Matrix
 
-> **Status:** v1.0 — DRAFT FOR APPROVAL · Phase 1 · 2026-10-13
+> **Status:** v1.0 — APPROVED (owner, 2026-10-13) · Phase 1 · 2026-10-13
 > Decision D2: five roles; "system administrator" is a scoped subset of
 > ADMINISTRATOR, not a separate role. Public visitor is unauthenticated, not a DB role.
 > Backend must enforce every rule below (master spec §3.8). Hiding a button is not a
