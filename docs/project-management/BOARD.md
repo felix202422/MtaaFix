@@ -23,8 +23,8 @@ Last updated: 2026-10-13.
 | Guard CI web step | DONE | Skips until `web/src` exists |
 | Truth-ify CHANGELOG + ROADMAP | DONE | Removed unverified "COMPLETE" claims |
 | This board | DONE | |
-| `git init` + initial commit + push to MtaaFix remote | TODO | Push only to `github.com/felix202422/MtaaFix` |
-| Phase 0 report + approval gate | TODO | Stop; do not start Phase 1 without approval |
+| `git init` + initial commit + push to MtaaFix remote | DONE | Commit `a18288d` pushed to `origin/master` (github.com/felix202422/MtaaFix); working tree clean |
+| Phase 0 report + approval gate | DONE | Report delivered; awaiting user approval before Phase 1 |
 
 ## Next phases (blocked on Phase 0 approval)
 
