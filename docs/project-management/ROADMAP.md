@@ -1,331 +1,204 @@
 # Roadmap — MtaaFix
 
-Status is based on **verified repository state** (last audited 2026-10-13),
-not intent. MVP scope for this effort: **Phases 0–7**.
+> Phase numbering follows the **master specification** (Phases 0–23) per decision D1
+> (2026-10-13). Status reflects **verified repository state** (last audited 2026-10-13),
+> not intent. **MVP = Phases 0–7** (approved). Every phase ends with an approval gate
+> (master spec Part 16). Local tracking: [BOARD.md](BOARD.md) ·
+> Work items: [BACKLOG.md](BACKLOG.md) · Requirements: [../requirements/SRS.md](../requirements/SRS.md)
 
 ## Version History
 
-- **[0.1.0]** — Phase 0 remediation: clean repo baseline, merged backend,
-  lint-clean mobile, guarded CI (2026-10-13)
+- **[0.2.0]** — Phase 1: requirements & system design baseline (SRS, role matrix,
+  lifecycle, domain model, API design, ADRs 0002–0004) — 2026-10-13
+- **[0.1.0]** — Phase 0: repository remediation & verified baseline — 2026-10-13
 
 ---
 
-## Phase 0 — Project Foundation (COMPLETE)
+## MVP summary (Phases 0–7)
 
-Verified present:
-- Repository scaffold: `backend/`, `web/`, `mobile/`, `docs/`, `.github/`
-- CI workflow (backend compile + test; guarded web/mobile steps)
-- Issue/PR templates, README, CHANGELOG, LICENSE, CODE_OF_CONDUCT,
-  CONTRIBUTING, SECURITY
-- Coding standards, security standards, one ADR, API doc
-- Backend build (Maven, Java 25) compiles; tests green (1 context-load test)
-- Flutter app analyzes clean
-- Root `.gitignore`, `.env.example`
+| Phase | Name | Status (2026-10-13) |
+| ----- | ---- | ------------------- |
+| 0 | Project audit and foundation | ✅ Complete |
+| 1 | Requirements and system design | ✅ Complete (awaiting approval) |
+| 2 | Design system and UI foundation | Not started |
+| 3 | Backend foundation | Partial — builds/tests green on H2; PostGIS runtime unverified |
+| 4 | Authentication and authorization | Partial — JWT flows present; role enforcement not matrix-complete |
+| 5 | Core reporting workflow | Partial — provisional endpoints; state machine gaps |
+| 6 | Public website | Not started (`web/` is manifest-only) |
+| 7 | Citizen web application | Not started |
 
----
-
-## Phase 1 — Requirements & Design (PARTIAL)
-
-- [x] API contract doc (`docs/api/API.md`) — exists, needs reconciliation
-  with the merged backend (Phase 1 follow-up)
-- [x] Coding standards (`docs/standards/CODING_STANDARDS.md`)
-- [x] Security standards (`docs/standards/SECURITY_STANDARDS.md`)
-- [x] One ADR (`docs/architecture/ADR_0001_PROJECT_STRUCTURE.md`)
-- [ ] Full functional/non-functional requirements doc
-- [ ] UI/UX wireframes for all five roles
-- [ ] OpenAPI spec exported/committed (Springdoc annotations exist in code)
+Post-MVP: Phases 8–23 below.
 
 ---
 
-## Phase 2 — Backend Foundation & MVP API (PARTIAL)
+## Phase 0 — Project Audit and Foundation (COMPLETE)
 
-Verified:
-- [x] Java 25, Spring Boot, Maven module builds
-- [x] Auth: register/login/refresh/logout with JWT (code present)
-- [x] Report lifecycle endpoints (code present)
-- [x] Categories, Assignments, Dashboard, Audit, Notifications (code present)
-- [x] Media upload/download endpoints (code present)
-- [x] Flyway V1 migration with PostGIS geometry columns
-- [x] Context-load test green on H2
+Verified: contaminated-history cleanup; canonical monorepo; merged backend
+(compiles, context-load test green); mobile analyze-clean; guarded CI; root
+.gitignore/.env.example; truth-ified docs. See CHANGELOG 0.1.0 and Phase 0 report.
 
-Not yet verified / not done:
-- [ ] Real PostgreSQL + PostGIS runtime test (extension not installed locally)
-- [ ] Service/repository/controller test coverage
-- [ ] End-to-end auth and report lifecycle tested against a live DB
+## Phase 1 — Requirements and System Design (COMPLETE — approval pending)
 
----
+Deliverables produced 2026-10-13:
+- [x] Requirements specification — [../requirements/SRS.md](../requirements/SRS.md)
+- [x] Role-permission matrix — [../design/ROLE_PERMISSION_MATRIX.md](../design/ROLE_PERMISSION_MATRIX.md)
+- [x] Report lifecycle specification — [../design/REPORT_LIFECYCLE.md](../design/REPORT_LIFECYCLE.md)
+- [x] Initial domain model — [../design/DOMAIN_MODEL.md](../design/DOMAIN_MODEL.md)
+- [x] API design outline + conventions — [../api/API_DESIGN.md](../api/API_DESIGN.md)
+- [x] Implementation backlog with acceptance criteria — [BACKLOG.md](BACKLOG.md)
+- [x] Architecture decisions — ADR-0002 (lifecycle), ADR-0003 (categories), ADR-0004 (roles)
+- [x] Decisions D1–D4 recorded in SRS §1.5
 
-## Phase 3 — Role Experience & Runtime Setup (NOT STARTED)
+## Phase 2 — Design System and UI Foundation (NOT STARTED)
 
-Blocked prerequisite: install PostGIS on local PostgreSQL (approved).
+- Design tokens (Tanzanian flag palette, Part 9.1)
+- Typography (Inter), spacing, card/form/status patterns
+- Reusable component library (React) + shared Flutter theme groundwork
+- Responsive layout rules; accessibility checklist (WCAG 2.1 AA)
+- Brand assets review (logo/favicon)
+- Exit: reusable foundation suitable for Phases 6–7 interfaces
 
-### Citizen
-- [ ] Dashboard with report stats
-- [ ] Report history with status timeline
-- [ ] Feedback on resolved reports
-- [ ] Notifications with online/offline sync
+## Phase 3 — Backend Foundation (PARTIAL)
 
-### Moderator
-- [ ] Review queue (reports awaiting verification)
-- [ ] Analytics: reports by status, category, location
-- [ ] User management (basic)
+Present: Maven module, Java 25, Spring Boot app, Flyway V1, application profiles,
+context-load test on H2, Springdoc annotations, health endpoint permitted.
+Remaining:
+- [ ] Install/configure PostGIS locally; verify Flyway V1 + entity DDL against real PostgreSQL+PostGIS
+- [ ] Test configuration matrix (H2 unit vs Postgres integration profile)
+- [ ] Commit exported OpenAPI spec (admin runtime UI exists)
+- [ ] `.env.example` → DEVELOPMENT.md runbook
+- Exit: backend builds and tests pass against PostgreSQL+PostGIS
 
-### Administrator
-- [ ] User management (CRUD)
-- [ ] Category management (CRUD)
-- [ ] Assignment management (CRUD)
-- [ ] Organisation management (CRUD)
-- [ ] Global audit log
+## Phase 4 — Authentication and Authorization (PARTIAL)
 
-### Field Worker
-- [ ] Assignment list (my assignments)
-- [ ] Work evidence upload
-- [ ] Assignment completion
+Present: register/login/refresh/logout/me, JWT filter, BCrypt, SecurityConfig
+(coarse: authenticated-vs-permitAll).
+Remaining:
+- [ ] Enforce [role matrix](../design/ROLE_PERMISSION_MATRIX.md) at service/controller layer
+- [ ] Org/ownership scoping in queries
+- [ ] Authorization tests (positive+negative per matrix row)
+- [ ] Audited A-scope operations
+- Exit: authorized/unauthorized access behaves per matrix; tests green
 
-### Organization Admin
-- [ ] Organization dashboard + stats
-- [ ] User management (org-level)
-- [ ] Assignment routing
+## Phase 5 — Core Reporting Workflow (PARTIAL)
 
----
+Present: create/list/get/update, submit/verify/reject/assign/resolve/close
+(provisional guards), status history, comments/media service methods.
+Remaining (see BACKLOG):
+- [ ] Flyway migration: status enum → 12 states; drop subject; category_id NOT NULL; duplicate_of; history nullability fix
+- [ ] Central state-machine guard (T1–T17); 409 on invalid transitions
+- [ ] Expose comment/media endpoints; needs-info/resubmit/duplicate/complete/return/confirm/dispute/reopen
+- [ ] Unique code generation `MTF-YYYY-NNNNNN` with DB constraint
+- [ ] Category seeding from legacy subjects; coordinate validation
+- [ ] Lifecycle tests for every transition row + negatives
+- Exit: core report workflow works; business rules tested
 
-## Phase 4 — Observability & Hardening (NOT STARTED)
+## Phase 6 — Public Website (NOT STARTED)
 
-- Structured logging (SLF4J, Logback, JSON format)
-- Correlation/request IDs
-- Health endpoints (Actuator)
-- Metrics (Micrometer)
-- Rate limiting (Semaphore)
-- Retry and circuit-breaker policies (Resilience4j)
-- Security scanning (OWASP Dependency-Check, SonarQube)
-- Dependency updates (Dependabot)
-- Secret scanning in CI
-- Deployment to cloud (env vars, HTTPS, managed DB/PostGIS)
-- Backup strategy and disaster recovery
-- Monitoring (Prometheus, Grafana)
+Pages 1–4 (landing, how-it-works, explore, public details) per SRS §3.8.
+Public read APIs (Planned table, API_DESIGN §3); privacy filtering (FR-8.5,
+FR-11.4). Vite/React scaffold from scratch under `web/`.
 
----
+## Phase 7 — Citizen Web Application (NOT STARTED)
 
-## Phase 5 — Web Application MVP (NOT STARTED)
+Pages 8–13 (dashboard, 4-step report wizard, my reports, tracking, notifications,
+profile) per SRS §3.2/3.6/3.7. Real API integration only; ownership tests.
 
-Current state: `web/` has `package.json`, `tsconfig.json`, `tsconfig.node.json`
-only — no application source. CI skips web build until `web/src` exists.
+## Phase 8 — Geographic Capabilities (NOT STARTED)
 
-### User Stories
+PostGIS spatial queries, GIST indexes, map interactions (Leaflet), public
+generalization, coordinate fuzzing, geographic filters. Depends on Phase 6 maps.
 
-**CITIZEN**
-- As a citizen, I can view the landing page to understand the platform
-- As a citizen, I can register for an account
-- As a citizen, I can log in to my account
-- As a citizen, I can create a report (category, description, location, evidence)
-- As a citizen, I can view my submitted reports
-- As a citizen, I can view a report's status and history
-- As a citizen, I can receive notifications
+## Phase 9 — Administration and Moderation (NOT STARTED)
 
-**MODERATOR**
-- As a moderator, I can view reports that need review
-- As a moderator, I can verify a report
-- As a moderator, I can reject a report with a comment
+Pages 14–24. Backend endpoints for users/orgs/categories/audit largely exist;
+needs management APIs + UIs + `organization_members` + category activate/order.
 
-**ADMINISTRATOR**
-- As an admin, I can manage users (CRUD)
-- As an admin, I can manage categories (CRUD)
-- As an admin, I can manage assignments
-- As an admin, I can view the global audit log
-- As an admin, I can view system statistics
+## Phase 10 — Field-Worker Web Application (NOT STARTED)
 
-**FIELD_WORKER**
-- As a field worker, I can view my assigned reports
-- As a field worker, I can update assignment status
-- As a field worker, I can upload completion evidence
+Pages 25–26. Assignment progression UIs; completion evidence; authorization tests.
 
-**ORGANIZATION_ADMIN**
-- As an org admin, I can view my organization's reports
-- As an org admin, I can assign assignments to my workers
+## Phase 11 — Flutter Application Foundation (PARTIAL)
 
-### Features
+Present: analyze-clean scaffold (splash/login/register/report screens, ApiClient).
+Remaining: navigation/theme hardening, secure token storage, Android/iOS project
+completeness (iOS folder missing), auth-state wiring, initial tests.
 
-- [ ] Landing page (branding, stats, map, how it works, contact)
-- [ ] Authentication pages (register, login, logout)
-- [ ] Citizen dashboard (report stats, my reports, create report)
-- [ ] Report creation form (category, description, location, evidence)
-- [ ] Report list (paginated, filterable, sortable)
-- [ ] Report detail (status, history, comments, media)
-- [ ] Moderator dashboard (review queue, stats)
-- [ ] Report moderation flow (verify, reject, comment)
-- [ ] Admin dashboard (users, categories, assignments, audit)
-- [ ] Map view (report markers, clustering, filtering)
-- [ ] Notifications center
-- [ ] Profile page
-- [ ] Report confirmation (MTF-2026-XXXXXX)
+## Phase 12 — Flutter Citizen Features (NOT STARTED)
 
-### Tech Stack
-- React 18 + TypeScript
-- Vite
-- Tailwind CSS
-- React Router
-- TanStack Query (server state)
-- React Hook Form + Zod (form validation)
-- Axios (HTTP client)
-- Leaflet + React Leaflet (mapping)
-- Recharts (analytics)
+Pages 27–36 (onboarding, home, creation with camera/GPS, map, notifications,
+profile). Permission-denial handling; Android/iOS verification.
 
----
+## Phase 13 — Notifications and Media (PARTIAL)
 
-## Phase 6 — Map & Geospatial Features (NOT STARTED)
+Present: in-app notifications on events; list/read/read-all.
+Remaining: delivery-state separation, email channel, push (FCM/APNs), preferences,
+media validation hardening, upload limits, password-reset flow (FR-1.7).
 
-- [ ] PostGIS optimized queries for map display
-- [ ] Marker clustering (Leaflet.markercluster)
-- [ ] Filter by category, status, location
-- [ ] Search location (Geocoding)
-- [ ] Capture location (GPS + map click)
-- [ ] Mobile location detection
-- [ ] Public map without sensitive details
-- [ ] Map layers (categories, status)
+## Phase 14 — Offline Capabilities (NOT STARTED)
 
----
+Drafts, retry, sync, conflict handling; never misrepresent unsent data as submitted.
 
-## Phase 7 — Administration & Assignment (NOT STARTED)
+## Phase 15 — Quality Assurance (NOT STARTED)
 
-- [ ] Full user management (CRUD, roles)
-- [ ] Category tree management
-- [ ] Assignment creation + reassignment
-- [ ] Assignment completion with evidence
-- [ ] Organization management
-- [ ] Audit log with filters (date, action, actor, entity)
+Full backend/web/mobile/integration/E2E suite per Part 13; role-boundary and
+lifecycle-transition test passes; accessibility + responsive audits.
+
+## Phase 16 — Security Hardening (NOT STARTED)
+
+Structured review per Part 16 (authn/z, validation, uploads, secrets, dependencies,
+logging/privacy, rate limiting, CORS, backups).
+
+## Phase 17 — Performance and Reliability (NOT STARTED)
+
+Query/index review, pagination, API measurement, map rendering, caching where
+justified (NFR-7 targets).
+
+## Phase 18 — Deployment and CI/CD (NOT STARTED)
+
+Docker (owner environment permitting), production config, migrations in deploy,
+health checks, rollback docs, secret protection.
+
+## Phase 19 — Observability and Operations (NOT STARTED)
+
+Structured logging, metrics, error reporting, alerts, backup/restore procedures,
+troubleshooting docs.
+
+## Phase 20 — Beta Release (NOT STARTED)
+
+Critical-workflow verification, test data, known-limitations doc, structured
+feedback, release criteria.
+
+## Phase 21 — Approved Advanced Features (NOT STARTED)
+
+Analytics, Swahili, multi-org improvements, duplicate detection, AI assistance
+(never silently replacing human review), integrations — each with own ACs.
+
+## Phase 22 — Production Readiness and Version 1.0 (NOT STARTED)
+
+Defect closure, security/privacy verification, backup/restore verification,
+documentation finalization, release notes.
+
+## Phase 23 — Post-release Development (NOT STARTED)
+
+Feedback- and data-driven iteration under the same approval-gated process.
 
 ---
 
-## Phase 8 — Flutter Mobile App (PARTIAL — post-MVP)
+## Delivery Targets (2026-10-13)
 
-Current state: app analyzes clean. Screens exist for splash, login, register,
-report list, report form, notifications, profile; `ApiClient` points at
-`http://localhost:8080/api/v1`. Gaps: no iOS project folder, no token
-persistence, no offline draft/sync, no push notifications, no tests.
-
-- [ ] Authentication flow wired to backend with token persistence
-- [ ] Citizen dashboard
-- [ ] Report creation (camera, gallery, GPS, map)
-- [ ] Report tracking (status, history)
-- [ ] Notifications (in-app, push)
-- [ ] Profile
-- [ ] Offline draft (save to local storage when offline)
-- [ ] Sync pending reports when online
-- [ ] Push notifications (FCM)
-- [ ] iOS project scaffold + build
-- [ ] Unit/widget/integration tests
-
----
-
-## Phase 9 — Notifications (NOT STARTED)
-
-- [ ] In-app notifications
-- [ ] Email notifications (via SendGrid/Brevo)
-- [ ] Push notifications (FCM/APNs)
-- [ ] Notification preferences
-- [ ] In-app notification badges
-
----
-
-## Phase 10 — Testing & Quality (NOT STARTED)
-
-- Backend:
-  - [ ] Unit tests (services, mappers, validation)
-  - [ ] Integration tests (repository, controller) against PostgreSQL + PostGIS
-  - [ ] Security tests
-  - [ ] API tests
-- Frontend (Web):
-  - [ ] Unit tests (React components)
-  - [ ] Integration tests (React Query, forms)
-  - [ ] E2E tests (Cypress)
-- Mobile (Flutter):
-  - [ ] Unit tests (services, models)
-  - [ ] Widget tests
-  - [ ] Integration tests
-- E2E (critical flow):
-  - Register → Login → Create report → Upload image → Capture location →
-    Submit → Admin reviews → Assign → Worker updates → Resolve → Citizen
-    confirms → Close
-
----
-
-## Phase 11 — Deployment (NOT STARTED)
-
-- [ ] Dockerfiles for backend and web
-- [ ] docker-compose.yml (PostgreSQL, PostGIS, backend, web)
-- [ ] Production configuration (profiles, envs)
-- [ ] Reverse proxy (Nginx) configuration
-- [ ] HTTPS (cert-manager, Let's Encrypt)
-- [ ] Database deployment (managed PostgreSQL + PostGIS)
-- [ ] Object storage (S3/MinIO for media)
-- [ ] CI/CD pipelines (GitHub Actions)
-- [ ] Monitoring (Prometheus, Grafana)
-- [ ] Logging (ELK or similar)
-- [ ] Backups (scheduled, verified)
-
----
-
-## Phase 12 — Beta Release (NOT STARTED)
-
-- [ ] Deploy to staging environment
-- [ ] Recruit pilot users (10-20)
-- [ ] Collect feedback
-- [ ] Fix critical bugs
-- [ ] Prioritize feature requests
-- [ ] Beta release notes
-
----
-
-## Phase 13 — Advanced Features (NOT STARTED)
-
-- [ ] AI-assisted image classification (report category prediction)
-- [ ] Duplicate report detection
-- [ ] Automatic categorization
-- [ ] Smart prioritization (severity + location + category)
-- [ ] Offline mobile reporting (fully functional)
-- [ ] Advanced analytics (Power BI connector)
-- [ ] Public transparency dashboards
-- [ ] Multi-organization support (designed; implement orgs)
-- [ ] Swahili language support
-- [ ] Advanced notifications (channels, preferences)
-- [ ] Data export (CSV, PDF, Excel)
-
----
-
-## Phase 14 — Production Hardening (NOT STARTED)
-
-- [ ] Security audit (third-party)
-- [ ] Dependency audit (OWASP, Snyk)
-- [ ] Performance testing (JMeter, k6)
-- [ ] Database optimization (indexes, queries)
-- [ ] Backup verification (restore test)
-- [ ] Disaster recovery testing
-- [ ] Logging verification
-- [ ] Monitoring dashboards
-- [ ] Privacy review (GDPR style)
-- [ ] Accessibility review (WCAG 2.1 AA)
-- [ ] Mobile release testing (App Store, Play Store)
-- [ ] API security review
-- [ ] Documentation review
-
----
-
-## Delivery Targets
-
-| Phase | Status (2026-10-13) |
-|-------|---------------------|
+| Phase | Status |
+| ----- | ------ |
 | 0 | Complete |
-| 1 | Partial |
-| 2 | Partial (compiles; runtime on PostGIS unverified) |
-| 3 | Not started |
-| 4 | Not started |
-| 5 | Not started (web scaffold only) |
+| 1 | Complete (approval pending) |
+| 2 | Not started |
+| 3 | Partial |
+| 4 | Partial |
+| 5 | Partial |
 | 6 | Not started |
 | 7 | Not started |
-| 8 | Partial (post-MVP; analyze-clean, not wired) |
-| 9 | Not started |
-| 10 | Not started |
-| 11 | Not started |
+| 8–10 | Not started |
+| 11 | Partial (scaffold) |
 | 12 | Not started |
-| 13 | Not started |
-| 14 | Not started |
+| 13 | Partial (in-app only) |
+| 14–23 | Not started |

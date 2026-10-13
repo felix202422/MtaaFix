@@ -2,42 +2,53 @@
 
 Local tracking board (GitHub `gh` CLI unavailable; revisit if auth is fixed).
 Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
+Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-13.
 
-## Phase 0 — Repository remediation (MVP milestone)
+## Current phase: Phase 1 complete — awaiting approval to start Phase 2
+
+## Phase 0 — Project audit & foundation (COMPLETE)
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Audit contaminated home-dir repo | DONE | History rooted at `C:\Users\PC`; unrelated projects mixed in |
-| Extract MtaaFix files from old HEAD to staging | DONE | `git archive` of old repo HEAD |
-| Assemble canonical tree at `Desktop\MtaaFix` | DONE | Dropped junk (`.freebuff`, mojibake, duplicate root `src/`+`pom.xml`) |
-| Merge three backend copies into one module | DONE | Root backend base + Desktop overlay + unique `ReportController`/ymls |
-| Fix `ReportController` compile errors | DONE | `update(id,…)`; new `AssignReportRequest` DTO |
-| Backend compile green | DONE | `mvn compile` BUILD SUCCESS (65 sources) |
-| Backend tests green | DONE | `mvn test` 1/1 context-load on H2; fixed H2/PG dialect mismatch in test profile |
-| Remove duplicate test class | DONE | Dropped `com.mtaafix.test.MtaaFixApplicationTests` |
-| Fix mobile pubspec | DONE | Removed nonexistent `boat_dirt_track`; `intl` → `^0.20.3` |
-| `flutter pub get` green | DONE | |
-| `flutter analyze` green | DONE | Fixed 15 issues (missing `User` import, bad `localizations` param, undefined icon, unused imports, deprecated `withOpacity`) |
-| Root `.gitignore` + `.env.example` | DONE | |
-| Guard CI web step | DONE | Skips until `web/src` exists |
-| Truth-ify CHANGELOG + ROADMAP | DONE | Removed unverified "COMPLETE" claims |
-| This board | DONE | |
-| `git init` + initial commit + push to MtaaFix remote | DONE | Commit `a18288d` pushed to `origin/master` (github.com/felix202422/MtaaFix); working tree clean |
-| Phase 0 report + approval gate | DONE | Report delivered; awaiting user approval before Phase 1 |
+| Audit contaminated home-dir repo | DONE | Rooted at `C:\Users\PC`; unrelated projects mixed in |
+| Extract MtaaFix files from old HEAD | DONE | `git archive` staging |
+| Assemble canonical tree | DONE | Junk dropped; three backend copies merged |
+| Backend compile + tests green | DONE | `mvn test` 1/1 on H2 |
+| Mobile pub get + analyze clean | DONE | 15 analyzer issues fixed; bogus dep removed |
+| Root `.gitignore` / `.env.example` / CI guards | DONE | |
+| Truth-ify docs; this board | DONE | |
+| `git init` + push to MtaaFix remote | DONE | Commits `a18288d`, `69056ea` |
 
-## Next phases (blocked on Phase 0 approval)
+## Phase 1 — Requirements & system design (COMPLETE — approval pending)
+
+| Deliverable | Status | File |
+|-------------|--------|------|
+| Requirements specification | DONE | `docs/requirements/SRS.md` |
+| Role-permission matrix | DONE | `docs/design/ROLE_PERMISSION_MATRIX.md` |
+| Report lifecycle specification (12 states, T1–T17) | DONE | `docs/design/REPORT_LIFECYCLE.md` |
+| Initial domain model (code-reconciled) | DONE | `docs/design/DOMAIN_MODEL.md` |
+| API design outline + conventions | DONE | `docs/api/API_DESIGN.md` |
+| Decisions D1–D4 | DONE | SRS §1.5 + ADRs 0002–0004 |
+| Backlog with acceptance criteria | DONE | `docs/project-management/BACKLOG.md` |
+| ROADMAP restructured to Phases 0–23 | DONE | `docs/project-management/ROADMAP.md` |
+| Commit + push | TODO | After final review |
+| Phase 1 report + approval gate | TODO | Stop; do not start Phase 2 without approval |
+
+## Next phases (blocked on Phase 1 approval)
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| Phase 1 — Requirements & design reconciliation | TODO | Reconcile `docs/api/API.md` with merged backend; wireframes |
-| Phase 3 — PostGIS install + runtime verification | BLOCKED | Needs Phase 0 approval; PostGIS install approved |
-| Phase 5 — Web app MVP | TODO | `web/` is manifest-only today |
+| Phase 2 — Design system & UI foundation | BLOCKED | Tokens, components, responsive rules (web) |
+| Phase 3 — Backend foundation completion | BLOCKED | PostGIS runtime verification (PostGIS install approved); OpenAPI export; DEVELOPMENT.md |
+| Phase 4 — AuthN/Z | BLOCKED | Depends on Phase 3; role-matrix enforcement + tests |
+| Phase 5 — Core reporting workflow | BLOCKED | State machine migration + endpoints (BACKLOG B-5.x) |
+| Phase 6–7 — Public site + citizen web | BLOCKED | Depend on Phases 2, 4, 5 |
 
 ## Environment notes
 
 - Java 25.0.4, Maven 3.9.16, Node 24.13.1, Flutter 3.47.1, PostgreSQL 18 running
 - PostGIS not installed (approved for Phase 3)
 - No Docker; no Testcontainers
-- `gh` CLI token invalid; git push credentials work via Windows Credential Manager
-- Old home-dir repo left untouched at `C:\Users\PC\.git` — never push from it
+- `gh` CLI token invalid; git push works via Windows Credential Manager
+- Old home-dir repo untouched at `C:\Users\PC\.git` — never push from it
