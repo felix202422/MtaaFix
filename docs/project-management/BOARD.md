@@ -5,9 +5,9 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-13.
 
-## Current phase: Phase 2 COMPLETE — awaiting owner approval (2026-10-13); next: Phase 3 (+ Phase 4 after), awaiting start authorization
+## Current phase: Phase 2 APPROVED (2026-10-13) — Phase 3 IN PROGRESS (started 2026-10-13)
 
-## Phase 2 — Design system & UI foundation (COMPLETE — awaiting approval)
+## Phase 2 — Design system & UI foundation (COMPLETE — APPROVED 2026-10-13)
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -22,7 +22,7 @@ Last updated: 2026-10-13.
 | Flutter theme groundwork | DONE | `mobile/lib/app/theme.dart` wired in; `flutter analyze` green; Phase 11 migrates screens |
 | CI lint step | DONE | `npm run lint` in web CI step |
 | Verify lint + build + flutter | DONE | `eslint .` 0 issues; `tsc` + `vite build` green; analyze clean |
-| Phase 2 report + approval gate | DONE | Report delivered; awaiting owner approval |
+| Phase 2 report + approval gate | DONE | Approved by owner 2026-10-13 |
 
 ## Phase 0 — Project audit & foundation (COMPLETE)
 
@@ -52,13 +52,31 @@ Last updated: 2026-10-13.
 | Commit + push | DONE | Commits `e0cad27` + approval bookkeeping pushed to `origin/master` |
 | Phase 1 report + approval gate | DONE | Approved by owner 2026-10-13; docs flipped to APPROVED |
 
-## Next phases (Phase 1 approved; start authorization pending)
+## Current phase: Phase 3 COMPLETE — awaiting owner approval (2026-10-14); next: Phase 4 (AuthN/Z) after approval
+
+## Phase 3 — Backend foundation completion (COMPLETE — awaiting approval)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Record Phase 2 approval | DONE | |
+| Inventory backend config/profiles/Flyway/entities | DONE | Found V1 defects + missing spatial deps |
+| Install PostGIS for PostgreSQL 18 | DONE | 3.6.2 OSGeo bundle, elevated overlay; DLL deps verified loadable |
+| Create `mtaafix` DB + PostGIS extension | DONE | `postgis_version()` = 3.6 USE_GEOS=1 USE_PROJ=1 |
+| Fix V1 migration | DONE | Extension, public schema, geometry+GIST, FK cycle, updated_at, from_status nullable, varchar(36) ids |
+| Fix Boot 4 deps | DONE | +spring-boot-flyway (was silently not running), +hibernate-spatial, +spring-boot-webmvc-test; −Testcontainers |
+| Fix entities | DONE | BaseEntity PrePersist + assigned ids; AuditLog jsonb |
+| Verify app on PG+PostGIS | DONE | Boot OK, Flyway applied, ddl validate passes, health UP (port 8085; 8080 held by system service) |
+| H2 vs PG test matrix | DONE | 5/5 green with MTAAXFIX_PG_IT; PG suite skips cleanly without |
+| Export OpenAPI spec | DONE | `docs/api/openapi.json` via OpenApiExportTest |
+| DEVELOPMENT.md runbook | DONE | |
+| Phase 3 report + approval gate | DONE | Report delivered; awaiting owner approval |
+
+## Next phases
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| Phase 3 — Backend foundation completion | READY | PostGIS runtime verification (PostGIS install approved); OpenAPI export; DEVELOPMENT.md |
-| Phase 2 approval | PENDING | Phase 2 complete; awaiting owner sign-off |
-| Phase 4 — AuthN/Z | BLOCKED | Depends on Phase 3; role-matrix enforcement + tests |
+| Phase 3 approval | PENDING | Complete; awaiting owner sign-off |
+| Phase 4 — AuthN/Z | READY after Phase 3 approval | Role-matrix enforcement + tests (BACKLOG B-4.x) |
 | Phase 5 — Core reporting workflow | BLOCKED | State machine migration + endpoints (BACKLOG B-5.x) |
 | Phase 6–7 — Public site + citizen web | BLOCKED | Depend on Phases 2, 4, 5 |
 

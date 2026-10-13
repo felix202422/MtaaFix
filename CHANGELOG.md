@@ -5,9 +5,48 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.4.0] — 2026-10-14
+### Phase 3 — Backend foundation completion
+Awaiting owner approval. Verified the backend against real PostgreSQL 18.6 +
+PostGIS 3.6.2 per master spec Phase 3; fixed the defects that made that
+verification impossible. No API behavior changes beyond correctness fixes
+listed below.
+
+- Installed PostGIS 3.6.2 for PG18 (official OSGeo bundle overlay, elevated);
+  `CREATE EXTENSION postgis` + `postgis_version()` verified (USE_GEOS=1, USE_PROJ=1)
+- **V1 migration rewritten** (never applied to any shared environment; dev DBs
+  recreated): `CREATE EXTENSION IF NOT EXISTS postgis`; tables moved from
+  `mtaafix.` schema to `public` (matches `currentSchema=public` and entities);
+  `GEOGRAPHY` → `GEOMETRY(POINT|POLYGON, 4326)` to match entity
+  columnDefinitions; GIST indexes on report geometries; reports↔assignments
+  FK cycle resolved (deferred `ALTER TABLE` after both tables exist);
+  `updated_at` added to all BaseEntity-backed tables; `from_status` nullable
+  (initial SUBMITTED transition has no previous state); UUID columns →
+  `VARCHAR(36)` to match String entity ids
+- Dependencies: added `org.hibernate.orm:hibernate-spatial` (JTS geometry
+  mapping), `spring-boot-flyway` (Spring Boot 4 module split — Flyway
+  auto-configuration was silently absent, migrations never ran),
+  `spring-boot-webmvc-test` (Boot 4 MockMvc test package); removed unused
+  Testcontainers artifacts (no Docker in this environment)
+- Entities: `BaseEntity` — `@PrePersist` default for `createdAt` (auditing
+  annotations were inert without `@EnableJpaAuditing`), removed conflicting
+  `@GeneratedValue` (ids are assigned random UUIDs at construction);
+  `AuditLog.details` mapped as jsonb via `@JdbcTypeCode(SqlTypes.JSON)`
+- Verified end-to-end on PG+PostGIS: boot, Flyway V1 apply, `ddl-auto:
+  validate`, `GET /actuator/health` = UP
+- Tests: `PostgresIntegrationTest` (env-gated `MTAAFIX_PG_IT=true`):
+  Flyway history, PostGIS availability, geometry insert/read-back +
+  `ST_AsText`; `OpenApiExportTest` exports `docs/api/openapi.json` on every
+  test run. Full suite 5/5 green with PG; without env var PG tests skip
+  cleanly (CI path)
+- `docs/api/openapi.json` — committed OpenAPI spec (admin-role endpoints
+  included; springdoc-generated)
+- `DEVELOPMENT.md` — runbook: prerequisites, PostGIS install, config matrix,
+  H2-vs-PG test matrix, troubleshooting
+
 ## [0.3.0] — 2026-10-13
 ### Phase 2 — Design system & UI foundation
-Awaiting owner approval (approval gate per master spec Part 16). Established the
+**Approved by owner 2026-10-13.** Established the
 web design foundation (tokens, components, gallery) and minimal Flutter theme
 groundwork per master spec Phase 2 and SRS §9. No product pages yet (Phases 6–7).
 

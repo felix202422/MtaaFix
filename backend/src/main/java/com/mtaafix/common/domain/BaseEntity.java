@@ -1,10 +1,9 @@
 package com.mtaafix.common.domain;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import java.time.Instant;
 import java.util.Objects;
@@ -15,8 +14,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 public abstract class BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "varchar(36)")
     private String id = java.util.UUID.randomUUID().toString();
 
     @CreatedDate
@@ -37,6 +35,13 @@ public abstract class BaseEntity {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    @PrePersist
+    public void onCreate() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
     }
 
     @PreUpdate

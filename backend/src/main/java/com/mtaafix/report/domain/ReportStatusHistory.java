@@ -20,7 +20,7 @@ import jakarta.persistence.Table;
 public class ReportStatusHistory extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "from_status", nullable = false, length = 30)
+    @Column(name = "from_status", length = 30)
     private Report.Status fromStatus;
 
     @Enumerated(EnumType.STRING)

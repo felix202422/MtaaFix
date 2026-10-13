@@ -5,6 +5,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "audit_logs", indexes = {
@@ -26,7 +28,8 @@ public class AuditLog extends BaseEntity {
     @Column(name = "entity_id", length = 255)
     private String entityId;
 
-    @Column(name = "details", columnDefinition = "text")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "details", columnDefinition = "jsonb")
     private String details;
 
     public AuditLog() {
