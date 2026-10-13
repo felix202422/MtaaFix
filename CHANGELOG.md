@@ -7,7 +7,7 @@ analyzer, or file presence) — not intentions.
 
 ## [0.4.0] — 2026-10-14
 ### Phase 3 — Backend foundation completion
-Awaiting owner approval. Verified the backend against real PostgreSQL 18.6 +
+**Approved by owner 2026-10-14.** Verified the backend against real PostgreSQL 18.6 +
 PostGIS 3.6.2 per master spec Phase 3; fixed the defects that made that
 verification impossible. No API behavior changes beyond correctness fixes
 listed below.

@@ -10,7 +10,7 @@
 
 - **[0.4.0]** — Phase 3: backend foundation completed (PostGIS 3.6.2 verified,
   Flyway V1 fixed + applied, H2/PostgreSQL test matrix, OpenAPI export,
-  DEVELOPMENT.md) — awaiting owner approval 2026-10-14
+  DEVELOPMENT.md) — **APPROVED** 2026-10-14
 - **[0.3.0]** — Phase 2: design system & UI foundation (tokens, components, gallery,
   Flutter theme groundwork) — **APPROVED** 2026-10-13
 - **[0.2.0]** — Phase 1: requirements & system design baseline (SRS, role matrix,
@@ -26,7 +26,7 @@
 | 0 | Project audit and foundation | ✅ Complete |
 | 1 | Requirements and system design | ✅ Complete (approved 2026-10-13) |
 | 2 | Design system and UI foundation | ✅ Complete (approved 2026-10-13) |
-| 3 | Backend foundation | ✅ Complete (awaiting owner approval 2026-10-14) — PostGIS verified; Flyway V1 green; H2+PG test matrix |
+| 3 | Backend foundation | ✅ Complete (**APPROVED** 2026-10-14) — PostGIS verified; Flyway V1 green; H2+PG test matrix |
 | 4 | Authentication and authorization | Partial — JWT flows present; role enforcement not matrix-complete |
 | 5 | Core reporting workflow | Partial — provisional endpoints; state machine gaps |
 | 6 | Public website | Not started (`web/` is manifest-only) |
@@ -73,7 +73,7 @@ Delivered 2026-10-13:
 - [x] CI: web step now runs lint + build; `npm run lint` added
 - Verified: `npm run lint`, `npm run build` (tsc + vite), `flutter analyze` all green
 
-## Phase 3 — Backend Foundation (COMPLETE — awaiting owner approval)
+## Phase 3 — Backend Foundation (COMPLETE — approved 2026-10-14)
 
 Delivered 2026-10-14:
 - [x] PostGIS 3.6.2 installed and verified against PostgreSQL 18.6
@@ -93,7 +93,7 @@ Delivered 2026-10-14:
 
 - **[0.4.0]** — Phase 3: backend foundation completed (PostGIS 3.6.2 verified,
   Flyway V1 fixed + applied, H2/PostgreSQL test matrix, OpenAPI export,
-  DEVELOPMENT.md) — awaiting owner approval 2026-10-14
+  DEVELOPMENT.md) — **APPROVED** 2026-10-14
 - **[0.3.0]** — Phase 2: design system & UI foundation (tokens, components, gallery,
   Flutter theme groundwork) — **APPROVED** 2026-10-13
 - **[0.2.0]** — Phase 1: requirements & system design baseline (SRS, role matrix,
@@ -109,7 +109,7 @@ Delivered 2026-10-14:
 | 0 | Project audit and foundation | ✅ Complete |
 | 1 | Requirements and system design | ✅ Complete (approved 2026-10-13) |
 | 2 | Design system and UI foundation | ✅ Complete (approved 2026-10-13) |
-| 3 | Backend foundation | ✅ Complete (awaiting owner approval 2026-10-14) — PostGIS verified; Flyway V1 green; H2+PG test matrix |
+| 3 | Backend foundation | ✅ Complete (**APPROVED** 2026-10-14) — PostGIS verified; Flyway V1 green; H2+PG test matrix |
 | 4 | Authentication and authorization | Partial — JWT flows present; role enforcement not matrix-complete |
 | 5 | Core reporting workflow | Partial — provisional endpoints; state machine gaps |
 | 6 | Public website | Not started (`web/` is manifest-only) |
@@ -156,7 +156,7 @@ Delivered 2026-10-13:
 - [x] CI: web step now runs lint + build; `npm run lint` added
 - Verified: `npm run lint`, `npm run build` (tsc + vite), `flutter analyze` all green
 
-## Phase 3 — Backend Foundation (COMPLETE — awaiting owner approval)
+## Phase 3 — Backend Foundation (COMPLETE — approved 2026-10-14)
 
 Present: Maven module, Java 25, Spring Boot app, Flyway V1, application profiles,
 context-load test on H2, Springdoc annotations, health endpoint permitted.
@@ -292,7 +292,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 0 | Complete |
 | 1 | Complete (approved) |
 | 2 | Complete (approved) |
-| 3 | Complete (awaiting approval) |
+| 3 | Complete (approved) |
 | 4 | Partial |
 | 5 | Partial |
 | 6 | Not started |

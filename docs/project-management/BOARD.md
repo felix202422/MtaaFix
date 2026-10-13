@@ -52,9 +52,9 @@ Last updated: 2026-10-13.
 | Commit + push | DONE | Commits `e0cad27` + approval bookkeeping pushed to `origin/master` |
 | Phase 1 report + approval gate | DONE | Approved by owner 2026-10-13; docs flipped to APPROVED |
 
-## Current phase: Phase 3 COMPLETE — awaiting owner approval (2026-10-14); next: Phase 4 (AuthN/Z) after approval
+## Current phase: Phase 3 APPROVED (2026-10-14) — next: Phase 4 (AuthN/Z), awaiting start authorization
 
-## Phase 3 — Backend foundation completion (COMPLETE — awaiting approval)
+## Phase 3 — Backend foundation completion (COMPLETE — APPROVED 2026-10-14)
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -69,14 +69,13 @@ Last updated: 2026-10-13.
 | H2 vs PG test matrix | DONE | 5/5 green with MTAAXFIX_PG_IT; PG suite skips cleanly without |
 | Export OpenAPI spec | DONE | `docs/api/openapi.json` via OpenApiExportTest |
 | DEVELOPMENT.md runbook | DONE | |
-| Phase 3 report + approval gate | DONE | Report delivered; awaiting owner approval |
+| Phase 3 report + approval gate | DONE | Approved by owner 2026-10-14; docs flipped to APPROVED |
 
 ## Next phases
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| Phase 3 approval | PENDING | Complete; awaiting owner sign-off |
-| Phase 4 — AuthN/Z | READY after Phase 3 approval | Role-matrix enforcement + tests (BACKLOG B-4.x) |
+| Phase 4 — AuthN/Z | READY | Role-matrix enforcement + tests (BACKLOG B-4.x) |
 | Phase 5 — Core reporting workflow | BLOCKED | State machine migration + endpoints (BACKLOG B-5.x) |
 | Phase 6–7 — Public site + citizen web | BLOCKED | Depend on Phases 2, 4, 5 |
 
