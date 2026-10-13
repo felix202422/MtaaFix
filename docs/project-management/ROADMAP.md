@@ -8,6 +8,8 @@
 
 ## Version History
 
+- **[0.3.0]** — Phase 2: design system & UI foundation (tokens, components, gallery,
+  Flutter theme groundwork) — awaiting owner approval 2026-10-13
 - **[0.2.0]** — Phase 1: requirements & system design baseline (SRS, role matrix,
   lifecycle, domain model, API design, ADRs 0002–0004) — **APPROVED** 2026-10-13
 - **[0.1.0]** — Phase 0: repository remediation & verified baseline — 2026-10-13
@@ -20,7 +22,7 @@
 | ----- | ---- | ------------------- |
 | 0 | Project audit and foundation | ✅ Complete |
 | 1 | Requirements and system design | ✅ Complete (approved 2026-10-13) |
-| 2 | Design system and UI foundation | Not started |
+| 2 | Design system and UI foundation | ✅ Complete (awaiting owner approval 2026-10-13) |
 | 3 | Backend foundation | Partial — builds/tests green on H2; PostGIS runtime unverified |
 | 4 | Authentication and authorization | Partial — JWT flows present; role enforcement not matrix-complete |
 | 5 | Core reporting workflow | Partial — provisional endpoints; state machine gaps |
@@ -49,14 +51,24 @@ Deliverables produced 2026-10-13:
 - [x] Architecture decisions — ADR-0002 (lifecycle), ADR-0003 (categories), ADR-0004 (roles)
 - [x] Decisions D1–D4 recorded in SRS §1.5
 
-## Phase 2 — Design System and UI Foundation (NOT STARTED)
+## Phase 2 — Design System and UI Foundation (COMPLETE — awaiting owner approval)
 
-- Design tokens (Tanzanian flag palette, Part 9.1)
-- Typography (Inter), spacing, card/form/status patterns
-- Reusable component library (React) + shared Flutter theme groundwork
-- Responsive layout rules; accessibility checklist (WCAG 2.1 AA)
-- Brand assets review (logo/favicon)
-- Exit: reusable foundation suitable for Phases 6–7 interfaces
+Delivered 2026-10-13:
+- [x] Design tokens (Tanzanian palette, spec §9.1) — `web/src/styles/tokens.css`
+- [x] Global styles + Inter typography — `web/src/styles/global.css`, `web/index.html`
+- [x] Tailwind v4 + ESLint 9 flat config with jsx-a11y — `web/vite.config.ts`, `web/eslint.config.js`
+- [x] Reusable React component library — `web/src/design-system/` (Button, Field,
+  TextAreaField, Card, Badge, Modal, Toast + ToastProvider, EmptyState,
+  LoadingState, ErrorState)
+- [x] In-repo design gallery at `/design` with layout previews (landing, auth,
+  dashboard, report wizard) — `web/src/gallery/` (design validation only)
+- [x] Design system documentation — [../design/DESIGN_SYSTEM.md](../design/DESIGN_SYSTEM.md)
+  (tokens, status mapping, responsive breakpoints, manual a11y checklist)
+- [x] Minimal brand assets — wordmark + `web/public/favicon.svg`
+- [x] Shared Flutter theme groundwork — `mobile/lib/app/theme.dart` wired into
+  `mobile/lib/app.dart` (screens still use hardcoded colors; Phase 11)
+- [x] CI: web step now runs lint + build; `npm run lint` added
+- Verified: `npm run lint`, `npm run build` (tsc + vite), `flutter analyze` all green
 
 ## Phase 3 — Backend Foundation (PARTIAL)
 
@@ -120,9 +132,11 @@ Pages 25–26. Assignment progression UIs; completion evidence; authorization te
 
 ## Phase 11 — Flutter Application Foundation (PARTIAL)
 
-Present: analyze-clean scaffold (splash/login/register/report screens, ApiClient).
-Remaining: navigation/theme hardening, secure token storage, Android/iOS project
-completeness (iOS folder missing), auth-state wiring, initial tests.
+Present: analyze-clean scaffold (splash/login/register/report screens, ApiClient),
+shared theme groundwork (`mobile/lib/app/theme.dart`, Phase 2).
+Remaining: navigation hardening, screen migration off hardcoded colors, secure
+token storage, Android/iOS project completeness (iOS folder missing), auth-state
+wiring, initial tests.
 
 ## Phase 12 — Flutter Citizen Features (NOT STARTED)
 
@@ -191,7 +205,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | ----- | ------ |
 | 0 | Complete |
 | 1 | Complete (approved) |
-| 2 | Not started |
+| 2 | Complete (awaiting approval) |
 | 3 | Partial |
 | 4 | Partial |
 | 5 | Partial |

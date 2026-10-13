@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.3.0] — 2026-10-13
+### Phase 2 — Design system & UI foundation
+Awaiting owner approval (approval gate per master spec Part 16). Established the
+web design foundation (tokens, components, gallery) and minimal Flutter theme
+groundwork per master spec Phase 2 and SRS §9. No product pages yet (Phases 6–7).
+
+- Fixed corrupted `web/tsconfig.json` / `tsconfig.node.json` (literal `\n`
+  sequences from old-repo extraction)
+- Tailwind v4 via `@tailwindcss/vite`; design tokens in
+  `web/src/styles/tokens.css` (spec §9.1 palette); global styles + Inter in
+  `web/src/styles/global.css`, `web/index.html`
+- ESLint 9 flat config with `eslint-plugin-jsx-a11y`; `npm run lint` script; CI
+  web step now runs lint + build
+- Component library `web/src/design-system/`: Button, Field, TextAreaField,
+  Card, Badge, Modal (Escape/outside-click/focus management), Toast +
+  ToastProvider (`aria-live`), EmptyState, LoadingState, ErrorState — all
+  exported from the barrel; a11y wiring (labels, aria-invalid, roles)
+- In-repo design gallery at `/design` (`web/src/gallery/`) with color/type/
+  component/status showcases and presentational layout previews: landing, auth,
+  citizen dashboard, report wizard (clearly labeled design validation; no
+  interactive dead controls)
+- `docs/design/DESIGN_SYSTEM.md` — tokens, typography, status→badge mapping
+  (12 states), responsive breakpoints, manual accessibility checklist
+- Minimal brand assets: `web/public/favicon.svg` (green pin + check)
+- Flutter groundwork: `mobile/lib/app/theme.dart` (Tanzanian palette,
+  M3 ThemeData) wired into `mobile/lib/app.dart` (screens still use hardcoded
+  `Colors.orange` — migration scheduled Phase 11)
+- Verified: `npm run lint` (0 issues), `npm run build` (tsc + vite, exit 0),
+  `flutter analyze` (no issues)
+- Known: 2 npm audit findings (esbuild ≤0.24.2 via vite ≤6.4.2 — dev-server
+  request vulnerability, GHSA-67mh-4wv8-2f99); fix requires vite 8 breaking
+  upgrade — deferred, decision pending owner
+
 ## [0.2.0] — 2026-10-13
 ### Phase 1 — Requirements & system design (docs only; no code changes)
 **Approved by owner 2026-10-13.** Established the requirements baseline before further implementation, per master

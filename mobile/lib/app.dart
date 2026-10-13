@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'package:mtaafix_mobile/app/theme.dart';
 import 'package:mtaafix_mobile/features/auth/presentation/auth_page.dart';
 import 'package:mtaafix_mobile/features/reports/presentation/report_list_screen.dart';
 import 'package:mtaafix_mobile/features/reports/presentation/report_form_screen.dart';
@@ -18,11 +19,7 @@ class MtaaFixMobileApp extends StatelessWidget {
     return MaterialApp(
       title: 'MtaaFix',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.orange,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
-        useMaterial3: true,
-      ),
+      theme: buildMtaaFixTheme(),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

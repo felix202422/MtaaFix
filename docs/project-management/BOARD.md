@@ -5,7 +5,24 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-13.
 
-## Current phase: Phase 1 APPROVED (2026-10-13) — next: Phase 2 (+ parallel Phase 3), awaiting start authorization
+## Current phase: Phase 2 COMPLETE — awaiting owner approval (2026-10-13); next: Phase 3 (+ Phase 4 after), awaiting start authorization
+
+## Phase 2 — Design system & UI foundation (COMPLETE — awaiting approval)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Fix corrupted tsconfig files | DONE | Real newlines; valid JSON |
+| Tailwind v4 + @tailwindcss/vite | DONE | `tokens.css` `@theme`, `global.css` |
+| ESLint 9 flat + jsx-a11y | DONE | Pinned eslint@^9 (v10 incompatible) |
+| npm install (tailwind, eslint, jsx-a11y) | DONE | Clean reinstall after corruption; 2 vulns noted (esbuild/vite dev-only) |
+| Design tokens + typography + favicon | DONE | Spec §9.1 palette; Inter; SVG pin+check |
+| Component library | DONE | Button, Field, TextAreaField, Card, Badge, Modal, Toast, EmptyState, LoadingState, ErrorState |
+| `/design` gallery + layout previews | DONE | Landing, auth, dashboard, report wizard — presentational only |
+| DESIGN_SYSTEM.md | DONE | Tokens, status map, breakpoints, manual a11y checklist |
+| Flutter theme groundwork | DONE | `mobile/lib/app/theme.dart` wired in; `flutter analyze` green; Phase 11 migrates screens |
+| CI lint step | DONE | `npm run lint` in web CI step |
+| Verify lint + build + flutter | DONE | `eslint .` 0 issues; `tsc` + `vite build` green; analyze clean |
+| Phase 2 report + approval gate | DONE | Report delivered; awaiting owner approval |
 
 ## Phase 0 — Project audit & foundation (COMPLETE)
 
@@ -39,8 +56,8 @@ Last updated: 2026-10-13.
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| Phase 2 — Design system & UI foundation | READY | Tokens, components, responsive rules (web) |
-| Phase 3 — Backend foundation completion | READY | PostGIS runtime verification (PostGIS install approved); OpenAPI export; DEVELOPMENT.md; may run parallel to Phase 2 |
+| Phase 3 — Backend foundation completion | READY | PostGIS runtime verification (PostGIS install approved); OpenAPI export; DEVELOPMENT.md |
+| Phase 2 approval | PENDING | Phase 2 complete; awaiting owner sign-off |
 | Phase 4 — AuthN/Z | BLOCKED | Depends on Phase 3; role-matrix enforcement + tests |
 | Phase 5 — Core reporting workflow | BLOCKED | State machine migration + endpoints (BACKLOG B-5.x) |
 | Phase 6–7 — Public site + citizen web | BLOCKED | Depend on Phases 2, 4, 5 |

@@ -39,7 +39,7 @@ jobs:
         run: |
           if [ -d web/src ]; then
             cd web
-            if command -v npm &>/dev/null; then npm ci && npx tsc --noEmit && npm run build; else echo "npm not installed, skipping"; fi
+            if command -v npm &>/dev/null; then npm ci && npm run lint && npm run build; else echo "npm not installed, skipping"; fi
             cd ..
           else
             echo "web/src not present (scaffold only) — skipping web build"
