@@ -3,9 +3,9 @@
 Local tracking board (GitHub `gh` CLI unavailable; revisit if auth is fixed).
 Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
-Last updated: 2026-10-13.
+Last updated: 2026-10-14.
 
-## Current phase: Phase 2 APPROVED (2026-10-13) — Phase 3 IN PROGRESS (started 2026-10-13)
+## Current phase: Phase 4 APPROVED (2026-10-14) — next: Phase 5 (not started)
 
 ## Phase 2 — Design system & UI foundation (COMPLETE — APPROVED 2026-10-13)
 
@@ -52,8 +52,6 @@ Last updated: 2026-10-13.
 | Commit + push | DONE | Commits `e0cad27` + approval bookkeeping pushed to `origin/master` |
 | Phase 1 report + approval gate | DONE | Approved by owner 2026-10-13; docs flipped to APPROVED |
 
-## Current phase: Phase 4 COMPLETE - submitted for approval (2026-10-14); next: Phase 5, blocked on Phase 4 approval
-
 ## Phase 3 — Backend foundation completion (COMPLETE — APPROVED 2026-10-14)
 
 | Task | Status | Notes |
@@ -71,8 +69,7 @@ Last updated: 2026-10-13.
 | DEVELOPMENT.md runbook | DONE | |
 | Phase 3 report + approval gate | DONE | Approved by owner 2026-10-14; docs flipped to APPROVED |
 
-
-## Phase 4 - Authentication and authorization (COMPLETE - submitted for approval 2026-10-14)
+## Phase 4 — Authentication and authorization (COMPLETE — APPROVED 2026-10-14)
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -88,14 +85,14 @@ Last updated: 2026-10-13.
 | Latent defects fixed | DONE | immutable jjwt claims broke all token generation; LIE on report get/create; unpersisted assignments; Long notification ids; H2 audit_logs DDL |
 | Tests | DONE | 41/41 H2 (matrix 15, auth flow 16, token 5) + 3/3 PostgreSQL; OpenAPI regenerated |
 | Live boot smoke on PG | DONE | register/login/refresh/me + 401/403 checks on port 8085 |
-| Phase 4 report + approval gate | PENDING | Submitted 2026-10-14; awaiting owner decision |
+| Phase 4 report + approval gate | DONE | Approved by owner 2026-10-14 |
 
 ## Next phases
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| Phase 4 - AuthN/Z | AWAITING APPROVAL | Matrix enforcement + scoping + audit + tests done; submitted 2026-10-14 |
-| Phase 5 — Core reporting workflow | BLOCKED | State machine migration + endpoints (BACKLOG B-5.x) |
+| Phase 4 - AuthN/Z | Complete (approved 2026-10-14) | Matrix enforcement + scoping + audit + tests done |
+| Phase 5 - Core reporting workflow | TODO | Next: state machine migration + endpoints (BACKLOG B-5.x) |
 | Phase 6–7 — Public site + citizen web | BLOCKED | Depend on Phases 2, 4, 5 |
 
 ## Environment notes

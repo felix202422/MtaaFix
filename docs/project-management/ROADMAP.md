@@ -8,6 +8,7 @@
 
 ## Version History
 
+- **[0.5.0]** — Phase 4: authentication & authorization enforcement (matrix gates, DB role lookup, org/ownership scoping, audit wiring; 41/41 + 3/3 tests) — **APPROVED** 2026-10-14
 - **[0.4.0]** — Phase 3: backend foundation completed (PostGIS 3.6.2 verified,
   Flyway V1 fixed + applied, H2/PostgreSQL test matrix, OpenAPI export,
   DEVELOPMENT.md) — **APPROVED** 2026-10-14
@@ -27,7 +28,7 @@
 | 1 | Requirements and system design | ✅ Complete (approved 2026-10-13) |
 | 2 | Design system and UI foundation | ✅ Complete (approved 2026-10-13) |
 | 3 | Backend foundation | ✅ Complete (**APPROVED** 2026-10-14) — PostGIS verified; Flyway V1 green; H2+PG test matrix |
-| 4 | Authentication and authorization | Partial — JWT flows present; role enforcement not matrix-complete |
+| 4 | Authentication and authorization | ✅ Complete (**APPROVED** 2026-10-14) — matrix gates, DB role lookup, scoping; tests 41/41 + 3/3 PG |
 | 5 | Core reporting workflow | Partial — provisional endpoints; state machine gaps |
 | 6 | Public website | Not started (`web/` is manifest-only) |
 | 7 | Citizen web application | Not started |
@@ -81,93 +82,12 @@ Delivered 2026-10-14:
 - [x] Boot 4 deps: hibernate-spatial, spring-boot-flyway (auto-config was absent), spring-boot-webmvc-test; Testcontainers removed
 - [x] Entity fixes: BaseEntity PrePersist + assigned ids; AuditLog jsonb
 - [x] App boots on PG+PostGIS; Flyway V1 applies; ddl validate passes; health UP
-- [x] Test matrix: H2 always; PostgresIntegrationTest gated by MTAAXFIX_PG_IT - 5/5 green with PG
+- [x] Test matrix: H2 always; PostgresIntegrationTest gated by MTAAFIX_PG_IT - 5/5 green with PG
 - [x] Committed OpenAPI spec - docs/api/openapi.json
-- [x] Runbook - DEVELOPMENT.mdcation** (Phases 0–23) per decision D1
-> (2026-10-13). Status reflects **verified repository state** (last audited 2026-10-13),
-> not intent. **MVP = Phases 0–7** (approved). Every phase ends with an approval gate
-> (master spec Part 16). Local tracking: [BOARD.md](BOARD.md) ·
-> Work items: [BACKLOG.md](BACKLOG.md) · Requirements: [../requirements/SRS.md](../requirements/SRS.md)
-
-## Version History
-
-- **[0.4.0]** — Phase 3: backend foundation completed (PostGIS 3.6.2 verified,
-  Flyway V1 fixed + applied, H2/PostgreSQL test matrix, OpenAPI export,
-  DEVELOPMENT.md) — **APPROVED** 2026-10-14
-- **[0.3.0]** — Phase 2: design system & UI foundation (tokens, components, gallery,
-  Flutter theme groundwork) — **APPROVED** 2026-10-13
-- **[0.2.0]** — Phase 1: requirements & system design baseline (SRS, role matrix,
-  lifecycle, domain model, API design, ADRs 0002–0004) — **APPROVED** 2026-10-13
-- **[0.1.0]** — Phase 0: repository remediation & verified baseline — 2026-10-13
-
----
-
-## MVP summary (Phases 0–7)
-
-| Phase | Name | Status (2026-10-13) |
-| ----- | ---- | ------------------- |
-| 0 | Project audit and foundation | ✅ Complete |
-| 1 | Requirements and system design | ✅ Complete (approved 2026-10-13) |
-| 2 | Design system and UI foundation | ✅ Complete (approved 2026-10-13) |
-| 3 | Backend foundation | ✅ Complete (**APPROVED** 2026-10-14) — PostGIS verified; Flyway V1 green; H2+PG test matrix |
-| 4 | Authentication and authorization | Partial — JWT flows present; role enforcement not matrix-complete |
-| 5 | Core reporting workflow | Partial — provisional endpoints; state machine gaps |
-| 6 | Public website | Not started (`web/` is manifest-only) |
-| 7 | Citizen web application | Not started |
-
-Post-MVP: Phases 8–23 below.
-
----
-
-## Phase 0 — Project Audit and Foundation (COMPLETE)
-
-Verified: contaminated-history cleanup; canonical monorepo; merged backend
-(compiles, context-load test green); mobile analyze-clean; guarded CI; root
-.gitignore/.env.example; truth-ified docs. See CHANGELOG 0.1.0 and Phase 0 report.
-
-## Phase 1 — Requirements and System Design (COMPLETE — approved 2026-10-13)
-
-Deliverables produced 2026-10-13:
-- [x] Requirements specification — [../requirements/SRS.md](../requirements/SRS.md)
-- [x] Role-permission matrix — [../design/ROLE_PERMISSION_MATRIX.md](../design/ROLE_PERMISSION_MATRIX.md)
-- [x] Report lifecycle specification — [../design/REPORT_LIFECYCLE.md](../design/REPORT_LIFECYCLE.md)
-- [x] Initial domain model — [../design/DOMAIN_MODEL.md](../design/DOMAIN_MODEL.md)
-- [x] API design outline + conventions — [../api/API_DESIGN.md](../api/API_DESIGN.md)
-- [x] Implementation backlog with acceptance criteria — [BACKLOG.md](BACKLOG.md)
-- [x] Architecture decisions — ADR-0002 (lifecycle), ADR-0003 (categories), ADR-0004 (roles)
-- [x] Decisions D1–D4 recorded in SRS §1.5
-
-## Phase 2 — Design System and UI Foundation (COMPLETE — approved 2026-10-13)
-
-Delivered 2026-10-13:
-- [x] Design tokens (Tanzanian palette, spec §9.1) — `web/src/styles/tokens.css`
-- [x] Global styles + Inter typography — `web/src/styles/global.css`, `web/index.html`
-- [x] Tailwind v4 + ESLint 9 flat config with jsx-a11y — `web/vite.config.ts`, `web/eslint.config.js`
-- [x] Reusable React component library — `web/src/design-system/` (Button, Field,
-  TextAreaField, Card, Badge, Modal, Toast + ToastProvider, EmptyState,
-  LoadingState, ErrorState)
-- [x] In-repo design gallery at `/design` with layout previews (landing, auth,
-  dashboard, report wizard) — `web/src/gallery/` (design validation only)
-- [x] Design system documentation — [../design/DESIGN_SYSTEM.md](../design/DESIGN_SYSTEM.md)
-  (tokens, status mapping, responsive breakpoints, manual a11y checklist)
-- [x] Minimal brand assets — wordmark + `web/public/favicon.svg`
-- [x] Shared Flutter theme groundwork — `mobile/lib/app/theme.dart` wired into
-  `mobile/lib/app.dart` (screens still use hardcoded colors; Phase 11)
-- [x] CI: web step now runs lint + build; `npm run lint` added
-- Verified: `npm run lint`, `npm run build` (tsc + vite), `flutter analyze` all green
-
-## Phase 3 — Backend Foundation (COMPLETE — approved 2026-10-14)
-
-Present: Maven module, Java 25, Spring Boot app, Flyway V1, application profiles,
-context-load test on H2, Springdoc annotations, health endpoint permitted.
-Remaining:
-- [x]] Install/configure PostGIS locally; verify Flyway V1 + entity DDL against real PostgreSQL+PostGIS
-- [x]] Test configuration matrix (H2 unit vs Postgres integration profile)
-- [x]] Commit exported OpenAPI spec (admin runtime UI exists)
-- [x]] `.env.example` → DEVELOPMENT.md runbook
+- [x] Runbook - DEVELOPMENT.md (prerequisites, PostGIS install, config matrix, troubleshooting)
 - Exit: backend builds and tests pass against PostgreSQL+PostGIS
 
-## Phase 4 - Authentication and Authorization (COMPLETE - submitted for approval 2026-10-14)
+## Phase 4 — Authentication and Authorization (COMPLETE — approved 2026-10-14)
 
 Present: register/login/refresh/logout/me, JWT filter, BCrypt, SecurityConfig
 (coarse: authenticated-vs-permitAll). Completed this phase:
@@ -301,7 +221,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 1 | Complete (approved) |
 | 2 | Complete (approved) |
 | 3 | Complete (approved) |
-| 4 | Partial |
+| 4 | Complete (approved) |
 | 5 | Partial |
 | 6 | Not started |
 | 7 | Not started |

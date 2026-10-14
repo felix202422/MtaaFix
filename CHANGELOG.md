@@ -7,7 +7,7 @@ analyzer, or file presence) — not intentions.
 
 ## [0.5.0] — 2026-10-14
 ### Phase 4 - Authentication & authorization
-**Implemented 2026-10-14; submitted for owner approval.** Enforced the
+**Approved by owner 2026-10-14.** Enforced the
 five-role permission model (ROLE_PERMISSION_MATRIX) across the API per SRS
 FR-1.1/FR-5.4, with role and account status resolved from the DB on every
 request.
