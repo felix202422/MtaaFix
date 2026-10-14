@@ -38,6 +38,8 @@ class PostgresIntegrationTest {
                 .createNativeQuery("SELECT version, description, success FROM flyway_schema_history")
                 .getResultList();
         assertTrue(rows.stream().anyMatch(r -> "1".equals(String.valueOf(r[0]))));
+        assertTrue(rows.stream().anyMatch(r -> "2".equals(String.valueOf(r[0]))),
+                "Phase 5 V2 migration must be applied");
         assertTrue(rows.stream().allMatch(r -> Boolean.TRUE.equals(r[2])));
     }
 
@@ -65,7 +67,12 @@ class PostgresIntegrationTest {
                 new org.locationtech.jts.geom.Coordinate(39.2084, -6.8229));
         point.setSRID(4326);
 
-        Report report = new Report(Report.Subject.POTHOLE, "IT pothole", "round trip",
+        com.mtaafix.report.domain.ReportCategory category = entityManager.find(
+                com.mtaafix.report.domain.ReportCategory.class,
+                "5f0a0001-0000-4000-8000-000000000001");
+        assertNotNull(category, "V2 must seed legacy-subject categories");
+
+        Report report = new Report(category, "IT pothole", "round trip",
                 point, null, user);
         report.setCode("MTF-IT-" + System.nanoTime());
         reportRepository.save(report);

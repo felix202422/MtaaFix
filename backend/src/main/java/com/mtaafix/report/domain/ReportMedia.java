@@ -47,6 +47,10 @@ public class ReportMedia extends BaseEntity {
     @JoinColumn(name = "report_id", nullable = false)
     private Report report;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uploaded_by")
+    private com.mtaafix.user.domain.User uploadedBy;
+
     public ReportMedia() {
     }
 
@@ -59,6 +63,20 @@ public class ReportMedia extends BaseEntity {
         this.url = url;
         this.mediaType = mediaType;
         this.report = report;
+    }
+
+    public ReportMedia(String fileName, String originalName, String contentType, Long sizeBytes,
+            String url, MediaType mediaType, Report report, com.mtaafix.user.domain.User uploadedBy) {
+        this(fileName, originalName, contentType, sizeBytes, url, mediaType, report);
+        this.uploadedBy = uploadedBy;
+    }
+
+    public com.mtaafix.user.domain.User getUploadedBy() {
+        return uploadedBy;
+    }
+
+    public void setUploadedBy(com.mtaafix.user.domain.User uploadedBy) {
+        this.uploadedBy = uploadedBy;
     }
 
     public String getFileName() {

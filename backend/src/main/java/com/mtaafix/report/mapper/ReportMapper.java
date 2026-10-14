@@ -1,8 +1,10 @@
 package com.mtaafix.report.mapper;
 
 import com.mtaafix.report.domain.Report;
+import com.mtaafix.report.domain.ReportCategory;
 import com.mtaafix.report.dto.CreateReportRequest;
 import com.mtaafix.report.dto.ReportDto;
+import com.mtaafix.user.domain.User;
 
 public final class ReportMapper {
 
@@ -13,8 +15,8 @@ public final class ReportMapper {
         return ReportDto.from(report);
     }
 
-    public static Report toEntity(CreateReportRequest request) {
-        return new Report(request.subject(), request.title(), request.description(),
-                null, null, null);
+    public static Report toEntity(CreateReportRequest request, ReportCategory category, User creator) {
+        return new Report(category, request.title(), request.description(),
+                request.location() != null ? request.location().toPoint() : null, null, creator);
     }
 }

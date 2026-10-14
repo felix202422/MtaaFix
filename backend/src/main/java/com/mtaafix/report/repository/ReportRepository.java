@@ -19,19 +19,22 @@ public interface ReportRepository extends JpaRepository<Report, String> {
             select r from Report r
             left join fetch r.category
             left join fetch r.organisation o
+            left join r.assignment a
             where (:status is null or r.status = :status)
             and (:categoryId is null or r.category.id = :categoryId)
             and (:orgId is null or o.id = :orgId)
             and (:userId is null or r.user.id = :userId)
-            and (:assigneeId is null or r.assignment.assignee.id = :assigneeId)
+            and (:assigneeId is null or a.assignee.id = :assigneeId)
             """)
-    Page<Report> findByScope(@Param("status") String status,
+    Page<Report> findByScope(@Param("status") Status status,
             @Param("categoryId") String categoryId, @Param("orgId") String orgId,
             @Param("userId") String userId, @Param("assigneeId") String assigneeId,
             Pageable pageable);
 
     @Query("select c from ReportCategory c where c.id = :id")
     Optional<ReportCategory> findCategoryById(@Param("id") String id);
+
+    Optional<Report> findByCode(String code);
 
     @Query("select o from Organisation o where o.id = :id")
     Optional<Organisation> findOrganisationById(@Param("id") String id);

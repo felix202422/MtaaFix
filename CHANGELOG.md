@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.6.0] — 2026-10-14
+### Phase 5 - Core reporting workflow
+**Submitted for owner approval 2026-10-14 (not yet approved).** Implemented the
+full submit → review → assign → resolve → confirm workflow per
+REPORT_LIFECYCLE.md v1.0 (T1–T17) and ADR-0003 (category-driven reporting).
+
+- Flyway `V2__category_driven_lifecycle.sql` (applied + validated on
+  PostgreSQL 18): status extended to 12 states, `subject` dropped,
+  `category_id` NOT NULL with 12 seeded categories, `duplicate_of` FK,
+  `reason_code` on history, `uploaded_by` on media, `report_code_counters`
+  (column `code_year` — `year` is reserved in H2)
+- New `report/lifecycle` package: `LifecycleAction` + `ReportLifecycle`
+  encoding all T1–T17 transition and actor rules; invalid transition → 409
+  `INVALID_STATUS_TRANSITION`, wrong role → 403 (role gate checked before
+  state gate); every transition appends a history row with its actor
+  (latest-history == status invariant covered by tests)
+- Category-driven creation: `categoryId` required (400), unknown → 404;
+  unique code `MTF-<year>-<6-digit>` from a pessimistic-locked per-year
+  counter (collision-free under 4-thread concurrency test); coordinate
+  validation ±90/±180 → 400 (nested `@Valid`); point persisted with SRID 4326
+  (previously written as SRID 0 — latent insert bug fixed)
+- Endpoints: `GET /reports` (status/categoryId/orgId filters, role scoping,
+  pagination), needs-info, resubmit, duplicate (canonical by id or code with
+  history note on canonical), start, complete (≥1 PHOTO evidence, assignment
+  → COMPLETED), return, confirm, dispute, reopen, comments, media attach
+  (FR-9.2 MIME allowlist + ≤20 MiB), `DELETE /media/{id}`
+- Editing restricted to SUBMITTED/NEEDS_INFORMATION; audit rows for
+  verified/rejected/duplicate/assigned/completed/returned/resolved/reopened;
+  notifications for needs-info/resubmit/duplicate/completion/return/reopen/
+  dispute/comments
+- DTO changes: `subject` removed (create/update/report DTOs),
+  `RejectReportRequest(reasonCode, comment)`, lifecycle request records,
+  `ReportDto.code` + `duplicateOfId`, `StatusHistoryDto.reasonCode`
+- Deferrals: T8/T2r/T7r/T10r endpoints (no API_DESIGN §2/§3 contract rows),
+  byte-level media content checks (storage in Phase 13), reopen-window
+  enforcement (needs `closed_at`), org-wide T14 notifications
+- Tests: `ReportLifecycleTest` (10: full journey, 409/403/400 negatives,
+  history invariant, code format, scoping + filtering, duplicate linking,
+  audit, comments/media, edit window), `ReportCodeGeneratorTest`
+  (concurrent uniqueness); matrix/auth fixtures updated for the 12-state
+  model; H2 49/49, PostgreSQL 3/3 with V2 applied; `openapi.json`
+  regenerated; live boot smoke 16/16 on port 8085
+
 ## [0.5.0] — 2026-10-14
 ### Phase 4 - Authentication & authorization
 **Approved by owner 2026-10-14.** Enforced the

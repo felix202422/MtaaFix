@@ -26,7 +26,6 @@ import com.mtaafix.report.domain.ReportCategory;
         @Index(name = "idx_reports_status", columnList = "status"),
         @Index(name = "idx_reports_category", columnList = "category_id"),
         @Index(name = "idx_reports_organisation", columnList = "organisation_id"),
-        @Index(name = "idx_reports_subject", columnList = "subject"),
         @Index(name = "idx_reports_user", columnList = "user_id")
 })
 public class Report extends BaseEntity {
@@ -34,32 +33,17 @@ public class Report extends BaseEntity {
     public enum Status {
         SUBMITTED,
         UNDER_REVIEW,
+        NEEDS_INFORMATION,
         VERIFIED,
         ASSIGNED,
         IN_PROGRESS,
+        RESOLUTION_REVIEW,
         RESOLVED,
         REJECTED,
+        DUPLICATE,
+        REOPENED,
         CLOSED
     }
-
-    public enum Subject {
-        POTHOLE,
-        BROKEN_STREETSIDE_LIGHT,
-        DAMAGED_ROAD,
-        GARBAGE_ACCUMULATION,
-        BLOCKED_DRAINAGE,
-        WATER_LEAK,
-        FLOODING,
-        DAMAGED_PUBLIC_INFRASTRUCTURE,
-        FALLEN_TREE,
-        DAMAGED_ELECTRICAL_INFRASTRUCTURE,
-        UNSAFE_PUBLIC_AREA,
-        OTHER
-    }
-
-    @Column(name = "subject", nullable = false, length = 50)
-    @Enumerated(EnumType.STRING)
-    private Subject subject;
 
     @Column(name = "code", nullable = false, length = 50)
     private String code;
@@ -91,8 +75,12 @@ public class Report extends BaseEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
+    @JoinColumn(name = "category_id", nullable = false)
     private ReportCategory category;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "duplicate_of")
+    private Report duplicateOf;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignment_id")
@@ -114,27 +102,15 @@ public class Report extends BaseEntity {
     public Report() {
     }
 
-    public Report(Subject subject, String title, String description, Point location,
+    public Report(ReportCategory category, String title, String description, Point location,
             Polygon locationArea, User user) {
-        this.subject = subject;
+        this.category = category;
         this.title = title;
         this.description = description;
         this.location = location;
         this.locationArea = locationArea;
         this.user = user;
-        this.statusHistory.add(new ReportStatusHistory(this, null, Status.SUBMITTED));
-    }
-
-    public Subject getSubject() {
-        return subject;
-    }
-
-    public void setSubject(Subject subject) {
-        this.subject = subject;
-    }
-
-    public String getTitle() {
-        return title;
+        this.statusHistory.add(new ReportStatusHistory(this, null, Status.SUBMITTED, user, null));
     }
 
     public String getCode() {
@@ -143,6 +119,10 @@ public class Report extends BaseEntity {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     public void setTitle(String title) {
@@ -211,6 +191,14 @@ public class Report extends BaseEntity {
 
     public void setCategory(ReportCategory category) {
         this.category = category;
+    }
+
+    public Report getDuplicateOf() {
+        return duplicateOf;
+    }
+
+    public void setDuplicateOf(Report duplicateOf) {
+        this.duplicateOf = duplicateOf;
     }
 
     public Assignment getAssignment() {

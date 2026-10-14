@@ -38,6 +38,9 @@ public class ReportStatusHistory extends BaseEntity {
     @Column(name = "comment", columnDefinition = "text")
     private String comment;
 
+    @Column(name = "reason_code", length = 50)
+    private String reasonCode;
+
     public ReportStatusHistory() {
     }
 
@@ -54,6 +57,16 @@ public class ReportStatusHistory extends BaseEntity {
         this.toStatus = toStatus;
         this.user = user;
         this.comment = comment;
+    }
+
+    public ReportStatusHistory(Report report, Report.Status fromStatus, Report.Status toStatus,
+            User user, String comment, String reasonCode) {
+        this.report = report;
+        this.fromStatus = fromStatus;
+        this.toStatus = toStatus;
+        this.user = user;
+        this.comment = comment;
+        this.reasonCode = reasonCode;
     }
 
     public Report.Status getFromStatus() {
@@ -94,5 +107,13 @@ public class ReportStatusHistory extends BaseEntity {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public String getReasonCode() {
+        return reasonCode;
+    }
+
+    public void setReasonCode(String reasonCode) {
+        this.reasonCode = reasonCode;
     }
 }

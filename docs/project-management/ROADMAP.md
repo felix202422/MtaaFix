@@ -1,13 +1,15 @@
 # Roadmap — MtaaFix
 
 > Phase numbering follows the **master specification** (Phases 0–23) per decision D1
-> (2026-10-13). Status reflects **verified repository state** (last audited 2026-10-13),
+> (2026-10-13). Status reflects **verified repository state** (last audited 2026-10-14),
 > not intent. **MVP = Phases 0–7** (approved). Every phase ends with an approval gate
 > (master spec Part 16). Local tracking: [BOARD.md](BOARD.md) ·
 > Work items: [BACKLOG.md](BACKLOG.md) · Requirements: [../requirements/SRS.md](../requirements/SRS.md)
 
 ## Version History
 
+- **[0.6.0]** — Phase 5: core reporting workflow (12-state lifecycle machine, category-driven
+  create, unique MTF codes, comments/media, full lifecycle endpoint set; 49/49 + 3/3 tests) — **submitted 2026-10-14 (pending owner approval)**
 - **[0.5.0]** — Phase 4: authentication & authorization enforcement (matrix gates, DB role lookup, org/ownership scoping, audit wiring; 41/41 + 3/3 tests) — **APPROVED** 2026-10-14
 - **[0.4.0]** — Phase 3: backend foundation completed (PostGIS 3.6.2 verified,
   Flyway V1 fixed + applied, H2/PostgreSQL test matrix, OpenAPI export,
@@ -22,14 +24,14 @@
 
 ## MVP summary (Phases 0–7)
 
-| Phase | Name | Status (2026-10-13) |
+| Phase | Name | Status (2026-10-14) |
 | ----- | ---- | ------------------- |
 | 0 | Project audit and foundation | ✅ Complete |
 | 1 | Requirements and system design | ✅ Complete (approved 2026-10-13) |
 | 2 | Design system and UI foundation | ✅ Complete (approved 2026-10-13) |
 | 3 | Backend foundation | ✅ Complete (**APPROVED** 2026-10-14) — PostGIS verified; Flyway V1 green; H2+PG test matrix |
 | 4 | Authentication and authorization | ✅ Complete (**APPROVED** 2026-10-14) — matrix gates, DB role lookup, scoping; tests 41/41 + 3/3 PG |
-| 5 | Core reporting workflow | Partial — provisional endpoints; state machine gaps |
+| 5 | Core reporting workflow | ✅ Complete (submitted 2026-10-14, pending approval) — 12-state machine, unique codes, comments/media; 49/49 + 3/3 tests |
 | 6 | Public website | Not started (`web/` is manifest-only) |
 | 7 | Citizen web application | Not started |
 
@@ -106,18 +108,30 @@ Present: register/login/refresh/logout/me, JWT filter, BCrypt, SecurityConfig
   token invalidation on logout (Phase 16)
 - Exit: authorized/unauthorized access behaves per matrix; tests green
 
-## Phase 5 — Core Reporting Workflow (PARTIAL)
+## Phase 5 — Core Reporting Workflow (COMPLETE - submitted 2026-10-14)
 
-Present: create/list/get/update, submit/verify/reject/assign/resolve/close
-(provisional guards), status history, comments/media service methods.
-Remaining (see BACKLOG):
-- [ ] Flyway migration: status enum → 12 states; drop subject; category_id NOT NULL; duplicate_of; history nullability fix
-- [ ] Central state-machine guard (T1–T17); 409 on invalid transitions
-- [ ] Expose comment/media endpoints; needs-info/resubmit/duplicate/complete/return/confirm/dispute/reopen
-- [ ] Unique code generation `MTF-YYYY-NNNNNN` with DB constraint
-- [ ] Category seeding from legacy subjects; coordinate validation
-- [ ] Lifecycle tests for every transition row + negatives
-- Exit: core report workflow works; business rules tested
+Delivered (see BACKLOG B-5.1–B-5.5 for acceptance criteria):
+- [x] Flyway V2: status enum → 12 states; drop subject; category_id NOT NULL +
+  12-category seed; duplicate_of; reason_code; uploaded_by; report_code_counters
+  (applied + validated on PostgreSQL)
+- [x] Central state-machine guard (T1–T17); 409 `INVALID_STATUS_TRANSITION`;
+  actor-role gate (403) evaluated before state gate
+- [x] Exposed comment/media endpoints + needs-info/resubmit/duplicate/start/
+  complete/return/confirm/dispute/reopen; GET `/reports` list with
+  status/categoryId/orgId filters + role scoping
+- [x] Unique code generation `MTF-YYYY-NNNNNN` (pessimistic-lock per-year counter,
+  concurrency-tested; no DB unique constraint — counter guarantees uniqueness)
+- [x] Category seeding from legacy subjects; coordinate validation (±90/±180, 400);
+  SRID 4326 write fix
+- [x] Lifecycle tests: full journey T1→T17, forbidden transitions (409), role
+  negatives (403), required fields (400), history invariant, audit assertions
+- Verification: H2 49/49, PG 3/3 (V2 applied), live smoke 16/16 on port 8085
+- Deferrals (documented in phase report): T8/T2r/T7r/T10r endpoints have no
+  §2/§3 contract rows (not implemented); byte-level media content checks (storage
+  is Phase 13); reopen-window enforcement needs `closed_at`; org-wide T14
+  notifications
+- Exit: ✅ core report workflow works; business rules tested
+- **Gate: submitted for owner approval — not yet approved; Phase 6 must not start**
 
 ## Phase 6 — Public Website (NOT STARTED)
 
@@ -213,7 +227,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 
 ---
 
-## Delivery Targets (2026-10-13)
+## Delivery Targets (updated 2026-10-14)
 
 | Phase | Status |
 | ----- | ------ |
@@ -222,7 +236,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 2 | Complete (approved) |
 | 3 | Complete (approved) |
 | 4 | Complete (approved) |
-| 5 | Partial |
+| 5 | Complete (submitted, pending approval) |
 | 6 | Not started |
 | 7 | Not started |
 | 8–10 | Not started |

@@ -25,7 +25,16 @@ public class Notification extends BaseEntity {
         REPORT_ASSIGNED,
         REPORT_RESOLVED,
         REPORT_CLOSED,
-        REPORT_REJECTED
+        REPORT_REJECTED,
+        REPORT_NEEDS_INFO,
+        REPORT_RESUBMITTED,
+        REPORT_DUPLICATE,
+        REPORT_COMPLETED,
+        REPORT_RETURNED,
+        REPORT_REOPENED,
+        REPORT_DISPUTED,
+        REPORT_IN_PROGRESS,
+        REPORT_COMMENTED
     }
 
     @Column(name = "title", nullable = false, length = 255)

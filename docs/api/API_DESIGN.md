@@ -30,7 +30,7 @@
 | Rate limits | Not yet implemented; assessment Phase 17 (NFR-7) |
 | CORS | Configured origins only (`CORS_ALLOWED_ORIGINS`) |
 
-## 2. Implemented endpoints (verified in code, 2026-10-13)
+## 2. Implemented endpoints (verified in code, 2026-10-14)
 
 ### Auth — `AuthController`
 | Method & path | Auth | Role | Notes |
@@ -44,19 +44,28 @@
 ### Reports — `ReportController`
 | Method & path | Auth | Role | Notes |
 | ------------- | ---- | ---- | ----- |
-| POST `/reports` | Bearer | Any authenticated (citizen flow) | Creates SUBMITTED; returns code (FR-2.2) |
-| GET `/reports/{id}` | Bearer | Scoped (matrix area 1) | |
-| PUT `/reports/{id}` | Bearer | Owner, state-limited (FR-2.6) | Note: PUT not PATCH — deviation from legacy API.md, accepted |
-| POST `/reports/{id}/submit` | Bearer | Moderator/admin (T2) | Enforced (Phase 4): MODERATOR or ADMINISTRATOR |
+| POST `/reports` | Bearer | Any authenticated (citizen flow) | Creates SUBMITTED; returns code (FR-2.2); `categoryId` required (Phase 5) |
+| GET `/reports` | Bearer | Scoped by role (citizen=own, worker=assigned, org admin=org, mod/admin=all) | Filters: `status`, `categoryId`, `orgId`; `page`/`size` (0-based, size ≤ 100) (Phase 5) |
+| GET `/reports/{id}` | Bearer | Scoped (matrix area 1) | Includes statusHistory, comments, media |
+| PUT `/reports/{id}` | Bearer | Owner, state-limited (FR-2.6) | Only SUBMITTED/NEEDS_INFORMATION (Phase 5); note: PUT not PATCH — deviation from legacy API.md, accepted |
+| POST `/reports/{id}/submit` | Bearer | Moderator/admin (T2/T17) | Enforced (Phase 4): MODERATOR or ADMINISTRATOR; also claims REOPENED→UNDER_REVIEW |
+| POST `/reports/{id}/needs-info` | Bearer | Moderator/admin (T3) | `NeedsInfoRequest.message` required (Phase 5) |
+| POST `/reports/{id}/resubmit` | Bearer | Citizen creator (T4) | Only from NEEDS_INFORMATION (Phase 5) |
 | POST `/reports/{id}/verify` | Bearer | Moderator/admin (T5) | Enforced (Phase 4): MODERATOR or ADMINISTRATOR |
-| POST `/reports/{id}/reject` | Bearer | Moderator/admin (T6) | Reason in body; enforced (Phase 4): MODERATOR or ADMINISTRATOR |
-| POST `/reports/{id}/assign` | Bearer | Admin/org admin (T9) | AssignReportRequest; org scope enforced (Phase 4) |
+| POST `/reports/{id}/reject` | Bearer | Moderator/admin (T6) | `RejectReportRequest.reasonCode` required; comment optional (Phase 5) |
+| POST `/reports/{id}/duplicate` | Bearer | Moderator/admin (T7) | `canonicalReportRef` = report id or code; notes link on canonical (Phase 5) |
+| POST `/reports/{id}/assign` | Bearer | Admin/org admin (T9/T9r) | AssignReportRequest; org scope enforced (Phase 4); reassignment cancels prior (Phase 5) |
+| POST `/reports/{id}/start` | Bearer | Field worker (assignee) / org admin (T10) | Assigned→IN_PROGRESS (Phase 5) |
+| POST `/reports/{id}/complete` | Bearer | Assignee / org admin (T11) | Requires ≥1 PHOTO attached (FR-4.4); assignment→COMPLETED (Phase 5) |
+| POST `/reports/{id}/return` | Bearer | Mod/admin/org admin (T12) | `ReturnReportRequest.comment` required (Phase 5) |
 | POST `/reports/{id}/resolve` | Bearer | Reviewer (T13) | Enforced (Phase 4): MODERATOR or ADMINISTRATOR |
+| POST `/reports/{id}/confirm` | Bearer | Citizen creator / admin (T14) | Optional feedback; RESOLVED→CLOSED (Phase 5) |
+| POST `/reports/{id}/dispute` | Bearer | Citizen creator / mod / admin (T15) | `disputeReason` required; RESOLVED→IN_PROGRESS (Phase 5) |
 | POST `/reports/{id}/close` | Bearer | System/admin (T14) | Enforced (Phase 4): ADMINISTRATOR |
-
-**Controller gaps vs service layer:** `ReportService` has comment/media methods
-(`CreateCommentRequest`, `CreateMediaRequest`, addMedia) but the controller exposes
-no `POST /reports/{id}/comments` or `POST /reports/{id}/media` routes — tracked Phase 5.
+| POST `/reports/{id}/reopen` | Bearer | Admin (T16) | `justification` required; CLOSED→REOPENED (Phase 5) |
+| POST `/reports/{id}/comments` | Bearer | Report readers (creator/staff), FR-2.8 | `CreateCommentRequest.content` required; notifies creator (Phase 5) |
+| POST `/reports/{id}/media` | Bearer | Report readers, FR-9.1 | Metadata only; MIME allowlist + ≤20 MiB, PHOTO for completion (FR-9.2) (Phase 5) |
+| DELETE `/media/{id}` | Bearer | Uploader (or mod/admin) | 204; storage removal is Phase 13 (Phase 5) |
 
 ### Categories — `CategoryController`
 | GET `/categories` | Bearer | Any | List |
@@ -88,18 +97,6 @@ no `POST /reports/{id}/comments` or `POST /reports/{id}/media` routes — tracke
 
 | Method & path | Purpose | SRS | Phase |
 | ------------- | ------- | --- | ----- |
-| POST `/reports/{id}/comments` | Citizen/staff comments (FR-2.8) | FR-2.8 | 5 |
-| POST `/reports/{id}/media` | Attach evidence to report (FR-9.1) | FR-9.1 | 5 |
-| DELETE `/media/{id}` | Remove own unattached/mistaken media | FR-9.2 | 5 |
-| POST `/reports/{id}/needs-info` | T3 request info | FR-3.5 | 5 |
-| POST `/reports/{id}/resubmit` | T4 citizen resubmit | FR-3.5 | 5 |
-| POST `/reports/{id}/duplicate` | T7 mark duplicate | FR-3.6 | 5 |
-| POST `/reports/{id}/start` | T10 start work | FR-4.3 | 5 |
-| POST `/reports/{id}/complete` | T11 completion claim + evidence | FR-4.4 | 5 |
-| POST `/reports/{id}/return` | T12 return to work | FR-4.5 | 5 |
-| POST `/reports/{id}/reopen` | T16 reopen | lifecycle | 5 |
-| POST `/reports/{id}/confirm` | T14 citizen confirm | FR-2.9 | 5 |
-| POST `/reports/{id}/dispute` | T15 citizen dispute | FR-2.9 | 5 |
 | GET `/reports/public` | Public explore feed (FR-8.3) | FR-8.3 | 6 |
 | GET `/reports/public/{code}` | Public detail by reference (FR-8.4) | FR-8.4 | 6 |
 | GET `/categories/public` | Public filter list | FR-8.3 | 6 |
@@ -113,11 +110,11 @@ no `POST /reports/{id}/comments` or `POST /reports/{id}/media` routes — tracke
 | Legacy claim | Reality / decision |
 | ------------ | ------------------ |
 | `PATCH /reports/{id}` | Implemented as **PUT** — keep PUT |
-| `POST /media` standalone | Not implemented; media attaches to reports (Planned Phase 5) |
-| `POST /reports/{id}/comments` | Service exists; controller route missing → Phase 5 |
-| `POST /reports/{id}/media` | Service exists; controller route missing → Phase 5 |
+| `POST /media` standalone | Not implemented; media attaches to reports (`POST /reports/{id}/media`, Phase 5) |
+| `POST /reports/{id}/comments` | Implemented in Phase 5 |
+| `POST /reports/{id}/media` | Implemented in Phase 5 |
 | Base URL `https://api.mtaafix.example.com` | Local dev: `http://localhost:8080/api/v1` |
-| `assigneeId`+`organizationId` on assign | Matches `AssignReportRequest` (verify exact fields in Phase 5 doc pass) |
+| `assigneeId`+`organizationId` on assign | Matches `AssignReportRequest` (`assigneeId`, `organisationId`, optional `dueDate`) |
 
 ## 5. OpenAPI
 

@@ -52,6 +52,9 @@ class AuthorizationMatrixTest {
     private ReportRepository reportRepository;
 
     @Autowired
+    private com.mtaafix.report.repository.ReportCategoryRepository categoryRepository;
+
+    @Autowired
     private AssignmentRepository assignmentRepository;
 
     @Autowired
@@ -93,7 +96,12 @@ class AuthorizationMatrixTest {
         org.locationtech.jts.geom.Point point =
                 GF.createPoint(new org.locationtech.jts.geom.Coordinate(39.2084, -6.8229));
         point.setSRID(4326);
-        Report report = new Report(Report.Subject.POTHOLE, "Matrix report " + System.nanoTime(),
+        com.mtaafix.report.domain.ReportCategory category =
+                categoryRepository.save(new com.mtaafix.report.domain.ReportCategory(
+                        "Matrix category " + System.nanoTime(),
+                        "matrix-cat-" + System.nanoTime(),
+                        com.mtaafix.report.domain.ReportCategory.Type.PRIMARY));
+        Report report = new Report(category, "Matrix report " + System.nanoTime(),
                 "Seeded for authorization matrix", point, null, owner);
         report.setCode("MTF-" + System.nanoTime());
         report.setStatus(status);
@@ -337,7 +345,7 @@ class AuthorizationMatrixTest {
         mockMvc.perform(post("/api/v1/reports/" + forReject.getId() + "/reject")
                         .header("Authorization", bearer(owner))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("\"not relevant\""))
+                        .content("{\"reasonCode\":\"NOT_RELEVANT\",\"comment\":\"not relevant\"}"))
                 .andExpect(status().isForbidden());
 
         mockMvc.perform(post("/api/v1/reports/" + forSubmit.getId() + "/submit")
@@ -400,8 +408,8 @@ class AuthorizationMatrixTest {
         User moderator = seedUser(User.Role.MODERATOR);
         User admin = seedUser(User.Role.ADMINISTRATOR);
 
-        Report toResolveAsCitizen = seedReport(owner, Report.Status.ASSIGNED);
-        Report toResolveAsModerator = seedReport(owner, Report.Status.ASSIGNED);
+        Report toResolveAsCitizen = seedReport(owner, Report.Status.RESOLUTION_REVIEW);
+        Report toResolveAsModerator = seedReport(owner, Report.Status.RESOLUTION_REVIEW);
         Report toCloseAsModerator = seedReport(owner, Report.Status.RESOLVED);
         Report toCloseAsAdmin = seedReport(owner, Report.Status.RESOLVED);
 

@@ -10,12 +10,13 @@ public record StatusHistoryDto(
         @Schema(description = "New status") Status toStatus,
         @Schema(description = "User id") String userId,
         @Schema(description = "Timestamp") String timestamp,
-        @Schema(description = "Comment") String comment) {
+        @Schema(description = "Comment") String comment,
+        @Schema(description = "Reason code") String reasonCode) {
 
     public static StatusHistoryDto from(ReportStatusHistory history) {
         return new StatusHistoryDto(history.getFromStatus(), history.getToStatus(),
                 history.getUser() != null ? history.getUser().getId() : null,
                 history.getCreatedAt() != null ? history.getCreatedAt().toString()
-                        : null, history.getComment());
+                        : null, history.getComment(), history.getReasonCode());
     }
 }
