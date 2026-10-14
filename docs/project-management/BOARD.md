@@ -5,7 +5,7 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-14.
 
-## Current phase: Phase 5 COMPLETE - submitted (2026-10-14) — next: owner approval gate
+## Current phase: Phase 5 APPROVED (2026-10-14) — next: Phase 6 (not started)
 
 ## Phase 2 — Design system & UI foundation (COMPLETE — APPROVED 2026-10-13)
 
@@ -87,7 +87,7 @@ Last updated: 2026-10-14.
 | Live boot smoke on PG | DONE | register/login/refresh/me + 401/403 checks on port 8085 |
 | Phase 4 report + approval gate | DONE | Approved by owner 2026-10-14 |
 
-## Phase 5 — Core reporting workflow (COMPLETE — submitted 2026-10-14)
+## Phase 5 — Core reporting workflow (COMPLETE — APPROVED 2026-10-14)
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -102,15 +102,15 @@ Last updated: 2026-10-14.
 | Tests | DONE | H2 suite 49/49 green (lifecycle 10, code generator 1, matrix 15, auth 16, token 5, context 1, openapi 1); PG suite 3/3 green with V2 applied |
 | Live boot smoke on PG | DONE | 16/16 checks on port 8085: register/login, create w/ seeded category + code format, list scoping + filters, history invariant, edit, comment, role-gate 403s, bad filter 400, media delete |
 | OpenAPI regenerated | DONE | `docs/api/openapi.json` via OpenApiExportTest |
-| Phase 5 report + approval gate | TODO | Submitted for owner approval — no approval yet |
+| Phase 5 report + approval gate | DONE | Approved by owner 2026-10-14; docs flipped to APPROVED |
 
 ## Next phases
 
 | Phase | Status | Notes |
 |-------|--------|-------|
 | Phase 4 - AuthN/Z | Complete (approved 2026-10-14) | Matrix enforcement + scoping + audit + tests done |
-| Phase 5 - Core reporting workflow | Complete (submitted 2026-10-14) | 12-state machine, unique codes, comments/media, lifecycle endpoints; awaiting owner approval |
-| Phase 6–7 — Public site + citizen web | BLOCKED | Depend on Phases 2, 4, 5 (5 pending approval) |
+| Phase 5 - Core reporting workflow | Complete (approved 2026-10-14) | 12-state machine, unique codes, comments/media, lifecycle endpoints; deferrals noted in report |
+| Phase 6–7 — Public site + citizen web | READY | All dependencies approved (2, 4, 5); Phase 6 next after gate |
 
 ## Environment notes
 

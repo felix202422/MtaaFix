@@ -9,7 +9,7 @@
 ## Version History
 
 - **[0.6.0]** — Phase 5: core reporting workflow (12-state lifecycle machine, category-driven
-  create, unique MTF codes, comments/media, full lifecycle endpoint set; 49/49 + 3/3 tests) — **submitted 2026-10-14 (pending owner approval)**
+  create, unique MTF codes, comments/media, full lifecycle endpoint set; 49/49 + 3/3 tests) — **APPROVED** 2026-10-14
 - **[0.5.0]** — Phase 4: authentication & authorization enforcement (matrix gates, DB role lookup, org/ownership scoping, audit wiring; 41/41 + 3/3 tests) — **APPROVED** 2026-10-14
 - **[0.4.0]** — Phase 3: backend foundation completed (PostGIS 3.6.2 verified,
   Flyway V1 fixed + applied, H2/PostgreSQL test matrix, OpenAPI export,
@@ -31,7 +31,7 @@
 | 2 | Design system and UI foundation | ✅ Complete (approved 2026-10-13) |
 | 3 | Backend foundation | ✅ Complete (**APPROVED** 2026-10-14) — PostGIS verified; Flyway V1 green; H2+PG test matrix |
 | 4 | Authentication and authorization | ✅ Complete (**APPROVED** 2026-10-14) — matrix gates, DB role lookup, scoping; tests 41/41 + 3/3 PG |
-| 5 | Core reporting workflow | ✅ Complete (submitted 2026-10-14, pending approval) — 12-state machine, unique codes, comments/media; 49/49 + 3/3 tests |
+| 5 | Core reporting workflow | ✅ Complete (**APPROVED** 2026-10-14) — 12-state machine, unique codes, comments/media; 49/49 + 3/3 tests |
 | 6 | Public website | Not started (`web/` is manifest-only) |
 | 7 | Citizen web application | Not started |
 
@@ -108,7 +108,7 @@ Present: register/login/refresh/logout/me, JWT filter, BCrypt, SecurityConfig
   token invalidation on logout (Phase 16)
 - Exit: authorized/unauthorized access behaves per matrix; tests green
 
-## Phase 5 — Core Reporting Workflow (COMPLETE - submitted 2026-10-14)
+## Phase 5 — Core Reporting Workflow (COMPLETE - approved 2026-10-14)
 
 Delivered (see BACKLOG B-5.1–B-5.5 for acceptance criteria):
 - [x] Flyway V2: status enum → 12 states; drop subject; category_id NOT NULL +
@@ -131,7 +131,7 @@ Delivered (see BACKLOG B-5.1–B-5.5 for acceptance criteria):
   is Phase 13); reopen-window enforcement needs `closed_at`; org-wide T14
   notifications
 - Exit: ✅ core report workflow works; business rules tested
-- **Gate: submitted for owner approval — not yet approved; Phase 6 must not start**
+- **Gate: APPROVED by owner 2026-10-14 — Phase 6 may start**
 
 ## Phase 6 — Public Website (NOT STARTED)
 
@@ -236,7 +236,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 2 | Complete (approved) |
 | 3 | Complete (approved) |
 | 4 | Complete (approved) |
-| 5 | Complete (submitted, pending approval) |
+| 5 | Complete (approved) |
 | 6 | Not started |
 | 7 | Not started |
 | 8–10 | Not started |

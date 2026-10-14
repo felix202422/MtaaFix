@@ -7,7 +7,7 @@ analyzer, or file presence) — not intentions.
 
 ## [0.6.0] — 2026-10-14
 ### Phase 5 - Core reporting workflow
-**Submitted for owner approval 2026-10-14 (not yet approved).** Implemented the
+**Approved by owner 2026-10-14.** Implemented the
 full submit → review → assign → resolve → confirm workflow per
 REPORT_LIFECYCLE.md v1.0 (T1–T17) and ADR-0003 (category-driven reporting).
 

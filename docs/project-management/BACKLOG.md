@@ -87,10 +87,10 @@ Dependencies flow: Phase 2 ∥ Phase 3 → Phase 4 → Phase 5 → Phase 6 → P
 
 ---
 
-## Phase 5 — Core reporting workflow (COMPLETE - submitted 2026-10-14)
+## Phase 5 — Core reporting workflow (COMPLETE - approved 2026-10-14)
 
 > **Status (2026-10-14):** B-5.1–B-5.5 all implemented and verified (H2 49/49,
-> PG 3/3 with V2 applied, live smoke 16/16) — submitted for owner approval.
+> PG 3/3 with V2 applied, live smoke 16/16) — approved by owner 2026-10-14.
 > Deferrals documented in the phase report: T8 (citizen cancel), T2r, T7r, T10r
 > have no API_DESIGN §2/§3 contract rows (no endpoint implemented); byte-level
 > media content checks wait for Phase 13 storage; reopen-window enforcement
