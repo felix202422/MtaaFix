@@ -5,6 +5,7 @@ import com.mtaafix.user.domain.User;
 import com.mtaafix.user.dto.AuthResponse;
 import com.mtaafix.user.dto.LoginRequest;
 import com.mtaafix.user.dto.RegisterRequest;
+import com.mtaafix.user.dto.RefreshRequest;
 import com.mtaafix.user.dto.UserDto;
 import com.mtaafix.user.service.UserService;
 import com.mtaafix.security.JwtTokenProvider;
@@ -49,15 +50,13 @@ public class AuthController {
 
     @Operation(summary = "Refresh an access token")
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@RequestBody String refreshToken) {
-        if (!tokenProvider.validateToken(refreshToken)) {
-            return ResponseEntity.badRequest().build();
-        }
-        String subject = tokenProvider.getSubject(refreshToken);
-        UserDto user = userService.findByEmail(subject);
-        String accessToken = tokenProvider.generateAccessToken(user.id(), user.role().name());
-        String newRefreshToken = tokenProvider.generateRefreshToken(user.id());
-        return ResponseEntity.ok(AuthResponse.of(accessToken, newRefreshToken, 900L, user));
+    public ResponseEntity<AuthResponse> refresh(
+            @Valid @RequestBody RefreshRequest request) {
+        User user = userService.refresh(request.refreshToken());
+        String accessToken = tokenProvider.generateAccessToken(user.getId(), user.getRole().name());
+        String newRefreshToken = tokenProvider.generateRefreshToken(user.getId());
+        return ResponseEntity.ok(AuthResponse.of(accessToken, newRefreshToken, 900L,
+                userService.toDto(user)));
     }
 
     @Operation(summary = "Log out")
@@ -66,9 +65,9 @@ public class AuthController {
         return ResponseEntity.ok(SimpleResponse.ok("Logged out"));
     }
 
-    @PreAuthorize("hasRole('CITIZEN')")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
     public ResponseEntity<UserDto> me(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(userService.findByEmail(user.getEmail()));
+        return ResponseEntity.ok(userService.toDto(user));
     }
 }

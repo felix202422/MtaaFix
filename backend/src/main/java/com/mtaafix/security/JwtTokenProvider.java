@@ -2,6 +2,7 @@ package com.mtaafix.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -40,26 +41,29 @@ public class JwtTokenProvider {
         this.refreshTokenExpiration = refreshTokenExpiration;
     }
 
+    public static final String TYPE_ACCESS = "access";
+    public static final String TYPE_REFRESH = "refresh";
+
     public String generateAccessToken(String subject, String role) {
-        return buildToken(subject, role, accessTokenExpiration);
+        return buildToken(subject, TYPE_ACCESS, role, accessTokenExpiration);
     }
 
     public String generateRefreshToken(String subject) {
-        return buildToken(subject, null, refreshTokenExpiration);
+        return buildToken(subject, TYPE_REFRESH, null, refreshTokenExpiration);
     }
 
-    private String buildToken(String subject, String role, long validityInMilliseconds) {
+    private String buildToken(String subject, String type, String role,
+            long validityInMilliseconds) {
         Instant now = Instant.now();
-        Claims claims = Jwts.claims().setSubject(subject).build();
+        JwtBuilder builder = Jwts.builder()
+                .subject(subject)
+                .claim("typ", type)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(validityInMilliseconds, ChronoUnit.MILLIS)));
         if (role != null) {
-            claims.put("role", role);
+            builder = builder.claim("role", role);
         }
-        return Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(now.plus(validityInMilliseconds, ChronoUnit.MILLIS)))
-                .signWith((javax.crypto.SecretKey) key)
-                .compact();
+        return builder.signWith((javax.crypto.SecretKey) key).compact();
     }
 
     public boolean validateToken(String token) {
@@ -82,6 +86,15 @@ public class JwtTokenProvider {
     public String getRole(String token) {
         Claims claims = parse(token);
         return claims.get("role", String.class);
+    }
+
+    public String getType(String token) {
+        Claims claims = parse(token);
+        return claims.get("typ", String.class);
+    }
+
+    public boolean isAccessToken(String token) {
+        return TYPE_ACCESS.equals(getType(token));
     }
 
     public Instant getIssuedAt(String token) {

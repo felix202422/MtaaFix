@@ -34,13 +34,15 @@ public class DashboardController {
 
     @Operation(summary = "Get organization statistics")
     @GetMapping("/organizations/{id}/stats")
-    @PreAuthorize("hasRole('ORGANIZATION_ADMIN')")
-    public ResponseEntity<DashboardStatsDto> orgStats(@PathVariable String id) {
-        return ResponseEntity.ok(dashboardService.getOrganizationStats(id));
+    @PreAuthorize("hasAnyRole('ORGANIZATION_ADMIN','ADMINISTRATOR')")
+    public ResponseEntity<DashboardStatsDto> orgStats(@PathVariable String id,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(dashboardService.getOrganizationStats(id, user));
     }
 
     @Operation(summary = "Get global statistics")
     @GetMapping("/stats")
+    @PreAuthorize("hasAnyRole('MODERATOR','ADMINISTRATOR')")
     public ResponseEntity<DashboardStatsDto> stats() {
         return ResponseEntity.ok(dashboardService.getGlobalStats());
     }

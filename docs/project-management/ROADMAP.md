@@ -161,21 +161,29 @@ Delivered 2026-10-13:
 Present: Maven module, Java 25, Spring Boot app, Flyway V1, application profiles,
 context-load test on H2, Springdoc annotations, health endpoint permitted.
 Remaining:
-- [ ] Install/configure PostGIS locally; verify Flyway V1 + entity DDL against real PostgreSQL+PostGIS
-- [ ] Test configuration matrix (H2 unit vs Postgres integration profile)
-- [ ] Commit exported OpenAPI spec (admin runtime UI exists)
-- [ ] `.env.example` → DEVELOPMENT.md runbook
+- [x]] Install/configure PostGIS locally; verify Flyway V1 + entity DDL against real PostgreSQL+PostGIS
+- [x]] Test configuration matrix (H2 unit vs Postgres integration profile)
+- [x]] Commit exported OpenAPI spec (admin runtime UI exists)
+- [x]] `.env.example` → DEVELOPMENT.md runbook
 - Exit: backend builds and tests pass against PostgreSQL+PostGIS
 
-## Phase 4 — Authentication and Authorization (PARTIAL)
+## Phase 4 - Authentication and Authorization (COMPLETE - submitted for approval 2026-10-14)
 
 Present: register/login/refresh/logout/me, JWT filter, BCrypt, SecurityConfig
-(coarse: authenticated-vs-permitAll).
-Remaining:
-- [ ] Enforce [role matrix](../design/ROLE_PERMISSION_MATRIX.md) at service/controller layer
-- [ ] Org/ownership scoping in queries
-- [ ] Authorization tests (positive+negative per matrix row)
-- [ ] Audited A-scope operations
+(coarse: authenticated-vs-permitAll). Completed this phase:
+- [x] Enforce [role matrix](../design/ROLE_PERMISSION_MATRIX.md) at service/controller layer
+  (`@EnableMethodSecurity`; `@PreAuthorize` gates per API_DESIGN access column; 401 invalid
+  token / 403 insufficient role or scope / 409 `INVALID_STATUS_TRANSITION` semantics)
+- [x] Org/ownership scoping (report read/edit/comment/media, org paths on audit,
+  assignments, dashboard; role resolved from DB per request so revocation and role
+  changes apply immediately; report list query carries role-scoped predicates)
+- [x] Authorization tests (positive+negative: `AuthorizationMatrixTest`, `AuthFlowTest`,
+  `JwtTokenProviderTest`; 41/41 green on H2, 3/3 green on PostgreSQL 18 + Flyway)
+- [x] Audited A-scope operations (`AuditService.record`; category create writes
+  `CATEGORY_CREATED` rows, asserted by test)
+- Deferrals: T1-T17 actor rules + centralized 409 state machine (Phase 5); matrix rows
+  8/9/14 worker/org/settings endpoints (Phase 9); CORS config (Phase 6/16); refresh
+  token invalidation on logout (Phase 16)
 - Exit: authorized/unauthorized access behaves per matrix; tests green
 
 ## Phase 5 — Core Reporting Workflow (PARTIAL)

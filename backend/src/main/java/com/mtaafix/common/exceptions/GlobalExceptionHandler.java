@@ -55,16 +55,83 @@ public class GlobalExceptionHandler {
         log.warn("Not found: {} - {}", ex.getMessage(), request.getDescription(false));
         ApiError apiError = ApiError.of(
                 HttpStatus.NOT_FOUND,
-                "NOT_FOUND",
+                "RESOURCE_NOT_FOUND",
                 ex.getMessage(),
                 request.getDescription(false),
                 Map.of());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
     }
 
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException ex,
+            WebRequest request) {
+        log.warn("Authentication failed: {}", request.getDescription(false));
+        ApiError apiError = ApiError.of(
+                HttpStatus.UNAUTHORIZED,
+                "INVALID_CREDENTIALS",
+                ex.getMessage(),
+                request.getDescription(false),
+                Map.of());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiError);
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ApiError> handleInvalidToken(InvalidTokenException ex,
+            WebRequest request) {
+        log.warn("Invalid token: {}", request.getDescription(false));
+        ApiError apiError = ApiError.of(
+                HttpStatus.UNAUTHORIZED,
+                "INVALID_TOKEN",
+                ex.getMessage(),
+                request.getDescription(false),
+                Map.of());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiError);
+    }
+
+    @ExceptionHandler(AccountInactiveException.class)
+    public ResponseEntity<ApiError> handleAccountInactive(AccountInactiveException ex,
+            WebRequest request) {
+        log.warn("Inactive account: {}", request.getDescription(false));
+        ApiError apiError = ApiError.of(
+                HttpStatus.FORBIDDEN,
+                "ACCOUNT_INACTIVE",
+                ex.getMessage(),
+                request.getDescription(false),
+                Map.of());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiError);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiError> handleIllegalState(IllegalStateException ex,
+            WebRequest request) {
+        log.warn("State conflict: {} - {}", ex.getMessage(), request.getDescription(false));
+        ApiError apiError = ApiError.of(
+                HttpStatus.CONFLICT,
+                "INVALID_STATUS_TRANSITION",
+                ex.getMessage(),
+                request.getDescription(false),
+                Map.of());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex,
             WebRequest request) {
+        org.springframework.security.core.Authentication authentication =
+                org.springframework.security.core.context.SecurityContextHolder.getContext()
+                        .getAuthentication();
+        boolean anonymous = authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken;
+        if (anonymous) {
+            log.warn("Unauthenticated access: {}", request.getDescription(false));
+            ApiError apiError = ApiError.of(
+                    HttpStatus.UNAUTHORIZED,
+                    "UNAUTHORIZED",
+                    "Authentication is required to access this resource.",
+                    request.getDescription(false),
+                    Map.of());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiError);
+        }
         log.warn("Access denied: {} - {}", ex.getMessage(), request.getDescription(false));
         ApiError apiError = ApiError.of(
                 HttpStatus.FORBIDDEN,

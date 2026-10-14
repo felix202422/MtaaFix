@@ -29,11 +29,11 @@ public class AuditController {
 
     @Operation(summary = "Get organisation audit log")
     @GetMapping("/organizations/{id}")
-    @PreAuthorize("hasRole('ADMINISTRATOR') or hasRole('ORGANIZATION_ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','ORGANIZATION_ADMIN')")
     public ResponseEntity<List<AuditLogEntry>> orgAudit(
             @PathVariable String id,
             @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(auditService.getOrganisationAuditLog(id));
+        return ResponseEntity.ok(auditService.getOrganisationAuditLog(id, user));
     }
 
     @Operation(summary = "Get global audit log (admin only)")

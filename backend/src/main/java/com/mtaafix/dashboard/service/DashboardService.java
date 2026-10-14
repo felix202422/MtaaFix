@@ -6,6 +6,7 @@ import com.mtaafix.dashboard.dto.UserDashboardDto;
 import com.mtaafix.report.domain.Report;
 import com.mtaafix.report.repository.ReportRepository;
 import com.mtaafix.user.domain.User;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -36,7 +37,13 @@ public class DashboardService {
         );
     }
 
-    public DashboardStatsDto getOrganizationStats(String orgId) {
+    public DashboardStatsDto getOrganizationStats(String orgId, User user) {
+        if (user.getRole() == User.Role.ORGANIZATION_ADMIN
+                && (user.getOrganisationId() == null
+                        || !user.getOrganisationId().equals(orgId))) {
+            throw new AccessDeniedException(
+                    "Organisation statistics are outside your organisation scope.");
+        }
         long totalReports = reportRepository.countByOrganisationId(orgId);
         long submittedReports = reportRepository.countByOrganisationIdAndStatus(orgId, Report.Status.SUBMITTED);
         long verifiedReports = reportRepository.countByOrganisationIdAndStatus(orgId, Report.Status.VERIFIED);

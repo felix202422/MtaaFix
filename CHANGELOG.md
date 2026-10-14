@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.5.0] — 2026-10-14
+### Phase 4 - Authentication & authorization
+**Implemented 2026-10-14; submitted for owner approval.** Enforced the
+five-role permission model (ROLE_PERMISSION_MATRIX) across the API per SRS
+FR-1.1/FR-5.4, with role and account status resolved from the DB on every
+request.
+
+- `@EnableMethodSecurity` enabled - the 7 existing `@PreAuthorize`
+  annotations were previously inert
+- `JwtAuthenticationFilter` rewritten: requires `Bearer` + valid token
+  with `typ=access`, loads the user from DB per request (role change /
+  revocation effective immediately), rejects inactive accounts, authorities
+  built from the loaded entity; principal is the `User` entity
+- `JwtTokenProvider`: fixed `buildToken` (jjwt 0.12 claim map is
+  immutable - token generation always threw `UnsupportedOperationException`,
+  so login/refresh never worked); added `typ` claim (`access` /
+  `refresh`) + `getType()` / `isAccessToken()`
+- Registration forces `Role.CITIZEN` (`role` removed from
+  `RegisterRequest`) per FR-5.4; `POST /auth/refresh` accepts
+  `RefreshRequest`, validates `typ=refresh`, rotates the token pair;
+  `GET /auth/me` requires an authenticated principal
+- Error semantics: unknown email and wrong password both 401
+  `INVALID_CREDENTIALS` (no user enumeration); inactive account 403
+  `ACCOUNT_INACTIVE`; invalid/expired token 401 `INVALID_TOKEN`;
+  `AccessDeniedException` 401 `UNAUTHORIZED` when anonymous, 403
+  `FORBIDDEN` when authenticated; `IllegalStateException` 409
+  `INVALID_STATUS_TRANSITION`; resource-not-found code now
+  `RESOURCE_NOT_FOUND`
+- Role gates (API_DESIGN §2 access column): submit/verify/reject/resolve →
+  MODERATOR|ADMINISTRATOR; assign → ADMINISTRATOR|ORGANIZATION_ADMIN +
+  org scope; close → ADMINISTRATOR; `/dashboard/stats` →
+  MODERATOR|ADMINISTRATOR (matrix row 11); `/assignments/me` →
+  FIELD_WORKER; category creation + global audit → ADMINISTRATOR; org
+  audit/stats/reports → ORGANIZATION_ADMIN|ADMINISTRATOR + own-org scope
+- Scoping enforced in code: report get/update/assign/comment/media check
+  ownership, org, or moderation rights (`assertCanRead` /
+  `assertInOrganisationScope`); notifications owner-only (reads, mark
+  all); `ReportService.list(...)` scoped but deliberately unexposed (no
+  list endpoint in API_DESIGN §2)
+- Audit wiring: `AuditService.record(...)` implemented (own ObjectMapper -
+  Boot 4 has no `com.fasterxml` bean); category creation emits
+  `CATEGORY_CREATED` events (FR-10.1)
+- Assignments now persisted (`AssignmentRepository.save`) - previously
+  mutated in memory only
+- Latent defects fixed: H2 test schema silently failed `audit_logs` DDL
+  (`JSONB` domain via `INIT=CREATE DOMAIN`); notification list leaked
+  all users' rows; `markAsRead` had no owner check; assignment scoping
+  missing
+- Tests: `JwtTokenProviderTest` (5), `AuthFlowTest` (16),
+  `AuthorizationMatrixTest` (15); full suite **41/41 green** (3 PG skipped
+  without env); PG integration **3/3 green** (`MTAAFIX_PG_IT=true`);
+  live boot smoke on PG: register (role forced CITIZEN)/login/refresh
+  rotation/401/403 paths verified
+- Deferred (tracked in ROADMAP): lifecycle actor gates T1-T17 + full 409
+  state machine (Phase 5), report list endpoint + comment/media routes
+  (Phase 5), CORS (Phase 6/16), matrix rows 8/9/14 endpoints (Phase 9),
+  refresh-token invalidation (Phase 16)
+- Docs: API_DESIGN provisional notes → enforced, ROLE_PERMISSION_MATRIX
+  note 6 decision recorded (DB lookup implemented), ROADMAP/BOARD/BACKLOG
+  updated, `docs/api/openapi.json` regenerated
+
 ## [0.4.0] — 2026-10-14
 ### Phase 3 — Backend foundation completion
 **Approved by owner 2026-10-14.** Verified the backend against real PostgreSQL 18.6 +

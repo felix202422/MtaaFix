@@ -52,7 +52,7 @@ Last updated: 2026-10-13.
 | Commit + push | DONE | Commits `e0cad27` + approval bookkeeping pushed to `origin/master` |
 | Phase 1 report + approval gate | DONE | Approved by owner 2026-10-13; docs flipped to APPROVED |
 
-## Current phase: Phase 3 APPROVED (2026-10-14) — next: Phase 4 (AuthN/Z), awaiting start authorization
+## Current phase: Phase 4 COMPLETE - submitted for approval (2026-10-14); next: Phase 5, blocked on Phase 4 approval
 
 ## Phase 3 — Backend foundation completion (COMPLETE — APPROVED 2026-10-14)
 
@@ -66,23 +66,42 @@ Last updated: 2026-10-13.
 | Fix Boot 4 deps | DONE | +spring-boot-flyway (was silently not running), +hibernate-spatial, +spring-boot-webmvc-test; −Testcontainers |
 | Fix entities | DONE | BaseEntity PrePersist + assigned ids; AuditLog jsonb |
 | Verify app on PG+PostGIS | DONE | Boot OK, Flyway applied, ddl validate passes, health UP (port 8085; 8080 held by system service) |
-| H2 vs PG test matrix | DONE | 5/5 green with MTAAXFIX_PG_IT; PG suite skips cleanly without |
+| H2 vs PG test matrix | DONE | 5/5 green with MTAAFIX_PG_IT; PG suite skips cleanly without |
 | Export OpenAPI spec | DONE | `docs/api/openapi.json` via OpenApiExportTest |
 | DEVELOPMENT.md runbook | DONE | |
 | Phase 3 report + approval gate | DONE | Approved by owner 2026-10-14; docs flipped to APPROVED |
+
+
+## Phase 4 - Authentication and authorization (COMPLETE - submitted for approval 2026-10-14)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Record Phase 3 approval | DONE | |
+| Enable method security | DONE | `@EnableMethodSecurity` - existing `@PreAuthorize` annotations were inert |
+| JWT filter hardening | DONE | DB user lookup per request, `ROLE_*` authorities, User principal, `typ` claim, no path bypass |
+| Register is CITIZEN-only | DONE | `role` dropped from RegisterRequest (FR-1.1/FR-5.4) |
+| Fix /auth/refresh | DONE | was `findByEmail(subject=id)`; now typ=refresh + findById + active check |
+| Login/refresh error semantics | DONE | 401 INVALID_CREDENTIALS / INVALID_TOKEN, 403 ACCOUNT_INACTIVE |
+| Role gates per matrix (B-4.1) | DONE | reports, categories, audit, dashboard, assignments, swagger |
+| Ownership/org scoping (B-4.2) | DONE | report read/edit, org audit/assignments/dashboard, notification owner scoping + markAllRead fix |
+| Audit writes (B-4.3) | DONE | AuditService.record; category create wired; role/org/settings audit with Phase 9 endpoints |
+| Latent defects fixed | DONE | immutable jjwt claims broke all token generation; LIE on report get/create; unpersisted assignments; Long notification ids; H2 audit_logs DDL |
+| Tests | DONE | 41/41 H2 (matrix 15, auth flow 16, token 5) + 3/3 PostgreSQL; OpenAPI regenerated |
+| Live boot smoke on PG | DONE | register/login/refresh/me + 401/403 checks on port 8085 |
+| Phase 4 report + approval gate | PENDING | Submitted 2026-10-14; awaiting owner decision |
 
 ## Next phases
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| Phase 4 — AuthN/Z | READY | Role-matrix enforcement + tests (BACKLOG B-4.x) |
+| Phase 4 - AuthN/Z | AWAITING APPROVAL | Matrix enforcement + scoping + audit + tests done; submitted 2026-10-14 |
 | Phase 5 — Core reporting workflow | BLOCKED | State machine migration + endpoints (BACKLOG B-5.x) |
 | Phase 6–7 — Public site + citizen web | BLOCKED | Depend on Phases 2, 4, 5 |
 
 ## Environment notes
 
 - Java 25.0.4, Maven 3.9.16, Node 24.13.1, Flutter 3.47.1, PostgreSQL 18 running
-- PostGIS not installed (approved for Phase 3)
+- PostGIS 3.6.2 installed for PG 18 (OSGeo bundle overlay, Phase 3)
 - No Docker; no Testcontainers
 - `gh` CLI token invalid; git push works via Windows Credential Manager
 - Old home-dir repo untouched at `C:\Users\PC\.git` — never push from it

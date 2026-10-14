@@ -73,7 +73,7 @@ Legend: **Y** = allowed · **N** = denied · **S** = self/own-scope only ·
 4. State-transition guards enforce [REPORT_LIFECYCLE.md](REPORT_LIFECYCLE.md); invalid
    transitions return 409 Conflict with a machine-readable error code.
 5. Privileged A-scope operations emit audit events (FR-10.1).
-6. JWT carries role claim; roles changes require re-authentication to take effect on
-   new tokens (documented limitation until refresh forces re-lookup — Phase 4 decision:
-   look up role from DB per request vs trust token claim; recommend DB lookup for
-   revocation responsiveness).
+6. **Phase 4 decision (implemented):** role is resolved from the DB on every request
+   (via `JwtAuthenticationFilter` -> `UserRepository.findById`), so role changes and
+   account revocation take effect immediately without re-authentication. The JWT role
+   claim is informational only; authorities are built from the loaded `User` entity.

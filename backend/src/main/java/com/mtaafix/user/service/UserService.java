@@ -1,7 +1,11 @@
 package com.mtaafix.user.service;
 
+import com.mtaafix.common.exceptions.AccountInactiveException;
+import com.mtaafix.common.exceptions.InvalidCredentialsException;
+import com.mtaafix.common.exceptions.InvalidTokenException;
 import com.mtaafix.common.exceptions.ResourceNotFoundException;
 import com.mtaafix.user.domain.User;
+import com.mtaafix.user.domain.User.Role;
 import com.mtaafix.user.dto.AuthResponse;
 import com.mtaafix.user.dto.RegisterRequest;
 import com.mtaafix.user.dto.UserDto;
@@ -27,23 +31,44 @@ public class UserService {
         }
         String passwordHash = BCrypt.hashpw(request.password(), BCrypt.gensalt());
         User user = new User(request.email(), passwordHash, request.fullName(),
-                request.mobile(), request.role());
+                request.mobile(), Role.CITIZEN);
         user = userRepository.save(user);
         return toDto(user);
     }
 
     public AuthResponse authenticate(String email, String password) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User", email));
+                .orElseThrow(InvalidCredentialsException::new);
         if (!BCrypt.checkpw(password, user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid credentials.");
+            throw new InvalidCredentialsException();
         }
         if (!user.isActive()) {
-            throw new IllegalArgumentException("Account is inactive.");
+            throw new AccountInactiveException();
         }
         String accessToken = tokenProvider.generateAccessToken(user.getId(), user.getRole().name());
         String refreshToken = tokenProvider.generateRefreshToken(user.getId());
         return AuthResponse.of(accessToken, refreshToken, 900L, toDto(user));
+    }
+
+    public User refresh(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()
+                || !tokenProvider.validateToken(refreshToken)
+                || !JwtTokenProvider.TYPE_REFRESH.equals(tokenProvider.getType(refreshToken))) {
+            throw new InvalidTokenException();
+        }
+        String subject = tokenProvider.getSubject(refreshToken);
+        User user = userRepository.findById(subject)
+                .orElseThrow(() -> new InvalidTokenException("Token subject does not exist."));
+        if (!user.isActive()) {
+            throw new AccountInactiveException();
+        }
+        return user;
+    }
+
+    public UserDto findById(String id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        return toDto(user);
     }
 
     public UserDto findByEmail(String email) {
@@ -52,7 +77,7 @@ public class UserService {
         return toDto(user);
     }
 
-    private UserDto toDto(User user) {
+    public UserDto toDto(User user) {
         return new UserDto(user.getId(), user.getEmail(), user.getFullName(), user.getMobile(),
                 user.getRole(), user.getOrganisationId());
     }

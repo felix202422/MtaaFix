@@ -42,6 +42,6 @@ public class CategoryController {
     public ResponseEntity<CategoryDto> create(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody CategoryDto dto) {
-        return ResponseEntity.ok(categoryService.create(dto));
+        return ResponseEntity.ok(categoryService.create(dto, user));
     }
 }

@@ -5,6 +5,8 @@ import com.mtaafix.report.domain.Assignment;
 import com.mtaafix.report.domain.Report;
 import com.mtaafix.report.mapper.ReportMapper;
 import com.mtaafix.report.repository.ReportRepository;
+import com.mtaafix.user.domain.User;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,7 +27,13 @@ public class AssignmentService {
                 .collect(Collectors.toList());
     }
 
-    public List<AssignmentDto> getReportsByOrganisation(String organisationId) {
+    public List<AssignmentDto> getReportsByOrganisation(String organisationId, User user) {
+        if (user.getRole() == User.Role.ORGANIZATION_ADMIN
+                && (user.getOrganisationId() == null
+                        || !user.getOrganisationId().equals(organisationId))) {
+            throw new AccessDeniedException(
+                    "Organisation assignments are outside your organisation scope.");
+        }
         return reportRepository.findReportsByOrganisationIdWithAssignment(organisationId).stream()
                 .map(this::toAssignmentDto)
                 .collect(Collectors.toList());

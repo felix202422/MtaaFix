@@ -22,9 +22,13 @@ public interface ReportRepository extends JpaRepository<Report, String> {
             where (:status is null or r.status = :status)
             and (:categoryId is null or r.category.id = :categoryId)
             and (:orgId is null or o.id = :orgId)
+            and (:userId is null or r.user.id = :userId)
+            and (:assigneeId is null or r.assignment.assignee.id = :assigneeId)
             """)
-    Page<Report> findByStatusAndCategoryIdAndOrganisationId(@Param("status") String status,
-            @Param("categoryId") String categoryId, @Param("orgId") String orgId, Pageable pageable);
+    Page<Report> findByScope(@Param("status") String status,
+            @Param("categoryId") String categoryId, @Param("orgId") String orgId,
+            @Param("userId") String userId, @Param("assigneeId") String assigneeId,
+            Pageable pageable);
 
     @Query("select c from ReportCategory c where c.id = :id")
     Optional<ReportCategory> findCategoryById(@Param("id") String id);

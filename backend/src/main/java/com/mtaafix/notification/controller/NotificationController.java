@@ -43,7 +43,7 @@ public class NotificationController {
     @PostMapping("/{id}/read")
     public ResponseEntity<SimpleResponse> markRead(
             @AuthenticationPrincipal User user,
-            @PathVariable @NotNull Long id) {
+            @PathVariable @NotNull String id) {
         notificationService.markAsRead(user, id);
         return ResponseEntity.ok(SimpleResponse.ok("Marked as read"));
     }

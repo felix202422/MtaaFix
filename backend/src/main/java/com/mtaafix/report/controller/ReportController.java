@@ -1,6 +1,5 @@
 package com.mtaafix.report.controller;
 
-import com.mtaafix.common.response.SimpleResponse;
 import com.mtaafix.report.dto.AssignReportRequest;
 import com.mtaafix.report.dto.CreateReportRequest;
 import com.mtaafix.report.dto.ReportDto;
@@ -12,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,10 +40,11 @@ public class ReportController {
         return ResponseEntity.status(201).body(report);
     }
 
-    @Operation(summary = "Get a report")
+    @Operation(summary = "Get a report (ownership / organisation scope enforced)")
     @GetMapping("/{id}")
-    public ResponseEntity<ReportDto> get(@Parameter(description = "Report id") @PathVariable String id) {
-        return ResponseEntity.ok(reportService.get(id));
+    public ResponseEntity<ReportDto> get(@Parameter(description = "Report id") @PathVariable String id,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(reportService.get(id, user));
     }
 
     @Operation(summary = "Update a report (creator only)")
@@ -54,8 +55,9 @@ public class ReportController {
         return ResponseEntity.ok(reportService.update(id, request, user));
     }
 
-    @Operation(summary = "Submit a report for review")
+    @Operation(summary = "Claim a report for review")
     @PostMapping("/{id}/submit")
+    @PreAuthorize("hasAnyRole('MODERATOR','ADMINISTRATOR')")
     public ResponseEntity<ReportDto> submit(@Parameter(description = "Report id") @PathVariable String id,
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(reportService.submit(id, user));
@@ -63,6 +65,7 @@ public class ReportController {
 
     @Operation(summary = "Verify a report")
     @PostMapping("/{id}/verify")
+    @PreAuthorize("hasAnyRole('MODERATOR','ADMINISTRATOR')")
     public ResponseEntity<ReportDto> verify(@Parameter(description = "Report id") @PathVariable String id,
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(reportService.verify(id, user));
@@ -70,27 +73,31 @@ public class ReportController {
 
     @Operation(summary = "Reject a report")
     @PostMapping("/{id}/reject")
+    @PreAuthorize("hasAnyRole('MODERATOR','ADMINISTRATOR')")
     public ResponseEntity<ReportDto> reject(@Parameter(description = "Report id") @PathVariable String id,
             @AuthenticationPrincipal User user, @RequestBody String comment) {
         return ResponseEntity.ok(reportService.reject(id, user, comment));
     }
 
-    @Operation(summary = "Assign a report")
+    @Operation(summary = "Assign a report (administrator or owning organisation)")
     @PostMapping("/{id}/assign")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','ORGANIZATION_ADMIN')")
     public ResponseEntity<ReportDto> assign(@Parameter(description = "Report id") @PathVariable String id,
             @AuthenticationPrincipal User user, @Valid @RequestBody AssignReportRequest request) {
         return ResponseEntity.ok(reportService.assign(id, user, request.assigneeId(), request.organisationId()));
     }
 
-    @Operation(summary = "Resolve a report")
+    @Operation(summary = "Resolve a report (reviewer, T13)")
     @PostMapping("/{id}/resolve")
+    @PreAuthorize("hasAnyRole('MODERATOR','ADMINISTRATOR')")
     public ResponseEntity<ReportDto> resolve(@Parameter(description = "Report id") @PathVariable String id,
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(reportService.resolve(id, user));
     }
 
-    @Operation(summary = "Close a report")
+    @Operation(summary = "Close a report (administrator, T14)")
     @PostMapping("/{id}/close")
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     public ResponseEntity<ReportDto> close(@Parameter(description = "Report id") @PathVariable String id,
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(reportService.close(id, user));

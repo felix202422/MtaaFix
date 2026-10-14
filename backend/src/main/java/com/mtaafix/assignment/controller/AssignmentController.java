@@ -29,14 +29,16 @@ public class AssignmentController {
 
     @Operation(summary = "Get my assignments")
     @GetMapping("/me")
+    @PreAuthorize("hasRole('FIELD_WORKER')")
     public ResponseEntity<List<AssignmentDto>> myAssignments(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(assignmentService.getAssignmentsByAssignee(user.getId()));
     }
 
     @Operation(summary = "Get organisation's reports")
     @GetMapping("/organizations/{orgId}/reports")
-    @PreAuthorize("hasRole('ORGANIZATION_ADMIN')")
-    public ResponseEntity<List<AssignmentDto>> orgReports(@PathVariable String orgId) {
-        return ResponseEntity.ok(assignmentService.getReportsByOrganisation(orgId));
+    @PreAuthorize("hasAnyRole('ORGANIZATION_ADMIN','ADMINISTRATOR')")
+    public ResponseEntity<List<AssignmentDto>> orgReports(@PathVariable String orgId,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(assignmentService.getReportsByOrganisation(orgId, user));
     }
 }

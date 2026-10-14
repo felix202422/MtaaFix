@@ -1,5 +1,6 @@
 package com.mtaafix.notification.service;
 
+import com.mtaafix.common.exceptions.ResourceNotFoundException;
 import com.mtaafix.notification.domain.Notification;
 import com.mtaafix.notification.domain.Notification.Type;
 import com.mtaafix.notification.dto.NotificationDto;
@@ -8,10 +9,10 @@ import com.mtaafix.report.domain.Report;
 import com.mtaafix.user.domain.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class NotificationService {
@@ -36,28 +37,23 @@ public class NotificationService {
     }
 
     public Page<NotificationDto> listByUser(User user, Pageable pageable) {
-        return notificationRepository.findAll(pageable).map(NotificationDto::from);
+        return notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable)
+                .map(NotificationDto::from);
     }
 
-    public NotificationDto markRead(String id) {
+    public void markAsRead(User user, String id) {
         Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new java.util.NoSuchElementException("Notification not found"));
-        notification.setRead(true);
-        notification = notificationRepository.save(notification);
-        return NotificationDto.from(notification);
-    }
-
-    public void markAsRead(User user, Long id) {
-        Notification notification = notificationRepository.findById(id.toString())
-                .orElseThrow(() -> new java.util.NoSuchElementException("Notification not found"));
-        if (notification.getUser().getId().equals(user.getId())) {
-            notification.setRead(true);
-            notificationRepository.save(notification);
+                .orElseThrow(() -> new ResourceNotFoundException("Notification", id));
+        if (!notification.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You can only mark your own notifications as read.");
         }
+        notification.setRead(true);
+        notificationRepository.save(notification);
     }
 
     public void markAllAsRead(User user) {
-        notificationRepository.findByUserOrderByCreatedAtDesc(user).forEach(n -> n.setRead(true));
-        notificationRepository.saveAll(notificationRepository.findAll());
+        List<Notification> notifications = notificationRepository.findByUserOrderByCreatedAtDesc(user);
+        notifications.forEach(notification -> notification.setRead(true));
+        notificationRepository.saveAll(notifications);
     }
 }

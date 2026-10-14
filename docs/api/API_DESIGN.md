@@ -17,7 +17,7 @@
 | Base path | `/api/v1` — major version in path; breaking changes bump version |
 | Content type | `application/json; charset=UTF-8` (multipart only for media upload) |
 | Auth | `Authorization: Bearer <accessToken>`; stateless JWT; refresh via `/auth/refresh` |
-| Roles | Enforced server-side per [ROLE_PERMISSION_MATRIX](../design/ROLE_PERMISSION_MATRIX.md); role claim in JWT, DB lookup preferred for revocation (matrix §3.6) |
+| Roles | Enforced server-side per [ROLE_PERMISSION_MATRIX](../design/ROLE_PERMISSION_MATRIX.md); Phase 4: role resolved from DB per request (revocation/role change effective immediately), JWT role claim informational only |
 | IDs | Internal UUIDs in authorized API surfaces; public references `MTF-YYYY-NNNNNN` for citizen/public display |
 | Timestamps | ISO-8601 UTC instant strings |
 | Pagination | Query `page` (0-based), `size` (default 20, max 100); response `PagedResponse { totalElements, totalPages, page, size, content }` |
@@ -26,7 +26,7 @@
 | Validation | Bean Validation on DTOs → 400 `VALIDATION_ERROR` with field details |
 | State conflicts | Invalid lifecycle transition → 409 `INVALID_STATUS_TRANSITION` |
 | Not found | 404 `RESOURCE_NOT_FOUND` |
-| Unauthorized / forbidden | 401 (no/invalid token) / 403 (insufficient role or scope) |
+| Unauthorized / forbidden | 401 (no/invalid token; codes `INVALID_TOKEN`, `INVALID_CREDENTIALS`, `UNAUTHORIZED`) / 403 (insufficient role or scope; codes `FORBIDDEN`, `ACCOUNT_INACTIVE`) |
 | Rate limits | Not yet implemented; assessment Phase 17 (NFR-7) |
 | CORS | Configured origins only (`CORS_ALLOWED_ORIGINS`) |
 
@@ -47,12 +47,12 @@
 | POST `/reports` | Bearer | Any authenticated (citizen flow) | Creates SUBMITTED; returns code (FR-2.2) |
 | GET `/reports/{id}` | Bearer | Scoped (matrix area 1) | |
 | PUT `/reports/{id}` | Bearer | Owner, state-limited (FR-2.6) | Note: PUT not PATCH — deviation from legacy API.md, accepted |
-| POST `/reports/{id}/submit` | Bearer | Moderator/admin (T2) | **Provisional:** currently no role check — Phase 4/5 |
-| POST `/reports/{id}/verify` | Bearer | Moderator/admin (T5) | Provisional role check |
-| POST `/reports/{id}/reject` | Bearer | Moderator/admin (T6) | Reason in body |
-| POST `/reports/{id}/assign` | Bearer | Admin/org admin (T9) | `AssignReportRequest` |
-| POST `/reports/{id}/resolve` | Bearer | Reviewer (T13) | Provisional |
-| POST `/reports/{id}/close` | Bearer | System/admin (T14) | Provisional |
+| POST `/reports/{id}/submit` | Bearer | Moderator/admin (T2) | Enforced (Phase 4): MODERATOR or ADMINISTRATOR |
+| POST `/reports/{id}/verify` | Bearer | Moderator/admin (T5) | Enforced (Phase 4): MODERATOR or ADMINISTRATOR |
+| POST `/reports/{id}/reject` | Bearer | Moderator/admin (T6) | Reason in body; enforced (Phase 4): MODERATOR or ADMINISTRATOR |
+| POST `/reports/{id}/assign` | Bearer | Admin/org admin (T9) | AssignReportRequest; org scope enforced (Phase 4) |
+| POST `/reports/{id}/resolve` | Bearer | Reviewer (T13) | Enforced (Phase 4): MODERATOR or ADMINISTRATOR |
+| POST `/reports/{id}/close` | Bearer | System/admin (T14) | Enforced (Phase 4): ADMINISTRATOR |
 
 **Controller gaps vs service layer:** `ReportService` has comment/media methods
 (`CreateCommentRequest`, `CreateMediaRequest`, addMedia) but the controller exposes
@@ -69,7 +69,7 @@ no `POST /reports/{id}/comments` or `POST /reports/{id}/media` routes — tracke
 ### Dashboard — `DashboardController`
 | GET `/dashboard/me` | Bearer | Any | Citizen/org aggregation |
 | GET `/dashboard/organizations/{id}/stats` | Bearer | Org/admin | |
-| GET `/dashboard/stats` | Bearer | Admin | Global |
+| GET `/dashboard/stats` | Bearer | Admin/moderator (matrix row 11) | Global |
 
 ### Notifications — `NotificationController`
 | GET `/notifications` | Bearer | Any | Own, paginated |

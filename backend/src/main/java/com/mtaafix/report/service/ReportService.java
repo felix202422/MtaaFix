@@ -23,6 +23,7 @@ import com.mtaafix.report.dto.ReportMediaDto;
 import com.mtaafix.report.dto.StatusHistoryDto;
 import com.mtaafix.report.dto.UpdateReportRequest;
 import com.mtaafix.report.mapper.ReportMapper;
+import com.mtaafix.report.repository.AssignmentRepository;
 import com.mtaafix.report.repository.ReportRepository;
 import com.mtaafix.user.domain.User;
 import com.mtaafix.user.domain.User.Role;
@@ -30,6 +31,7 @@ import com.mtaafix.user.repository.UserRepository;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,14 +41,17 @@ public class ReportService {
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final AssignmentRepository assignmentRepository;
 
     public ReportService(ReportRepository reportRepository, UserRepository userRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService, AssignmentRepository assignmentRepository) {
         this.reportRepository = reportRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.assignmentRepository = assignmentRepository;
     }
 
+    @Transactional
     public ReportDto create(CreateReportRequest request, User creator) {
         Report report = ReportMapper.toEntity(request);
         report.setUser(creator);
@@ -57,19 +62,34 @@ public class ReportService {
         return ReportMapper.toDto(report);
     }
 
-    public ReportDto get(String id) {
+    @Transactional(readOnly = true)
+    public ReportDto get(String id, User user) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+        assertCanRead(report, user);
         return ReportMapper.toDto(report);
     }
 
-    public PagedResponse<ReportDto> list(String status, String categoryId, String orgId, Pageable pageable) {
-        Page<Report> page;
-        if (status == null && categoryId == null && orgId == null) {
-            page = reportRepository.findAll(pageable);
-        } else {
-            page = reportRepository.findByStatusAndCategoryIdAndOrganisationId(status, categoryId, orgId, pageable);
+    @Transactional(readOnly = true)
+    public PagedResponse<ReportDto> list(String status, String categoryId, String orgId, User user,
+            Pageable pageable) {
+        String scopedOrgId = orgId;
+        String userId = null;
+        String assigneeId = null;
+        switch (user.getRole()) {
+            case CITIZEN -> userId = user.getId();
+            case FIELD_WORKER -> assigneeId = user.getId();
+            case ORGANIZATION_ADMIN -> {
+                if (user.getOrganisationId() != null) {
+                    scopedOrgId = user.getOrganisationId();
+                } else {
+                    userId = user.getId();
+                }
+            }
+            case MODERATOR, ADMINISTRATOR -> { }
         }
+        Page<Report> page = reportRepository.findByScope(status, categoryId, scopedOrgId, userId,
+                assigneeId, pageable);
         List<ReportDto> content = page.getContent().stream()
                 .map(ReportMapper::toDto)
                 .toList();
@@ -129,6 +149,7 @@ public class ReportService {
         if (!report.getStatus().equals(Status.VERIFIED)) {
             throw new IllegalStateException("Only VERIFIED reports can be assigned.");
         }
+        assertInOrganisationScope(report, user);
         User assignee = userRepository.findById(assigneeId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", assigneeId));
         if (organisationId != null) {
@@ -137,7 +158,7 @@ public class ReportService {
         }
         report.setStatus(Status.ASSIGNED);
         report.getStatusHistory().add(new ReportStatusHistory(report, Status.VERIFIED, Status.ASSIGNED));
-        report.setAssignment(new Assignment(report, assignee, null));
+        report.setAssignment(assignmentRepository.save(new Assignment(report, assignee, null)));
         report = reportRepository.save(report);
         notificationService.send(Type.REPORT_ASSIGNED, user, report,
                 "New assignment", "You have been assigned this report.");
@@ -178,6 +199,9 @@ public class ReportService {
     public ReportDto update(String id, UpdateReportRequest request, User user) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+        if (!user.getId().equals(report.getUser().getId())) {
+            throw new AccessDeniedException("Only the report creator can edit this report.");
+        }
         if (report.getStatus() == Status.ASSIGNED) {
             throw new IllegalStateException("Cannot update assigned reports.");
         }
@@ -199,6 +223,7 @@ public class ReportService {
     public ReportDto addComment(String id, User user, String content) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+        assertCanRead(report, user);
         report.getComments().add(new ReportComment(content, report, user));
         report = reportRepository.save(report);
         notificationService.send(Type.REPORT_VERIFIED, user, report,
@@ -211,6 +236,7 @@ public class ReportService {
             String contentType, Long sizeBytes, String url, String mediaType) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report", id));
+        assertCanRead(report, user);
         ReportMedia.MediaType mt = ReportMedia.MediaType.valueOf(mediaType.toUpperCase());
         report.getMedia().add(new ReportMedia(fileName, originalName, contentType, sizeBytes, url, mt, report));
         report = reportRepository.save(report);
@@ -219,11 +245,48 @@ public class ReportService {
         return ReportMapper.toDto(report);
     }
 
+    @Transactional
     public void deleteMedia(String mediaId, User user) {
         ReportMedia media = reportRepository.findMediaById(mediaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Media", mediaId));
+        assertCanRead(media.getReport(), user);
         media.getReport().getMedia().remove(media);
         reportRepository.save(media.getReport());
+    }
+
+    private void assertCanRead(Report report, User user) {
+        if (user.getRole() == Role.MODERATOR || user.getRole() == Role.ADMINISTRATOR) {
+            return;
+        }
+        if (user.getId().equals(report.getUser().getId())) {
+            return;
+        }
+        if (user.getRole() == Role.ORGANIZATION_ADMIN) {
+            if (report.getOrganisation() != null && user.getOrganisationId() != null
+                    && user.getOrganisationId().equals(report.getOrganisation().getId())) {
+                return;
+            }
+            throw new AccessDeniedException("Report is outside your organisation scope.");
+        }
+        if (user.getRole() == Role.FIELD_WORKER) {
+            if (report.getAssignment() != null && report.getAssignment().getAssignee() != null
+                    && user.getId().equals(report.getAssignment().getAssignee().getId())) {
+                return;
+            }
+            throw new AccessDeniedException("Report is not assigned to you.");
+        }
+        throw new AccessDeniedException("You can only access your own reports.");
+    }
+
+    private void assertInOrganisationScope(Report report, User user) {
+        if (user.getRole() != Role.ORGANIZATION_ADMIN) {
+            return;
+        }
+        if (report.getOrganisation() != null && user.getOrganisationId() != null
+                && user.getOrganisationId().equals(report.getOrganisation().getId())) {
+            return;
+        }
+        throw new AccessDeniedException("Report is outside your organisation scope.");
     }
 
     private Organisation orgByRole(User user) {

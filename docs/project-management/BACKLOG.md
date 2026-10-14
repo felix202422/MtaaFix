@@ -82,6 +82,8 @@ Dependencies flow: Phase 2 ∥ Phase 3 → Phase 4 → Phase 5 → Phase 6 → P
 - **AC:** Role grants, org/category/settings changes write AuditLog rows containing
   actor, action, entity, outcome; test asserts row written; no secrets in payload logs.
 - **Phase:** 4
+- **Partial (Phase 4 done):** category create writes `CATEGORY_CREATED` audit rows;
+  role grants / org / settings audit arrives with their Phase 9 endpoints (rows 8/9/14).
 
 ---
 
