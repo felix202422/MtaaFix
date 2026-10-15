@@ -32,7 +32,7 @@
 | 3 | Backend foundation | ✅ Complete (**APPROVED** 2026-10-14) — PostGIS verified; Flyway V1 green; H2+PG test matrix |
 | 4 | Authentication and authorization | ✅ Complete (**APPROVED** 2026-10-14) — matrix gates, DB role lookup, scoping; tests 41/41 + 3/3 PG |
 | 5 | Core reporting workflow | ✅ Complete (**APPROVED** 2026-10-14) — 12-state machine, unique codes, comments/media; 49/49 + 3/3 tests |
-| 6 | Public website | ✅ Complete (pending approval) — 4 public pages, public APIs, privacy review; 22/22 web tests |
+| 6 | Public website | ✅ Complete (**APPROVED** 2026-10-15) — 4 public pages, public APIs, privacy review; 22/22 web tests |
 | 7 | Citizen web application | Not started |
 
 Post-MVP: Phases 8–23 below.
@@ -133,7 +133,7 @@ Delivered (see BACKLOG B-5.1–B-5.5 for acceptance criteria):
 - Exit: ✅ core report workflow works; business rules tested
 - **Gate: APPROVED by owner 2026-10-14 — Phase 6 may start**
 
-## Phase 6 — Public Website (COMPLETE — pending owner approval)
+## Phase 6 — Public Website (COMPLETE — APPROVED 2026-10-15)
 
 Pages 1–4 (landing, how-it-works, explore, public details) per SRS §3.8 plus
 `/report` info route. Public read APIs implemented (`/reports/public`,
@@ -145,7 +145,7 @@ Vitest + Testing Library, wired to `npm run test` + CI. Real-PG smoke caught
 and fixed a `lower(bytea)`/untyped-Instant-null query bug H2 could not see.
 
 - Exit: ✅ public users can navigate the site and view only authorized public information
-- **Gate: awaiting owner approval**
+- **Gate: APPROVED by owner 2026-10-15 — Phase 7 may start**
 
 ## Phase 7 — Citizen Web Application (NOT STARTED)
 

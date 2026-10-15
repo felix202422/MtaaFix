@@ -5,9 +5,9 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-15.
 
-## Current phase: Phase 6 COMPLETE (pending approval 2026-10-15) — stop here for owner gate
+## Current phase: Phase 6 APPROVED (2026-10-15) — next: Phase 7 (not started)
 
-## Phase 6 — Public website (COMPLETE — pending approval)
+## Phase 6 — Public website (COMPLETE — APPROVED 2026-10-15)
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -121,7 +121,7 @@ Last updated: 2026-10-15.
 |-------|--------|-------|
 | Phase 4 - AuthN/Z | Complete (approved 2026-10-14) | Matrix enforcement + scoping + audit + tests done |
 | Phase 5 - Core reporting workflow | Complete (approved 2026-10-14) | 12-state machine, unique codes, comments/media, lifecycle endpoints; deferrals noted in report |
-| Phase 6 - Public website | Complete (pending approval 2026-10-15) | 4 public pages + public APIs + privacy; real-PG smoke caught/fixed H2-masked query bug |
+| Phase 6 - Public website | Complete (approved 2026-10-15) | 4 public pages + public APIs + privacy; real-PG smoke caught/fixed H2-masked query bug |
 | Phase 7 - Citizen web | READY | Blocked only by Phase 6 gate |
 
 ## Environment notes

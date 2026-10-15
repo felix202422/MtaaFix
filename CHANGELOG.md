@@ -7,7 +7,8 @@ analyzer, or file presence) — not intentions.
 
 ## [0.7.0] — 2026-10-15
 ### Phase 6 - Public website
-Implemented the public transparency surface (SRS FR-8.1–8.5, Part 10 pages 1–4).
+**Approved by owner 2026-10-15.** Implemented the public transparency surface
+(SRS FR-8.1–8.5, Part 10 pages 1–4).
 
 **Backend (public read APIs, all `permitAll`)**
 - `GET /api/v1/reports/public` — explore feed with `status`/`categoryId`/`q`/
