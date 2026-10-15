@@ -8,6 +8,9 @@
 
 ## Version History
 
+- **[0.9.0]** — Phase 8: geographic capabilities (HMAC location fuzzing, bbox/near
+  spatial queries, GeoJSON, Leaflet map interactions, GIST indexes; 90/90 backend +
+  36/36 web) — **2026-10-15, approval gate pending**
 - **[0.8.0]** — Phase 7: citizen web application (auth layer, 6 citizen pages, profile
   update, T8 cancel, multipart photo upload/streaming, dashboard attention; 73/73 + 3/3
   backend, 33/33 web) — **APPROVED** 2026-10-15
@@ -143,8 +146,9 @@ Pages 1–4 (landing, how-it-works, explore, public details) per SRS §3.8 plus
 `/report` info route. Public read APIs implemented (`/reports/public`,
 `/reports/public/{code}`, `/categories/public`, `/stats/public`); privacy
 filtering (FR-8.5): no identity/media/comments, coords rounded to 2dp pending
-Phase 8 fuzzing (FR-11.4). Map view deferred to Phase 8 (owner decision).
-Media in public payloads deferred to Phase 10/13 (owner decision). Web tests:
+Phase 8 fuzzing (FR-11.4) *(fuzzing shipped in Phase 8, replaced 2dp)*. Map view
+deferred to Phase 8 (owner decision) *(shipped in Phase 8)*. Media in public
+payloads deferred to Phase 10/13 (owner decision). Web tests:
 Vitest + Testing Library, wired to `npm run test` + CI. Real-PG smoke caught
 and fixed a `lower(bytea)`/untyped-Instant-null query bug H2 could not see.
 
@@ -194,11 +198,31 @@ Delivered 2026-10-15:
   cancel → refresh, plus 401/403/400/409/oversize paths.
 - **Gate: APPROVED by owner 2026-10-15 — Phase 8 may start**
 
-## Phase 8 — Geographic Capabilities (NOT STARTED)
+## Phase 8 — Geographic Capabilities (COMPLETE — 2026-10-15, approval gate pending)
 
-PostGIS spatial queries, GIST indexes, map interactions (Leaflet), public
-generalization, coordinate fuzzing (replaces Phase 6's 2dp rounding),
-geographic filters.
+Delivered 2026-10-15 (see CHANGELOG 0.9.0; BACKLOG B-8.1–B-8.4):
+- [x] Geographic persistence (FR-11.1): SRID 4326 Point (existing) + GeoJSON
+  representation (FR-11.5) on authorized and public DTOs
+- [x] Coordinate validation (FR-11.2): ±90/±180 + null-island (0,0) → 400 on
+  create/update
+- [x] Spatial queries: `bbox` (ST_Intersects/ST_MakeEnvelope) + `near`
+  (ST_DWithin geography, ≤500 km) on `GET /reports/public`; mutually exclusive →
+  400; PostgreSQL-only native SQL (H2 covers validation)
+- [x] Map interactions (Leaflet): explore list/map toggle + "Search this area" bbox
+  filter; detail Location section; wizard tap-to-pick; jsdom-safe lazy loading +
+  sr-only marker list
+- [x] Location privacy (FR-11.4): deterministic HMAC-SHA256 fuzzing, uniform
+  150–600 m offset, applied to **all** public locations (superset of "sensitive
+  categories" — disclosed at gate); replaces Phase 6's 2dp rounding
+- [x] Indexes (FR-11.3): GIST verified for geometry; new V3 GIST on
+  `(location::geography)` for radius search — `EXPLAIN` confirms both use index scans
+- [x] Tests: LocationGeneralizerTest (11), PG IT bbox/near + sorted-Pageable path,
+  public/citizen API fuzz assertions; web map tests — 90/90 backend + 36/36 web;
+  live smoke green (fuzz determinism, spatial filters, 400 paths)
+- Bugs found & fixed: native-query sorted-`Pageable` → invalid `order by reportedat`
+  (500); radius search missing geography index (seq scan)
+- **Exit: ✅ geographic features behave correctly and respect privacy boundaries**
+- **Gate: report delivered 2026-10-15 — awaiting owner approval**
 
 ## Phase 9 — Administration and Moderation (NOT STARTED)
 
@@ -290,7 +314,8 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 5 | Complete (approved) |
 | 6 | Complete (approved) |
 | 7 | Complete (approved) |
-| 8–10 | Not started |
+| 8 | Complete (2026-10-15; approval gate pending) |
+| 9–10 | Not started |
 | 11 | Partial (scaffold) |
 | 12 | Not started |
 | 13 | Partial (in-app only) |

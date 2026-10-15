@@ -46,9 +46,9 @@
 ### Reports — `ReportController`
 | Method & path | Auth | Role | Notes |
 | ------------- | ---- | ---- | ----- |
-| POST `/reports` | Bearer | Any authenticated (citizen flow) | Creates SUBMITTED; returns code (FR-2.2); `categoryId` required (Phase 5) |
+| POST `/reports` | Bearer | Any authenticated (citizen flow) | Creates SUBMITTED; returns code (FR-2.2); `categoryId` required (Phase 5); `location` validated ±90/±180 and implausible (0,0) → 400 (FR-11.2) |
 | GET `/reports` | Bearer | Scoped by role (citizen=own, worker=assigned, org admin=org, mod/admin=all) | Filters: `status`, `categoryId`, `orgId`; `page`/`size` (0-based, size ≤ 100) (Phase 5) |
-| GET `/reports/{id}` | Bearer | Scoped (matrix area 1) | Includes statusHistory, comments, media |
+| GET `/reports/{id}` | Bearer | Scoped (matrix area 1) | Includes statusHistory, comments, media; response carries **exact** `location` + `geoJson` (authorized surfaces only, FR-11.5) |
 | PUT `/reports/{id}` | Bearer | Owner, state-limited (FR-2.6) | Only SUBMITTED/NEEDS_INFORMATION (Phase 5); note: PUT not PATCH — deviation from legacy API.md, accepted |
 | POST `/reports/{id}/submit` | Bearer | Moderator/admin (T2/T17) | Enforced (Phase 4): MODERATOR or ADMINISTRATOR; also claims REOPENED→UNDER_REVIEW |
 | POST `/reports/{id}/needs-info` | Bearer | Moderator/admin (T3) | `NeedsInfoRequest.message` required (Phase 5) |
@@ -102,9 +102,9 @@
 | GET `/actuator/health` | Public | — | Health check |
 | GET `/swagger-ui/**`, `/v3/api-docs/**` | Bearer | ADMINISTRATOR | OpenAPI |
 
-### Public (unauthenticated, CORS-enabled) — Phase 6
-| GET `/reports/public` | Public | — | Explore feed: status/categoryId/q/dateFrom/dateTo filters; coords rounded to 2dp; no identity/media/comments (FR-8.3, FR-8.5) |
-| GET `/reports/public/{code}` | Public | — | Detail by `MTF-YYYY-NNNNNN` code: high-level timeline (status+timestamp only), `duplicateOfCode`, `resolvedAt`/`closedAt` (FR-8.4) |
+### Public (unauthenticated, CORS-enabled) — Phase 6/8
+| GET `/reports/public` | Public | — | Explore feed: q/status/categoryId/dateFrom/dateTo + **geo filters** `bbox=minLon,minLat,maxLon,maxLat` (ST_Intersects) or `near=lat,lon,radiusKm` (ST_DWithin, ≤500 km; cannot be combined, invalid → 400; **PostgreSQL-only** native queries) — locations **fuzzed per FR-11.4** (deterministic HMAC, uniform 150–600 m; replaces Phase 6 2dp rounding) + `geoJson`; no identity/media/comments (FR-8.3, FR-8.5) |
+| GET `/reports/public/{code}` | Public | — | Detail by `MTF-YYYY-NNNNNN` code: high-level timeline (status+timestamp only), `duplicateOfCode`, `resolvedAt`/`closedAt`, fuzzed location + `geoJson` (FR-8.4) |
 | GET `/categories/public` | Public | — | Category filter list |
 | GET `/stats/public` | Public | — | Aggregate counts only: total/submitted/resolved/categories (FR-8.1) |
 

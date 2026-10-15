@@ -208,6 +208,59 @@ All four items **delivered 2026-10-15** (see CHANGELOG 0.8.0; approval gate pend
 
 ---
 
+## Phase 8 — Geographic capabilities
+
+All four items **delivered 2026-10-15** (see CHANGELOG 0.9.0; approval gate pending).
+
+### B-8.1 Coordinate validation + GeoJSON representation — DONE
+- **AC:** Lat/lng range validation enforced (FR-11.2) incl. implausible null-island
+  (0,0) → 400; API exposes GeoJSON Point `[lng, lat]` alongside lat/long (FR-11.5);
+  exact coordinates only on authorized surfaces.
+- **Phase:** 8 · **Depends:** B-5.5
+- **Delivered:** `GeoJsonPoint` on `ReportDto` (exact) and both public DTOs (fuzzed);
+  `ReportService` null-island guard on create+update; range validation already from
+  B-5.5 retained.
+
+### B-8.2 Location privacy (fuzzing) — DONE
+- **AC:** Public surfaces never reveal exact coordinates (FR-11.4/NFR-5); same
+  report yields a stable public point (no request-to-request jitter); fuzz radius
+  bounded and configurable; exact location readable only by authorized roles.
+- **Phase:** 8 · **Depends:** B-8.1
+- **Delivered:** `LocationGeneralizer` — deterministic HMAC-SHA256(reportId,
+  `geo.fuzz-secret`) offset, uniform distance 150–600 m + uniform bearing
+  (`GEO_FUZZ_MIN/MAX_METERS`); replaces Phase 6's 2dp rounding. Applied to **all**
+  public locations — a superset of FR-11.4's "sensitive categories" wording (owner
+  decision recorded at gate). Production must set `GEO_FUZZ_SECRET`.
+
+### B-8.3 Spatial queries + geographic filters — DONE
+- **AC:** Bounding-box and radius filters on the public feed return correct subsets;
+  invalid/mutually-exclusive filters → 400; queries execute on PostgreSQL+PostGIS;
+  H2 suite stays green (validation-only for the native queries).
+- **Phase:** 8 · **Depends:** B-8.1
+- **Delivered:** `bbox` (`ST_Intersects`/`ST_MakeEnvelope`) + `near`
+  (`ST_DWithin`, ≤500 km) on `GET /reports/public`, validated by
+  `GeoBounds`/`NearSearch`; PG IT asserts Dar/Arusha filtering incl. the controller's
+  sorted-Pageable path (live bug found: Hibernate appended invalid
+  `order by reportedat` → fixed via `PublicReportService.unsorted()`).
+
+### B-8.4 Map interactions + indexes — DONE
+- **AC:** Map renders report locations with markers, click/pan interactions and
+  graceful fallback when tiles/map unavailable; explore filter by visible extent;
+  wizard location pickable from map; GIST index used for spatial filters (EXPLAIN);
+  tests cover geographic operations.
+- **Phase:** 8 · **Depends:** B-8.2, B-8.3
+- **Delivered:** `ReportMapView` (Leaflet, lazy chunk) + `ReportMap` wrapper
+  (error boundary + sr-only marker list); explore list/map toggle + "Search this
+  area"; detail Location section; wizard tap-to-pick. V3 migration adds GIST on
+  `(location::geography)` — `EXPLAIN` shows index scans for bbox **and** near.
+  Web 36/36 tests; backend 90/90 (H2+PG); live smoke green.
+
+**Resolves Phase 6/7 deferrals:** map view (Phase 6), coordinate fuzzing (Phase 6),
+wizard map tiles (B-7.2). **Remaining deferral:** `near` radius filter has no citizen
+UI (API-level only); browser-based map verification → Phase 15.
+
+---
+
 ## Cross-cutting (scheduled, not MVP-blocking)
 
 | ID | Item | Phase | AC summary |

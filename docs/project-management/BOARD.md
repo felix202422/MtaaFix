@@ -5,7 +5,24 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-15.
 
-## Current phase: Phase 7 APPROVED (2026-10-15) — next: Phase 8 (in progress)
+## Current phase: Phase 8 COMPLETE (2026-10-15) — approval gate pending; next: Phase 9
+
+## Phase 8 — Geographic capabilities (COMPLETE — approval gate pending)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Geo primitives | DONE | `common/geo`: LocationGeneralizer (HMAC fuzz 150–600 m, env `GEO_FUZZ_*`), GeoJsonPoint, GeoBounds, NearSearch |
+| Null-island guard | DONE | (0,0) → 400 `BAD_REQUEST` on create/update (FR-11.2) |
+| Spatial queries | DONE | `bbox` (ST_Intersects) + `near` (ST_DWithin ≤500 km) on `/reports/public`; mutually exclusive → 400; PG-only native SQL |
+| GeoJSON (FR-11.5) | DONE | exact on `ReportDto`; fuzzed on public summary+detail; OpenAPI regenerated |
+| Location privacy (FR-11.4) | DONE | deterministic HMAC fuzzing on **all** public locations (superset of "sensitive categories" — gate disclosure); replaces 2dp rounding |
+| Web map interactions | DONE | `ReportMap`/`ReportMapView` (Leaflet lazy chunk, error boundary, sr-only list); explore toggle + "Search this area"; detail Location section; wizard tap-pick |
+| Indexes (FR-11.3) | DONE | V3 GIST on `(location::geography)`; EXPLAIN: bbox + near both index-scan |
+| Bug: sorted Pageable 500 | DONE | controller's `Sort.by(reportedAt)` → Hibernate appended invalid `order by reportedat` on native SQL; fixed via `PublicReportService.unsorted()`; IT now tests live path |
+| Tests | DONE | backend 90/90 (H2 + PG 5/5 incl. sorted path); web 36/36; lint/typecheck/build green |
+| Live smoke on PG | DONE | port 8085: fuzz determinism + differs-exact, spatial filter counts, 400s (null-island/bbox+near/malformed), exact geoJson authorized |
+| Docs sync | DONE | CHANGELOG 0.9.0, ROADMAP/BACKLOG/BOARD Phase 8 sections, API_DESIGN public-feed row |
+| Phase 8 report + gate | DONE | Report delivered 2026-10-15 — **awaiting owner approval** |
 
 ## Phase 7 — Citizen web application (COMPLETE — APPROVED 2026-10-15)
 
@@ -143,8 +160,8 @@ Last updated: 2026-10-15.
 | Phase 4 - AuthN/Z | Complete (approved 2026-10-14) | Matrix enforcement + scoping + audit + tests done |
 | Phase 5 - Core reporting workflow | Complete (approved 2026-10-14) | 12-state machine, unique codes, comments/media, lifecycle endpoints; deferrals noted in report |
 | Phase 6 - Public website | Complete (approved 2026-10-15) | 4 public pages + public APIs + privacy; real-PG smoke caught/fixed H2-masked query bug |
-| Phase 7 - Citizen web | Complete (2026-10-15 — awaiting approval gate) | Auth layer + 6 citizen pages; profile/T8-cancel/multipart/dashboard-attention backend; live smoke caught 2 real bugs (code counter, oversize 500) — both fixed |
-| Phase 8 - Geographic capabilities | Blocked by Phase 7 gate | PostGIS queries, Leaflet map, coord fuzzing |
+| Phase 7 - Citizen web | Complete (approved 2026-10-15) | Auth layer + 6 citizen pages; profile/T8-cancel/multipart/dashboard-attention backend; live smoke caught 2 real bugs (code counter, oversize 500) — both fixed |
+| Phase 8 - Geographic capabilities | Complete (2026-10-15 — awaiting approval gate) | PostGIS bbox/near queries, Leaflet map, HMAC coord fuzzing, V3 geography index; live smoke + IT hardening caught 1 real bug (sorted Pageable → 500) — fixed |
 
 ## Environment notes
 

@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.9.0] — 2026-10-15
+### Phase 8 - Geographic capabilities
+Implemented geographic functionality per master spec Phase 8 (SRS FR-11.x, Part 6.4)
+— coordinate validation, PostGIS spatial queries, map interactions, geographic filters,
+location privacy, indexes, and tests. **Approval gate pending.**
+
+**Backend — geographic primitives (new `com.mtaafix.common.geo`)**
+- `LocationGeneralizer` — public location fuzzing (FR-11.4): deterministic
+  HMAC-SHA256(reportId, `geo.fuzz-secret`) offset, distance uniform 150–600 m
+  (`geo.fuzz-min-meters`/`geo.fuzz-max-meters`, env `GEO_FUZZ_*`), uniform bearing;
+  same report → same public point on every request. Applied to **all** public
+  locations (stronger than FR-11.4's "sensitive categories" wording — disclosed for
+  owner review at the gate)
+- `GeoJsonPoint` — GeoJSON Point (FR-11.5), coordinates `[lng, lat]`; exact on
+  authorized `ReportDto`, fuzzed on both public DTOs
+- `GeoBounds`/`NearSearch` — parse+validate `bbox=minLon,minLat,maxLon,maxLat` and
+  `near=lat,lon,radiusKm` (max 500 km); mutually exclusive → 400
+- Null-island (0,0) rejected → 400 `BAD_REQUEST` on report create/update
+  (FR-11.2 implausibility guard)
+
+**Backend — spatial queries (PostgreSQL-only native SQL)**
+- `GET /api/v1/reports/public` gains `bbox` + `near` params: `ST_Intersects`/
+  `ST_MakeEnvelope` (bbox) and `ST_DWithin` geography (near), each with countQuery;
+  H2 suite covers param validation only
+- **Bug found (IT hardening):** the controller always passes a sorted `Pageable`;
+  Hibernate appends `order by r.reportedAt` after the native query's own order-by →
+  `column r.reportedat does not exist` (500). Fixed by stripping sorts in
+  `PublicReportService.unsorted()`; `PostgresIntegrationTest` now exercises the live
+  path through the service, not the repository directly
+- Flyway `V3__report_location_geography_index.sql` — GIST index on
+  `(location::geography)`; `EXPLAIN` verifies both bbox (`idx_reports_location`) and
+  near (`idx_reports_location_geography`) use index scans
+
+**Web (`web/`) — map interactions**
+- New `components/map/ReportMapView` (Leaflet, lazy chunk 151 kB) + `ReportMap`
+  wrapper (Suspense + error boundary + always-present sr-only marker list; jsdom-safe)
+- Explore: list/map toggle, "Search this area" bbox filter, FR-11.4 privacy note;
+  detail: Location section with generalized marker; wizard step 3: tap-to-pick map
+  feeding the location draft
+- Deps: `leaflet` + `react-leaflet`; `npm audit` → 5 dev-only vulns (vite/vitest
+  chain; runtime deps clean) — documented, no forced upgrade
+
+**Tests / verification**
+- Backend `mvn verify` (H2 + live PostGIS): **90/90 green** (new
+  `LocationGeneralizerTest` 11; PG IT 5/5 incl. bbox/near assertions + sorted-Pageable
+  path)
+- Web: lint/typecheck/build green, **36/36 tests** (new: explore map toggle + bbox
+  flow, wizard map pick, detail Location section)
+- Live smoke PG :8085: fuzzing deterministic + differs-from-exact; bbox/near filter
+  correctly (baseline 23 → 12 Dar / 6 Arusha); null-island 400; bbox+near 400;
+  malformed bbox 400; exact `geoJson` on authorized DTO; OpenAPI regenerated with
+  `bbox`/`near`/`geoJson`
+
+**Known follow-ups:** production must set `GEO_FUZZ_SECRET`; `near` radius filter has
+no citizen UI (API-level only); browser-based map verification deferred to Phase 15
+(unit-tested in jsdom here).
+
 ## [0.8.0] — 2026-10-15
 ### Phase 7 - Citizen web application
 **Approved by owner 2026-10-15.** Implemented the authenticated citizen surface (SRS FR-1.x/FR-2.x/FR-7.x/FR-9.x,
