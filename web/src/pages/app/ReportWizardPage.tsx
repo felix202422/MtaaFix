@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Field, TextAreaField, useToast } from '../../design-system';
+import { ReportMap } from '../../components/map/ReportMap';
 import { api, isApiError } from '../../lib/api';
 import type { Category, Location, Report } from '../../lib/types';
 
@@ -266,8 +267,36 @@ export function ReportWizardPage() {
               <Button onClick={useMyLocation} disabled={locBusy} variant="outline">
                 {locBusy ? 'Locating…' : 'Use my location'}
               </Button>
-              <span className="text-sm text-muted">or enter coordinates manually</span>
+              <span className="text-sm text-muted">
+                or tap the map / enter coordinates manually
+              </span>
             </div>
+            <ReportMap
+              points={
+                draft.location
+                  ? [
+                      {
+                        code: 'picked',
+                        title: 'Selected location',
+                        latitude: draft.location.latitude,
+                        longitude: draft.location.longitude,
+                      },
+                    ]
+                  : []
+              }
+              onLocationPick={(latitude, longitude) =>
+                patch({ location: { latitude, longitude, srid: 4326 } })
+              }
+              center={
+                draft.location
+                  ? [draft.location.latitude, draft.location.longitude]
+                  : undefined
+              }
+              zoom={draft.location ? 14 : undefined}
+              height="16rem"
+              hideMarkerList
+              ariaLabel="Tap the map to pick the report location"
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label="Latitude"

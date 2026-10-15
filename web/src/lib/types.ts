@@ -20,6 +20,11 @@ export type ReportStatus =
   | 'REOPENED'
   | 'CLOSED';
 
+export interface GeoJsonPoint {
+  type: 'Point';
+  coordinates: [number, number]; // [longitude, latitude]
+}
+
 export interface PublicReportSummary {
   code: string;
   title: string;
@@ -31,6 +36,7 @@ export interface PublicReportSummary {
   reportedAt: string;
   latitude: number | null;
   longitude: number | null;
+  geoJson?: GeoJsonPoint | null;
 }
 
 export interface PublicTimelineEntry {
@@ -65,6 +71,10 @@ export interface PublicReportFilters {
   categoryId?: string;
   dateFrom?: string;
   dateTo?: string;
+  /** Bounding box "minLon,minLat,maxLon,maxLat" (PostgreSQL spatial query). */
+  bbox?: string;
+  /** Radius search "lat,lon,radiusKm" (PostgreSQL spatial query). */
+  near?: string;
   page?: number;
   size?: number;
 }
@@ -142,6 +152,7 @@ export interface Report {
   title: string;
   description: string | null;
   location: Location | null;
+  geoJson?: GeoJsonPoint | null;
   reportedAt: string;
   status: ReportStatus;
   score: number | null;

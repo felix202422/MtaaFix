@@ -53,7 +53,12 @@ describe('PublicReportDetailPage', () => {
     expect(screen.getByText('-6.82, 39.21')).toBeInTheDocument();
     expect(screen.getByText(/none is available for this report yet/i)).toBeInTheDocument();
 
-    const timeline = screen.getByRole('list');
+    expect(screen.getByRole('heading', { level: 2, name: /^location$/i })).toBeInTheDocument();
+    expect(screen.getByText(/generalized location/i)).toBeInTheDocument();
+    const markers = screen.getByRole('list', { name: /map markers/i });
+    expect(within(markers).getByText(/-6\.82/)).toBeInTheDocument();
+
+    const timeline = screen.getByRole('list', { name: /status timeline/i });
     expect(within(timeline).getByText('Submitted')).toBeInTheDocument();
     expect(within(timeline).getByText('Verified')).toBeInTheDocument();
     expect(within(timeline).getByText('Resolved')).toBeInTheDocument();

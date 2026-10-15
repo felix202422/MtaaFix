@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Badge, Card, ErrorState, LinkButton, LoadingState } from '../design-system';
+import { ReportMap } from '../components/map/ReportMap';
 import { api, isApiError } from '../lib/api';
 import { formatDate, statusLabel, statusTone } from '../lib/status';
 import type { PublicReportDetail } from '../lib/types';
@@ -99,6 +100,33 @@ export function PublicReportDetailPage() {
         )}
       </dl>
 
+      {report.latitude !== null && report.longitude !== null && (
+        <section className="mt-8" aria-labelledby="map-heading">
+          <h2 id="map-heading" className="text-xl font-bold">
+            Location
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            The marker shows a generalized location (privacy protection, FR-11.4) — it may
+            be up to several hundred metres from the actual report position.
+          </p>
+          <div className="mt-3">
+            <ReportMap
+              points={[
+                {
+                  code: report.code,
+                  title: report.title,
+                  latitude: report.latitude,
+                  longitude: report.longitude,
+                },
+              ]}
+              height="16rem"
+              zoom={14}
+              ariaLabel={`Generalized location of report ${report.code}`}
+            />
+          </div>
+        </section>
+      )}
+
       {report.description && (
         <section className="mt-8" aria-labelledby="description-heading">
           <h2 id="description-heading" className="text-xl font-bold">
@@ -135,7 +163,7 @@ export function PublicReportDetailPage() {
         <h2 id="timeline-heading" className="text-xl font-bold">
           Status timeline
         </h2>
-        <ol className="mt-4 space-y-3">
+        <ol className="mt-4 space-y-3" aria-label="Status timeline">
           {report.timeline.map((entry, index) => (
             <li key={`${entry.status}-${entry.timestamp ?? index}`} className="flex gap-3">
               <span

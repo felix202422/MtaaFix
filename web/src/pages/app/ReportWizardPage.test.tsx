@@ -3,6 +3,18 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderRoute } from '../../test/renderWithRouter';
 
+vi.mock('../../components/map/ReportMap', () => ({
+  ReportMap: ({
+    onLocationPick,
+  }: {
+    onLocationPick?: (latitude: number, longitude: number) => void;
+  }) => (
+    <button type="button" onClick={() => onLocationPick?.(-6.82, 39.2)}>
+      Pick location on map
+    </button>
+  ),
+}));
+
 const fetchMock = vi.fn();
 
 const citizen = {
@@ -70,6 +82,22 @@ describe('report wizard', () => {
     await screen.findByRole('option', { name: /potholes/i });
     expect(screen.getByRole('button', { name: /next/i })).toBeDisabled();
     await user.selectOptions(screen.getByLabelText(/what kind of issue is this/i), 'cat-1');
+    expect(screen.getByRole('button', { name: /next/i })).toBeEnabled();
+  });
+
+  it('picks a location from the map on the location step', async () => {
+    mockBase();
+    renderRoute('/app/reports/new');
+    const user = userEvent.setup();
+    await screen.findByRole('option', { name: /potholes/i });
+    await user.selectOptions(screen.getByLabelText(/what kind of issue is this/i), 'cat-1');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    await user.type(screen.getByLabelText(/title/i), 'Deep pothole on Main St');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    await user.click(screen.getByRole('button', { name: /pick location on map/i }));
+    expect(screen.getByLabelText(/latitude/i)).toHaveValue(-6.82);
+    expect(screen.getByLabelText(/longitude/i)).toHaveValue(39.2);
     expect(screen.getByRole('button', { name: /next/i })).toBeEnabled();
   });
 

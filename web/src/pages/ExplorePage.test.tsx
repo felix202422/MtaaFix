@@ -3,6 +3,20 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderRoute } from '../test/renderWithRouter';
 
+vi.mock('../components/map/ReportMap', () => ({
+  ReportMap: ({
+    onBoundsChange,
+  }: {
+    onBoundsChange?: (bbox: string) => void;
+  }) => (
+    <div>
+      <button type="button" onClick={() => onBoundsChange?.('39.1,-6.9,39.3,-6.7')}>
+        Simulate map bounds change
+      </button>
+    </div>
+  ),
+}));
+
 const fetchMock = vi.fn();
 
 const reportA = {
@@ -104,6 +118,56 @@ describe('ExplorePage', () => {
       expect(screen.queryByText(reportA.title)).not.toBeInTheDocument();
     });
     expect(screen.getByText(reportB.title)).toBeInTheDocument();
+  });
+
+  it('toggles to map view and shows the privacy note', async () => {
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes('/categories/public')) {
+        return Promise.resolve(emptyCategories);
+      }
+      return Promise.resolve(pageOf([reportA]));
+    });
+
+    const user = userEvent.setup();
+    renderExplore();
+    await screen.findByText(reportA.title);
+
+    expect(screen.queryByText(/generalized for privacy/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /map view/i }));
+
+    expect(screen.getByText(/generalized for privacy/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /map view/i }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByText(reportA.title)).not.toBeInTheDocument();
+  });
+
+  it('sends the bbox filter to the API when Search this area is clicked', async () => {
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes('/categories/public')) {
+        return Promise.resolve(emptyCategories);
+      }
+      return Promise.resolve(pageOf([reportA]));
+    });
+
+    const user = userEvent.setup();
+    renderExplore();
+    await screen.findByText(reportA.title);
+
+    await user.click(screen.getByRole('button', { name: /map view/i }));
+    await user.click(screen.getByRole('button', { name: /simulate map bounds change/i }));
+    await user.click(screen.getByRole('button', { name: /search this area/i }));
+
+    await waitFor(() => {
+      const bboxCall = fetchMock.mock.calls
+        .map((call) => call[0] as string)
+        .find(
+          (url) =>
+            url.includes('/reports/public') && decodeURIComponent(url).includes('bbox=39.1,-6.9,39.3,-6.7'),
+        );
+      expect(bboxCall).toBeDefined();
+    });
   });
 
   it('shows the empty state when nothing matches', async () => {

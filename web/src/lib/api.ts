@@ -243,6 +243,8 @@ function toQuery(filters: PublicReportFilters): string {
   if (filters.categoryId) params.set('categoryId', filters.categoryId);
   if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
   if (filters.dateTo) params.set('dateTo', filters.dateTo);
+  if (filters.bbox) params.set('bbox', filters.bbox);
+  if (filters.near) params.set('near', filters.near);
   if (filters.page !== undefined) params.set('page', String(filters.page));
   if (filters.size !== undefined) params.set('size', String(filters.size));
   const query = params.toString();

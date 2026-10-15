@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState } from '../design-system';
+import { ReportMap } from '../components/map/ReportMap';
 import { api } from '../lib/api';
 import { formatDate, statusLabel, statusTone } from '../lib/status';
 import type { PublicCategory, PublicReportSummary, ReportStatus } from '../lib/types';
@@ -40,6 +41,9 @@ export function ExplorePage() {
   const [categoryId, setCategoryId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [bbox, setBbox] = useState('');
+  const [pendingBbox, setPendingBbox] = useState('');
+  const [view, setView] = useState<'list' | 'map'>('list');
   const [page, setPage] = useState(0);
   const [categories, setCategories] = useState<PublicCategory[]>([]);
   const [feed, setFeed] = useState<FeedState>({ kind: 'loading' });
@@ -58,9 +62,10 @@ export function ExplorePage() {
     const controller = new AbortController();
     setFeed({ kind: 'loading' });
     api
-      .getPublicReports({ q, status, categoryId, dateFrom, dateTo, page, size: PAGE_SIZE }, {
-        signal: controller.signal,
-      })
+      .getPublicReports(
+        { q, status, categoryId, dateFrom, dateTo, bbox: bbox || undefined, page, size: PAGE_SIZE },
+        { signal: controller.signal },
+      )
       .then((data) =>
         setFeed({
           kind: 'ready',
@@ -78,7 +83,7 @@ export function ExplorePage() {
         });
       });
     return () => controller.abort();
-  }, [q, status, categoryId, dateFrom, dateTo, page, retryKey]);
+  }, [q, status, categoryId, dateFrom, dateTo, bbox, page, retryKey]);
 
   const submitSearch = useCallback(
     (event: FormEvent) => {
@@ -96,10 +101,34 @@ export function ExplorePage() {
     setCategoryId('');
     setDateFrom('');
     setDateTo('');
+    setBbox('');
+    setPendingBbox('');
     setPage(0);
   }, []);
 
-  const hasFilters = q !== '' || status !== '' || categoryId !== '' || dateFrom !== '' || dateTo !== '';
+  const applyThisArea = useCallback(() => {
+    setPage(0);
+    setBbox(pendingBbox);
+  }, [pendingBbox]);
+
+  const hasFilters =
+    q !== '' ||
+    status !== '' ||
+    categoryId !== '' ||
+    dateFrom !== '' ||
+    dateTo !== '' ||
+    bbox !== '';
+
+  const mapPoints = feed.kind === 'ready'
+    ? feed.content
+        .filter((report) => report.latitude !== null && report.longitude !== null)
+        .map((report) => ({
+          code: report.code,
+          title: report.title,
+          latitude: report.latitude as number,
+          longitude: report.longitude as number,
+        }))
+    : [];
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -226,10 +255,56 @@ export function ExplorePage() {
       )}
       {feed.kind === 'ready' && (
         <>
-          <p className="mt-6 text-sm text-muted" role="status">
-            {feed.totalElements} report{feed.totalElements === 1 ? '' : 's'} found
-          </p>
-          {feed.content.length === 0 ? (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted" role="status">
+              {feed.totalElements} report{feed.totalElements === 1 ? '' : 's'} found
+            </p>
+            <div
+              className="flex items-center gap-2"
+              role="group"
+              aria-label="Result view"
+            >
+              <Button
+                size="sm"
+                variant={view === 'list' ? 'primary' : 'outline'}
+                aria-pressed={view === 'list'}
+                onClick={() => setView('list')}
+              >
+                List view
+              </Button>
+              <Button
+                size="sm"
+                variant={view === 'map' ? 'primary' : 'outline'}
+                aria-pressed={view === 'map'}
+                onClick={() => setView('map')}
+              >
+                Map view
+              </Button>
+            </div>
+          </div>
+          {view === 'map' && (
+            <div className="mt-4">
+              {pendingBbox !== '' && pendingBbox !== bbox && (
+                <div className="mb-3">
+                  <Button size="sm" onClick={applyThisArea}>
+                    Search this area
+                  </Button>
+                </div>
+              )}
+              <ReportMap
+                points={mapPoints}
+                onBoundsChange={setPendingBbox}
+                ariaLabel="Map of community reports (generalized locations)"
+              />
+              <p className="mt-2 text-xs text-muted">
+                Marker positions are generalized for privacy (FR-11.4) and may be up to
+                several hundred metres from the actual location. Pan or zoom, then use
+                &ldquo;Search this area&rdquo; to filter by the visible map extent.
+              </p>
+            </div>
+          )}
+          {view === 'list' &&
+            (feed.content.length === 0 ? (
             <EmptyState
               title="No reports match these filters"
               description="Try broadening the search or clearing the filters."
@@ -274,8 +349,8 @@ export function ExplorePage() {
                 </li>
               ))}
             </ul>
-          )}
-          {feed.totalPages > 1 && (
+          ))}
+          {feed.totalPages > 1 && view === 'list' && (
             <nav
               aria-label="Pagination"
               className="mt-8 flex items-center justify-between gap-4"
