@@ -7,7 +7,7 @@ analyzer, or file presence) — not intentions.
 
 ## [0.8.0] — 2026-10-15
 ### Phase 7 - Citizen web application
-Implemented the authenticated citizen surface (SRS FR-1.x/FR-2.x/FR-7.x/FR-9.x,
+**Approved by owner 2026-10-15.** Implemented the authenticated citizen surface (SRS FR-1.x/FR-2.x/FR-7.x/FR-9.x,
 Part 10 pages 8–13) per the approved Phase 7 plan (6 owner-confirmed decisions).
 
 **Backend — citizen gaps**

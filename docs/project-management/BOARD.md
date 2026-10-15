@@ -5,9 +5,9 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-15.
 
-## Current phase: Phase 7 COMPLETE (2026-10-15) — awaiting approval gate; next: Phase 8 (on approval)
+## Current phase: Phase 7 APPROVED (2026-10-15) — next: Phase 8 (in progress)
 
-## Phase 7 — Citizen web application (COMPLETE — awaiting approval gate)
+## Phase 7 — Citizen web application (COMPLETE — APPROVED 2026-10-15)
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -26,7 +26,7 @@ Last updated: 2026-10-15.
 | Bug: code counter collision | DONE | seeded codes beat counter → 500; bootstrapped from max `MTF-` serial at startup |
 | Bug: oversize upload 500 | DONE | Tomcat 1MB default fired pre-check → Spring multipart limits + 413 handler |
 | Docs sync (CHANGELOG/ROADMAP/BACKLOG/API_DESIGN) | DONE | 0.8.0 entry; Phase 7 sections; B-7.1–7.4 DONE with delivery notes |
-| Phase 7 report + approval gate | IN PROGRESS | Part 17 report → commit/push → stop for owner approval |
+| Phase 7 report + approval gate | DONE | Approved by owner 2026-10-15; docs flipped to APPROVED |
 
 ## Phase 6 — Public website (COMPLETE — APPROVED 2026-10-15)
 

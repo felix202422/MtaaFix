@@ -10,7 +10,7 @@
 
 - **[0.8.0]** — Phase 7: citizen web application (auth layer, 6 citizen pages, profile
   update, T8 cancel, multipart photo upload/streaming, dashboard attention; 73/73 + 3/3
-  backend, 33/33 web) — 2026-10-15
+  backend, 33/33 web) — **APPROVED** 2026-10-15
 - **[0.7.0]** — Phase 6: public website (4 public pages, public APIs, privacy review; 22/22 web tests) — **APPROVED** 2026-10-15
 - **[0.6.0]** — Phase 5: core reporting workflow (12-state lifecycle machine, category-driven
   create, unique MTF codes, comments/media, full lifecycle endpoint set; 49/49 + 3/3 tests) — **APPROVED** 2026-10-14
@@ -37,7 +37,7 @@
 | 4 | Authentication and authorization | ✅ Complete (**APPROVED** 2026-10-14) — matrix gates, DB role lookup, scoping; tests 41/41 + 3/3 PG |
 | 5 | Core reporting workflow | ✅ Complete (**APPROVED** 2026-10-14) — 12-state machine, unique codes, comments/media; 49/49 + 3/3 tests |
 | 6 | Public website | ✅ Complete (**APPROVED** 2026-10-15) — 4 public pages, public APIs, privacy review; 22/22 web tests |
-| 7 | Citizen web application | ✅ Complete (2026-10-15) — auth layer, 6 citizen pages; 73/73 + 3/3 backend, 33/33 web |
+| 7 | Citizen web application | ✅ Complete (**APPROVED** 2026-10-15) — auth layer, 6 citizen pages; 73/73 + 3/3 backend, 33/33 web |
 
 Post-MVP: Phases 8–23 below.
 
@@ -151,7 +151,7 @@ and fixed a `lower(bytea)`/untyped-Instant-null query bug H2 could not see.
 - Exit: ✅ public users can navigate the site and view only authorized public information
 - **Gate: APPROVED by owner 2026-10-15 — Phase 7 may start**
 
-## Phase 7 — Citizen Web Application (COMPLETE — awaiting approval gate)
+## Phase 7 — Citizen Web Application (COMPLETE — APPROVED 2026-10-15)
 
 Pages 8–13 (dashboard, 4-step report wizard, my reports, tracking, notifications,
 profile) per SRS §3.2/3.6/3.7, plus login/register. Real API integration only.
@@ -192,7 +192,7 @@ Delivered 2026-10-15:
   lint/typecheck/build/test green (33/33); live smoke on PG (8085) covering
   register → login → create → photo upload → tracking → profile update →
   cancel → refresh, plus 401/403/400/409/oversize paths.
-- **Gate: awaiting owner approval — Phase 8 may start on approval**
+- **Gate: APPROVED by owner 2026-10-15 — Phase 8 may start**
 
 ## Phase 8 — Geographic Capabilities (NOT STARTED)
 
@@ -289,7 +289,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 4 | Complete (approved) |
 | 5 | Complete (approved) |
 | 6 | Complete (approved) |
-| 7 | Complete (2026-10-15 — awaiting approval gate) |
+| 7 | Complete (approved) |
 | 8–10 | Not started |
 | 11 | Partial (scaffold) |
 | 12 | Not started |
