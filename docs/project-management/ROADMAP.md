@@ -8,6 +8,10 @@
 
 ## Version History
 
+- **[0.8.0]** — Phase 7: citizen web application (auth layer, 6 citizen pages, profile
+  update, T8 cancel, multipart photo upload/streaming, dashboard attention; 73/73 + 3/3
+  backend, 33/33 web) — 2026-10-15
+- **[0.7.0]** — Phase 6: public website (4 public pages, public APIs, privacy review; 22/22 web tests) — **APPROVED** 2026-10-15
 - **[0.6.0]** — Phase 5: core reporting workflow (12-state lifecycle machine, category-driven
   create, unique MTF codes, comments/media, full lifecycle endpoint set; 49/49 + 3/3 tests) — **APPROVED** 2026-10-14
 - **[0.5.0]** — Phase 4: authentication & authorization enforcement (matrix gates, DB role lookup, org/ownership scoping, audit wiring; 41/41 + 3/3 tests) — **APPROVED** 2026-10-14
@@ -33,7 +37,7 @@
 | 4 | Authentication and authorization | ✅ Complete (**APPROVED** 2026-10-14) — matrix gates, DB role lookup, scoping; tests 41/41 + 3/3 PG |
 | 5 | Core reporting workflow | ✅ Complete (**APPROVED** 2026-10-14) — 12-state machine, unique codes, comments/media; 49/49 + 3/3 tests |
 | 6 | Public website | ✅ Complete (**APPROVED** 2026-10-15) — 4 public pages, public APIs, privacy review; 22/22 web tests |
-| 7 | Citizen web application | Not started |
+| 7 | Citizen web application | ✅ Complete (2026-10-15) — auth layer, 6 citizen pages; 73/73 + 3/3 backend, 33/33 web |
 
 Post-MVP: Phases 8–23 below.
 
@@ -147,10 +151,48 @@ and fixed a `lower(bytea)`/untyped-Instant-null query bug H2 could not see.
 - Exit: ✅ public users can navigate the site and view only authorized public information
 - **Gate: APPROVED by owner 2026-10-15 — Phase 7 may start**
 
-## Phase 7 — Citizen Web Application (NOT STARTED)
+## Phase 7 — Citizen Web Application (COMPLETE — awaiting approval gate)
 
 Pages 8–13 (dashboard, 4-step report wizard, my reports, tracking, notifications,
-profile) per SRS §3.2/3.6/3.7. Real API integration only; ownership tests.
+profile) per SRS §3.2/3.6/3.7, plus login/register. Real API integration only.
+
+Delivered 2026-10-15:
+- [x] Backend citizen gaps closed: `PUT /auth/me` profile update (fullName/mobile
+  only), `POST /reports/{id}/cancel` (T8: creator + SUBMITTED → REJECTED,
+  `CANCELLED_BY_CITIZEN`), multipart `POST /reports/{id}/media/upload` with
+  MIME allowlist + magic-byte + ≤20 MiB checks, `GET /media/{id}/content`
+  authenticated streaming, `DELETE /media/{id}` (removes file too)
+- [x] Real photo storage on local disk (`./uploads`, UUID names) — documented
+  Phase 13 placeholder owner decision
+- [x] Dashboard attention data (FR-7.4): `needsInfoCount`,
+  `resolvedAwaitingConfirmCount`, `activeCount`, `attentionReports[]` (cap 5)
+- [x] Web auth layer: `AuthProvider` + `useAuth()`, token pair in localStorage
+  with silent refresh-once-on-401 (B-7.1 AC), `<RequireAuth>` guard, header
+  user menu, `/login`, `/register`, `/forgot-password` (info-only, Phase 13)
+- [x] 6 citizen pages under `/app`: dashboard (attention + stat cards), 4-step
+  wizard (draft in localStorage, MTF ref on success, geolocation "use my
+  location" + manual lat/lng, photo upload with 20 MiB guard), my reports
+  (pagination), tracking (timeline, comments, evidence blobs, edit/cancel/
+  confirm/dispute/resubmit eligibility), notifications (read / read-all),
+  profile (name + mobile)
+- [x] Tests: `CitizenApiTest` (11) covering profile/T8/upload authz + validation/
+  dashboard attention; web `Phase7.test.tsx` (6) + `ReportWizardPage.test.tsx`
+  (5) covering auth flow, wizard validation/submit, mark-read, profile,
+  ownership errors
+- Bug found by live smoke: report-code counter collided with pre-existing
+  seeded codes → 500 on create. Fixed by bootstrapping the counter from the
+  max existing `MTF-` serial at startup.
+- Bug found by live smoke: oversize upload returned 500 (Tomcat default 1 MB
+  limit fired before the 20 MiB check). Fixed with Spring multipart limits
+  (21 MB file / 25 MB request) + `MaxUploadSizeExceededException` → 413 handler.
+- Deferrals (owner decisions): password change/reset → Phase 13;
+  notification prefs/privacy options → Phase 13; map view → Phase 8;
+  org features → Phase 9.
+- Verification: backend `mvn verify` green (73 H2 + 3/3 PG); web
+  lint/typecheck/build/test green (33/33); live smoke on PG (8085) covering
+  register → login → create → photo upload → tracking → profile update →
+  cancel → refresh, plus 401/403/400/409/oversize paths.
+- **Gate: awaiting owner approval — Phase 8 may start on approval**
 
 ## Phase 8 — Geographic Capabilities (NOT STARTED)
 
@@ -246,8 +288,8 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 3 | Complete (approved) |
 | 4 | Complete (approved) |
 | 5 | Complete (approved) |
-| 6 | Not started |
-| 7 | Not started |
+| 6 | Complete (approved) |
+| 7 | Complete (2026-10-15 — awaiting approval gate) |
 | 8–10 | Not started |
 | 11 | Partial (scaffold) |
 | 12 | Not started |

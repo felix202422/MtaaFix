@@ -165,27 +165,46 @@ Dependencies flow: Phase 2 ∥ Phase 3 → Phase 4 → Phase 5 → Phase 6 → P
 
 ## Phase 7 — Citizen web
 
-### B-7.1 Auth pages (login/register)
+All four items **delivered 2026-10-15** (see CHANGELOG 0.8.0; approval gate pending).
+
+### B-7.1 Auth pages (login/register) — DONE
 - **AC:** Real `/auth/*` integration; token storage strategy documented; duplicate
   email error surfaced; logout clears session.
 - **Phase:** 7 · **Depends:** B-6.1, B-4.1
+- **Delivered:** `AuthProvider` + `/login` + `/register`; access+refresh in localStorage
+  with silent refresh-once-on-401 (single in-flight refresh; session dropped when
+  refresh fails); server error messages (incl. duplicate email 409) surfaced inline;
+  logout calls `/auth/logout` and clears tokens. `/forgot-password` is info-only
+  (password self-service → Phase 13 / B-X.1).
 
-### B-7.2 Report wizard (4 steps)
+### B-7.2 Report wizard (4 steps) — DONE
 - **AC:** Category from API; location via map or pin; photo upload with client+server
   validation; review step; success shows MTF reference; draft protection against
   double-submit.
 - **Phase:** 7 · **Depends:** B-5.4, B-2.2
+- **Delivered:** categories from `GET /categories`; location via browser geolocation
+  ("Use my location") + manual lat/lng (map tiles → Phase 8, owner decision); photo
+  client validation (type + 20 MiB) + server MIME/magic-byte/size checks; review step;
+  success shows MTF code; draft persists in localStorage and the submit button is
+  disabled while in flight (double-submit guarded).
 
-### B-7.3 My Reports / Tracking / Notifications / Profile
+### B-7.3 My Reports / Tracking / Notifications / Profile — DONE
 - **AC:** List paginated+filterable; timeline shows full history; confirm/dispute
   actions appear only in eligible states; notifications mark-read works; profile edit
   own-only.
 - **Phase:** 7 · **Depends:** B-7.1, B-5.1
+- **Delivered:** paginated `/app/reports`; full `statusHistory` timeline + comments +
+  evidence (authenticated blobs); action eligibility driven by status (cancel in
+  SUBMITTED, confirm/dispute in RESOLVED, resubmit in NEEDS_INFORMATION); mark-read
+  + mark-all; `PUT /auth/me` edits name/mobile only, own account only (403 tests).
 
-### B-7.4 Citizen dashboard
+### B-7.4 Citizen dashboard — DONE
 - **AC:** Real stats from `/dashboard/me`; attention-required panel driven by
   NEEDS_INFORMATION/dispute states; no fabricated numbers (FR-7.4).
 - **Phase:** 7 · **Depends:** B-7.1
+- **Delivered:** backend extended with `needsInfoCount`, `resolvedAwaitingConfirmCount`,
+  `activeCount`, `attentionReports[]` (cap 5, needs-info + resolved awaiting confirm)
+  from real queries; dashboard renders only API data.
 
 ---
 

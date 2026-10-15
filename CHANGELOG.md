@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.8.0] — 2026-10-15
+### Phase 7 - Citizen web application
+Implemented the authenticated citizen surface (SRS FR-1.x/FR-2.x/FR-7.x/FR-9.x,
+Part 10 pages 8–13) per the approved Phase 7 plan (6 owner-confirmed decisions).
+
+**Backend — citizen gaps**
+- `PUT /api/v1/auth/me` — profile update (fullName + mobile only; blank name
+  → 400; email/password not editable here)
+- `POST /api/v1/reports/{id}/cancel` — T8 citizen cancel: creator-only (403),
+  SUBMITTED only (409), → REJECTED with `CANCELLED_BY_CITIZEN`, history +
+  creator notification + `REPORT_CANCELLED` audit
+- `POST /api/v1/reports/{id}/media/upload` (multipart) — real photo upload:
+  MIME allowlist (jpeg/png/webp), magic-byte check, ≤20 MiB, stored on local
+  disk under `./uploads` (UUID names; documented Phase 13 placeholder);
+  JSON-body `/media` kept for backward compatibility
+- `GET /api/v1/media/{id}/content` — authenticated byte streaming with
+  ownership/moderation checks (FR-9.3); `DELETE /media/{id}` now also removes
+  the stored file
+- `GET /api/v1/dashboard/me` extended (FR-7.4): `needsInfoCount`,
+  `resolvedAwaitingConfirmCount`, `activeCount`, `attentionReports[]` (cap 5)
+- `application.yml`: `media.storage-dir`, Spring multipart limits
+  (21 MB file / 25 MB request)
+
+**Web (`web/`) — auth layer + 6 citizen pages**
+- `AuthProvider`/`useAuth()`, `RequireAuth` guard, header user menu; access +
+  refresh tokens in localStorage with **silent refresh-once-on-401** in the API
+  client (single in-flight refresh; session dropped on refresh failure) —
+  token strategy documented per B-7.1 AC
+- Pages: `/login`, `/register`, `/forgot-password` (info-only until Phase 13),
+  and `/app` (dashboard with attention list + stat cards), `/app/reports/new`
+  (4-step wizard: category → details → location/photo → review; draft in
+  localStorage; geolocation "Use my location" + manual lat/lng; MTF reference
+  on success), `/app/reports` (paginated), `/app/reports/:id` (timeline,
+  comments, authenticated evidence blobs, cancel/confirm/dispute/resubmit
+  eligibility), `/app/notifications` (read / read-all), `/app/profile`
+  (name + mobile)
+- Tests: `Phase7.test.tsx` (6: login success/error, profile update/blank,
+  mark-read, 403 surfacing) + `ReportWizardPage.test.tsx` (5: step gating,
+  submit payload, oversize rejection, ownership error); suite 33/33
+
+**Bugs found by the live smoke (not visible under H2/unit tests)**
+- Report-code counter collided with pre-existing seeded codes → 500 on create;
+  fixed by bootstrapping the counter from the max existing `MTF-` serial at
+  startup (`ReportRepository.findMaxReportSerial` + initializer)
+- Oversize upload returned 500 — Tomcat's default 1 MB multipart limit threw
+  before the service's 20 MiB check; fixed with Spring multipart limits and a
+  `MaxUploadSizeExceededException` → 413 handler (service still returns 400
+  for files that pass the container limit but exceed 20 MiB)
+
+**Verified:** backend `mvn verify` green (73 H2 tests + 3/3 PG integration);
+web lint/typecheck/build/test green (33 tests); live smoke on PG (port 8085):
+register → login → create → photo upload → content stream → my reports →
+dashboard → profile update → notifications → cancel → refresh, plus wrong
+password 401, bad token 401, GIF/magic-byte/oversize 400 paths.
+Deferrals (owner decisions): password change/reset → 13, notification prefs
+→ 13, map → 8, org features → 9.
+
+
 ## [0.7.0] — 2026-10-15
 ### Phase 6 - Public website
 **Approved by owner 2026-10-15.** Implemented the public transparency surface

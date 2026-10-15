@@ -5,7 +5,28 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-15.
 
-## Current phase: Phase 6 APPROVED (2026-10-15) — next: Phase 7 (not started)
+## Current phase: Phase 7 COMPLETE (2026-10-15) — awaiting approval gate; next: Phase 8 (on approval)
+
+## Phase 7 — Citizen web application (COMPLETE — awaiting approval gate)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Record Phase 6 approval | DONE | Approved 2026-10-15 |
+| Owner decisions (6) | DONE | localStorage+silent-refresh, local disk uploads, geolocation+manual coords, PUT /auth/me now, T8 cancel now, dashboard attention now |
+| Backend: PUT /auth/me | DONE | fullName + mobile only; blank → 400 |
+| Backend: T8 cancel | DONE | creator-only, SUBMITTED → REJECTED `CANCELLED_BY_CITIZEN`, history + notification + audit |
+| Backend: multipart upload | DONE | `POST /reports/{id}/media/upload`, MIME allowlist + magic bytes + ≤20 MiB, local `./uploads` disk store |
+| Backend: media content/stream | DONE | `GET /media/{id}/content` authenticated bytes; DELETE removes file too |
+| Backend: dashboard attention | DONE | needsInfoCount / resolvedAwaitingConfirmCount / activeCount / attentionReports[] (cap 5) |
+| Web auth layer | DONE | AuthProvider, RequireAuth, user menu, tokens localStorage + silent refresh-once-on-401 |
+| Web pages 8–13 | DONE | dashboard, 4-step wizard (draft + geolocation + photo), my reports, tracking, notifications, profile; login/register/forgot-password info |
+| Backend tests | DONE | `CitizenApiTest` 11; full suite 73 H2 + 3/3 PG green (`mvn verify`) |
+| Web tests | DONE | Phase7 (6) + wizard (5); suite 33/33; lint/typecheck/build green |
+| Live smoke on PG | DONE | port 8085: full citizen journey + 401/400/409/oversize paths |
+| Bug: code counter collision | DONE | seeded codes beat counter → 500; bootstrapped from max `MTF-` serial at startup |
+| Bug: oversize upload 500 | DONE | Tomcat 1MB default fired pre-check → Spring multipart limits + 413 handler |
+| Docs sync (CHANGELOG/ROADMAP/BACKLOG/API_DESIGN) | DONE | 0.8.0 entry; Phase 7 sections; B-7.1–7.4 DONE with delivery notes |
+| Phase 7 report + approval gate | IN PROGRESS | Part 17 report → commit/push → stop for owner approval |
 
 ## Phase 6 — Public website (COMPLETE — APPROVED 2026-10-15)
 
@@ -122,7 +143,8 @@ Last updated: 2026-10-15.
 | Phase 4 - AuthN/Z | Complete (approved 2026-10-14) | Matrix enforcement + scoping + audit + tests done |
 | Phase 5 - Core reporting workflow | Complete (approved 2026-10-14) | 12-state machine, unique codes, comments/media, lifecycle endpoints; deferrals noted in report |
 | Phase 6 - Public website | Complete (approved 2026-10-15) | 4 public pages + public APIs + privacy; real-PG smoke caught/fixed H2-masked query bug |
-| Phase 7 - Citizen web | READY | Blocked only by Phase 6 gate |
+| Phase 7 - Citizen web | Complete (2026-10-15 — awaiting approval gate) | Auth layer + 6 citizen pages; profile/T8-cancel/multipart/dashboard-attention backend; live smoke caught 2 real bugs (code counter, oversize 500) — both fixed |
+| Phase 8 - Geographic capabilities | Blocked by Phase 7 gate | PostGIS queries, Leaflet map, coord fuzzing |
 
 ## Environment notes
 

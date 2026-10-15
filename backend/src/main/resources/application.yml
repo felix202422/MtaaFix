@@ -7,6 +7,11 @@ server:
 spring:
   application:
     name: mtaafix
+  servlet:
+    multipart:
+      max-file-size: ${SPRING_MULTIPART_MAX_FILE_SIZE:21MB}
+      max-request-size: ${SPRING_MULTIPART_MAX_REQUEST_SIZE:25MB}
+      file-size-threshold: 0
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/mtaafix?currentSchema=public&ssl=false}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}

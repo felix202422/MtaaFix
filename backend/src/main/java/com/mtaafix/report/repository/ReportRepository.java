@@ -91,6 +91,10 @@ public interface ReportRepository extends JpaRepository<Report, String> {
 
     long countByStatus(Status status);
 
+    @Query("select max(cast(substring(r.code, 10) as int)) from Report r "
+            + "where r.code like 'MTF-%'")
+    Integer findMaxReportSerial();
+
     @Query("select r from Report r left join fetch r.assignment a where a.assignee.id = :assigneeId")
     List<Report> findReportsByAssigneeId(@Param("assigneeId") String assigneeId);
 

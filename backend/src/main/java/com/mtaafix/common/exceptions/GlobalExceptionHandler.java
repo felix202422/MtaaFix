@@ -142,6 +142,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiError);
     }
 
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> handleMaxUploadSize(
+            org.springframework.web.multipart.MaxUploadSizeExceededException ex,
+            WebRequest request) {
+        log.warn("Upload too large: {} - {}", ex.getMessage(), request.getDescription(false));
+        ApiError apiError = ApiError.of(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "PAYLOAD_TOO_LARGE",
+                "Media size must not exceed 20 MiB (FR-9.2).",
+                request.getDescription(false),
+                Map.of());
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(apiError);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleAll(Exception ex, WebRequest request) {
         log.error("Unhandled error", ex);

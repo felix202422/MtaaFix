@@ -26,11 +26,12 @@
 | Validation | Bean Validation on DTOs → 400 `VALIDATION_ERROR` with field details |
 | State conflicts | Invalid lifecycle transition → 409 `INVALID_STATUS_TRANSITION` |
 | Not found | 404 `RESOURCE_NOT_FOUND` |
+| Payload too large | 413 `PAYLOAD_TOO_LARGE` (Spring multipart limit, Phase 7); files ≤ container limit but > 20 MiB → 400 from service check |
 | Unauthorized / forbidden | 401 (no/invalid token; codes `INVALID_TOKEN`, `INVALID_CREDENTIALS`, `UNAUTHORIZED`) / 403 (insufficient role or scope; codes `FORBIDDEN`, `ACCOUNT_INACTIVE`) |
 | Rate limits | Not yet implemented; assessment Phase 17 (NFR-7) |
 | CORS | Configured origins only (`CORS_ALLOWED_ORIGINS`) |
 
-## 2. Implemented endpoints (verified in code, 2026-10-14)
+## 2. Implemented endpoints (verified in code, 2026-10-15)
 
 ### Auth — `AuthController`
 | Method & path | Auth | Role | Notes |
@@ -40,6 +41,7 @@
 | POST `/auth/refresh` | Public (refresh token body) | — | Rotates tokens |
 | POST `/auth/logout` | Refresh token body | — | Invalidates refresh token |
 | GET `/auth/me` | Bearer | Any | Current user profile |
+| PUT `/auth/me` | Bearer | Any (own account) | Update `fullName`/`mobile` only (Phase 7); blank name → 400; email/password not editable here |
 
 ### Reports — `ReportController`
 | Method & path | Auth | Role | Notes |
@@ -51,6 +53,7 @@
 | POST `/reports/{id}/submit` | Bearer | Moderator/admin (T2/T17) | Enforced (Phase 4): MODERATOR or ADMINISTRATOR; also claims REOPENED→UNDER_REVIEW |
 | POST `/reports/{id}/needs-info` | Bearer | Moderator/admin (T3) | `NeedsInfoRequest.message` required (Phase 5) |
 | POST `/reports/{id}/resubmit` | Bearer | Citizen creator (T4) | Only from NEEDS_INFORMATION (Phase 5) |
+| POST `/reports/{id}/cancel` | Bearer | Citizen creator (T8) | Only SUBMITTED; → REJECTED with `CANCELLED_BY_CITIZEN`, history + notification + audit (Phase 7) |
 | POST `/reports/{id}/verify` | Bearer | Moderator/admin (T5) | Enforced (Phase 4): MODERATOR or ADMINISTRATOR |
 | POST `/reports/{id}/reject` | Bearer | Moderator/admin (T6) | `RejectReportRequest.reasonCode` required; comment optional (Phase 5) |
 | POST `/reports/{id}/duplicate` | Bearer | Moderator/admin (T7) | `canonicalReportRef` = report id or code; notes link on canonical (Phase 5) |
@@ -65,7 +68,13 @@
 | POST `/reports/{id}/reopen` | Bearer | Admin (T16) | `justification` required; CLOSED→REOPENED (Phase 5) |
 | POST `/reports/{id}/comments` | Bearer | Report readers (creator/staff), FR-2.8 | `CreateCommentRequest.content` required; notifies creator (Phase 5) |
 | POST `/reports/{id}/media` | Bearer | Report readers, FR-9.1 | Metadata only; MIME allowlist + ≤20 MiB, PHOTO for completion (FR-9.2) (Phase 5) |
-| DELETE `/media/{id}` | Bearer | Uploader (or mod/admin) | 204; storage removal is Phase 13 (Phase 5) |
+| POST `/reports/{id}/media/upload` | Bearer | Report readers, FR-9.1 | Multipart (`file`) photo upload → real disk storage under `media.storage-dir`; MIME allowlist + magic bytes + ≤20 MiB (Phase 7) |
+| DELETE `/media/{id}` | Bearer | Uploader (or mod/admin) | 204; deletes stored file too (Phase 7; was metadata-only in Phase 5) |
+
+### Media — `MediaController` (Phase 7)
+| Method & path | Auth | Role | Notes |
+| ------------- | ---- | ---- | ----- |
+| GET `/media/{id}/content` | Bearer | Report readers (ownership/moderation scope) | Raw bytes (`image/jpeg|png|webp`), inline; authenticated — used by web via blob fetch (FR-9.3) |
 
 ### Categories — `CategoryController`
 | GET `/categories` | Bearer | Any | List |
@@ -76,7 +85,7 @@
 | GET `/assignments/organizations/{orgId}/reports` | Bearer | Org scope | Org reports |
 
 ### Dashboard — `DashboardController`
-| GET `/dashboard/me` | Bearer | Any | Citizen/org aggregation |
+| GET `/dashboard/me` | Bearer | Any | Citizen/org aggregation; Phase 7 adds `needsInfoCount`, `resolvedAwaitingConfirmCount`, `activeCount`, `attentionReports[]` (cap 5) — FR-7.4 |
 | GET `/dashboard/organizations/{id}/stats` | Bearer | Org/admin | |
 | GET `/dashboard/stats` | Bearer | Admin/moderator (matrix row 11) | Global |
 

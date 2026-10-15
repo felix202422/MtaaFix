@@ -25,6 +25,9 @@ dist/
 # Maven
 backend/target/
 
+# Runtime upload storage (local-disk placeholder, Phase 7)
+backend/uploads/
+
 # Flutter / Dart
 mobile/.dart_tool/
 mobile/build/
