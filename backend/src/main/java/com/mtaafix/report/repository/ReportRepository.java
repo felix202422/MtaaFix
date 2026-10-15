@@ -60,6 +60,80 @@ public interface ReportRepository extends JpaRepository<Report, String> {
             """)
     Optional<Report> findPublicByCode(@Param("code") String code);
 
+    // Spatial public filters (FR-11.3/FR-8.3): PostGIS native SQL using the GIST
+    // index on reports.location. PostgreSQL-only — the H2 suite covers parameter
+    // validation but never executes these queries.
+    //
+    // These queries must be called with an UNSORTED Pageable: the ordering is
+    // declared in the SQL below. If the Pageable carries a Sort, Hibernate appends
+    // a second `order by <property>` derived from the Java field name (e.g.
+    // r.reportedAt), which is invalid against the native `r` alias — Postgres then
+    // fails with `column r.reportedat does not exist`. PublicReportService strips
+    // any incoming sort before calling these.
+    @Query(value = """
+            select r.* from reports r
+            where (cast(:status as varchar) is null or r.status = :status)
+            and (:categoryId is null or r.category_id = :categoryId)
+            and (:pattern is null or lower(r.title) like :pattern
+                or (r.description is not null and lower(r.description) like :pattern))
+            and r.reported_at >= :dateFrom
+            and r.reported_at <= :dateTo
+            and r.location is not null
+            and ST_Intersects(r.location,
+                ST_MakeEnvelope(:minLongitude, :minLatitude, :maxLongitude, :maxLatitude, 4326))
+            order by r.reported_at desc
+            """, countQuery = """
+            select count(*) from reports r
+            where (cast(:status as varchar) is null or r.status = :status)
+            and (:categoryId is null or r.category_id = :categoryId)
+            and (:pattern is null or lower(r.title) like :pattern
+                or (r.description is not null and lower(r.description) like :pattern))
+            and r.reported_at >= :dateFrom
+            and r.reported_at <= :dateTo
+            and r.location is not null
+            and ST_Intersects(r.location,
+                ST_MakeEnvelope(:minLongitude, :minLatitude, :maxLongitude, :maxLatitude, 4326))
+            """, nativeQuery = true)
+    Page<Report> findPublicInBbox(@Param("status") String status,
+            @Param("categoryId") String categoryId, @Param("pattern") String pattern,
+            @Param("dateFrom") java.time.Instant dateFrom,
+            @Param("dateTo") java.time.Instant dateTo,
+            @Param("minLongitude") double minLongitude,
+            @Param("minLatitude") double minLatitude,
+            @Param("maxLongitude") double maxLongitude,
+            @Param("maxLatitude") double maxLatitude, Pageable pageable);
+
+    @Query(value = """
+            select r.* from reports r
+            where (cast(:status as varchar) is null or r.status = :status)
+            and (:categoryId is null or r.category_id = :categoryId)
+            and (:pattern is null or lower(r.title) like :pattern
+                or (r.description is not null and lower(r.description) like :pattern))
+            and r.reported_at >= :dateFrom
+            and r.reported_at <= :dateTo
+            and r.location is not null
+            and ST_DWithin(r.location::geography,
+                ST_MakePoint(:longitude, :latitude)::geography, :radiusMeters)
+            order by r.reported_at desc
+            """, countQuery = """
+            select count(*) from reports r
+            where (cast(:status as varchar) is null or r.status = :status)
+            and (:categoryId is null or r.category_id = :categoryId)
+            and (:pattern is null or lower(r.title) like :pattern
+                or (r.description is not null and lower(r.description) like :pattern))
+            and r.reported_at >= :dateFrom
+            and r.reported_at <= :dateTo
+            and r.location is not null
+            and ST_DWithin(r.location::geography,
+                ST_MakePoint(:longitude, :latitude)::geography, :radiusMeters)
+            """, nativeQuery = true)
+    Page<Report> findPublicNear(@Param("status") String status,
+            @Param("categoryId") String categoryId, @Param("pattern") String pattern,
+            @Param("dateFrom") java.time.Instant dateFrom,
+            @Param("dateTo") java.time.Instant dateTo,
+            @Param("latitude") double latitude, @Param("longitude") double longitude,
+            @Param("radiusMeters") double radiusMeters, Pageable pageable);
+
     @Query("select o from Organisation o where o.id = :id")
     Optional<Organisation> findOrganisationById(@Param("id") String id);
 

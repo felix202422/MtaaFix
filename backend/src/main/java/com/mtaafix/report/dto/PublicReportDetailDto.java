@@ -1,5 +1,7 @@
 package com.mtaafix.report.dto;
 
+import com.mtaafix.common.geo.GeoJsonPoint;
+import com.mtaafix.common.geo.LocationGeneralizer;
 import com.mtaafix.report.domain.Report;
 import com.mtaafix.report.domain.ReportStatusHistory;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,14 +19,15 @@ public record PublicReportDetailDto(
         @Schema(description = "Category slug") String categorySlug,
         @Schema(description = "Status") Report.Status status,
         @Schema(description = "Submission date") Instant reportedAt,
-        @Schema(description = "Generalized latitude (2 decimals)") Double latitude,
-        @Schema(description = "Generalized longitude (2 decimals)") Double longitude,
+        @Schema(description = "Generalized latitude (distance fuzzing, FR-11.4)") Double latitude,
+        @Schema(description = "Generalized longitude (distance fuzzing, FR-11.4)") Double longitude,
+        @Schema(description = "Generalized GeoJSON point (fuzzed, FR-11.5)") GeoJsonPoint geoJson,
         @Schema(description = "Resolved timestamp (null until resolved)") Instant resolvedAt,
         @Schema(description = "Closed timestamp (null until closed)") Instant closedAt,
         @Schema(description = "Canonical reference when this report is a duplicate") String duplicateOfCode,
         @Schema(description = "High-level public status timeline") List<PublicTimelineEntryDto> timeline) {
 
-    public static PublicReportDetailDto from(Report r) {
+    public static PublicReportDetailDto from(Report r, LocationGeneralizer generalizer) {
         List<ReportStatusHistory> history = r.getStatusHistory().stream()
                 .filter(PublicReportDetailDto::isPublicTransition)
                 .sorted(Comparator.comparing(ReportStatusHistory::getCreatedAt,
@@ -32,14 +35,17 @@ public record PublicReportDetailDto(
                 .toList();
         Instant resolvedAt = firstAt(history, Report.Status.RESOLVED);
         Instant closedAt = firstAt(history, Report.Status.CLOSED);
+        LocationGeneralizer.GeneralizedLocation geo =
+                generalizer.generalize(r.getId(), r.getLocation());
         return new PublicReportDetailDto(
                 r.getCode(), r.getTitle(), r.getDescription(),
                 r.getCategory() != null ? r.getCategory().getId() : null,
                 r.getCategory() != null ? r.getCategory().getName() : null,
                 r.getCategory() != null ? r.getCategory().getSlug() : null,
                 r.getStatus(), r.getReportedAt(),
-                PublicReportDetailDto.roundCoord(r.getLocation() != null ? r.getLocation().getY() : null),
-                PublicReportDetailDto.roundCoord(r.getLocation() != null ? r.getLocation().getX() : null),
+                geo != null ? geo.latitude() : null,
+                geo != null ? geo.longitude() : null,
+                geo != null ? geo.geoJson() : null,
                 resolvedAt, closedAt,
                 r.getDuplicateOf() != null ? r.getDuplicateOf().getCode() : null,
                 history.stream()
@@ -66,12 +72,5 @@ public record PublicReportDetailDto(
                 .filter(t -> t != null)
                 .min(Comparator.naturalOrder())
                 .orElse(null);
-    }
-
-    static Double roundCoord(Double value) {
-        if (value == null) {
-            return null;
-        }
-        return Math.round(value * 100.0) / 100.0;
     }
 }

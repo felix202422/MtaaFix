@@ -78,11 +78,20 @@ public class ReportService {
         ReportCategory category = reportRepository.findCategoryById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", request.categoryId()));
         Report report = ReportMapper.toEntity(request, category, creator);
+        assertPlausibleLocation(report.getLocation());
         report.setCode(codeGenerator.next());
         report = reportRepository.save(report);
         notifyUser(creator, Type.REPORT_SUBMITTED, report,
                 "Report submitted", "Your report " + report.getCode() + " was submitted.");
         return ReportMapper.toDto(report);
+    }
+
+    /** FR-11.2: reject implausible coordinates (the 0,0 "null island" default). */
+    static void assertPlausibleLocation(org.locationtech.jts.geom.Point location) {
+        if (location != null && location.getX() == 0.0 && location.getY() == 0.0) {
+            throw new IllegalArgumentException(
+                    "Location is implausible (0,0); provide real coordinates.");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -396,7 +405,10 @@ public class ReportService {
         }
         if (request.title() != null) report.setTitle(request.title());
         if (request.description() != null) report.setDescription(request.description());
-        if (request.location() != null) report.setLocation(request.location().toPoint());
+        if (request.location() != null) {
+            assertPlausibleLocation(request.location().toPoint());
+            report.setLocation(request.location().toPoint());
+        }
         if (request.categoryId() != null) {
             ReportCategory category = reportRepository.findCategoryById(request.categoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category", request.categoryId()));

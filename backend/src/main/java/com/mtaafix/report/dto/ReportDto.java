@@ -1,5 +1,6 @@
 package com.mtaafix.report.dto;
 
+import com.mtaafix.common.geo.GeoJsonPoint;
 import com.mtaafix.report.domain.Report;
 import com.mtaafix.report.domain.Report.Status;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -13,7 +14,8 @@ public record ReportDto(
         @Schema(description = "Report code") String code,
         @Schema(description = "Title") String title,
         @Schema(description = "Description") String description,
-        @Schema(description = "Location") LocationDto location,
+        @Schema(description = "Location (exact; authorized surfaces only)") LocationDto location,
+        @Schema(description = "GeoJSON Point (exact, FR-11.5; authorized surfaces only)") GeoJsonPoint geoJson,
         @Schema(description = "Reported at") Instant reportedAt,
         @Schema(description = "Status") Status status,
         @Schema(description = "Score") Integer score,
@@ -27,10 +29,13 @@ public record ReportDto(
         @Schema(description = "Comments") List<ReportCommentDto> comments) {
 
     public static ReportDto from(Report r) {
+        LocationDto location = r.getLocation() != null
+                ? new LocationDto(r.getLocation().getY(), r.getLocation().getX(), null)
+                : null;
         return new ReportDto(
                 r.getId(), r.getCode(), r.getTitle(), r.getDescription(),
-                r.getLocation() != null ? new LocationDto(
-                        r.getLocation().getY(), r.getLocation().getX(), null) : null,
+                location,
+                location != null ? GeoJsonPoint.of(location.latitude(), location.longitude()) : null,
                 r.getReportedAt(), r.getStatus(), r.getScore(),
                 r.getCategory() != null ? r.getCategory().getId() : null,
                 r.getAssignment() != null ? r.getAssignment().getId() : null,

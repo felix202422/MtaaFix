@@ -27,7 +27,8 @@ public class PublicReportController {
         this.publicReportService = publicReportService;
     }
 
-    @Operation(summary = "Public explore feed (search/category/status/date filters, pagination; public fields only)")
+    @Operation(summary = "Public explore feed (search/category/status/date/bbox/near filters, "
+            + "pagination; public fields only, generalized locations per FR-11.4)")
     @GetMapping
     public ResponseEntity<PagedResponse<PublicReportSummaryDto>> list(
             @Parameter(description = "Search in title/description") @RequestParam(required = false) String q,
@@ -35,12 +36,16 @@ public class PublicReportController {
             @Parameter(description = "Category id filter") @RequestParam(required = false) String categoryId,
             @Parameter(description = "Submitted-from date (YYYY-MM-DD)") @RequestParam(required = false) String dateFrom,
             @Parameter(description = "Submitted-to date (YYYY-MM-DD, inclusive)") @RequestParam(required = false) String dateTo,
+            @Parameter(description = "Bounding box 'minLon,minLat,maxLon,maxLat' (PostgreSQL spatial query; "
+                    + "cannot be combined with near)") @RequestParam(required = false) String bbox,
+            @Parameter(description = "Radius search 'lat,lon,radiusKm' (PostgreSQL spatial query; "
+                    + "cannot be combined with bbox)") @RequestParam(required = false) String near,
             @Parameter(description = "Page (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size) {
         int safePage = Math.max(0, page);
         int safeSize = Math.max(1, Math.min(size, 100));
         return ResponseEntity.ok(publicReportService.list(status, categoryId, q, dateFrom, dateTo,
-                PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "reportedAt"))));
+                bbox, near, PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "reportedAt"))));
     }
 
     @Operation(summary = "Public report detail by reference code (public fields only)")

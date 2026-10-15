@@ -159,8 +159,11 @@ class PublicApiTest {
         String detailBody = mockMvc.perform(get("/api/v1/reports/public/" + code))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(code))
-                .andExpect(jsonPath("$.latitude").value(-6.82))
-                .andExpect(jsonPath("$.longitude").value(39.21))
+                .andExpect(jsonPath("$.latitude").isNumber())
+                .andExpect(jsonPath("$.longitude").isNumber())
+                .andExpect(jsonPath("$.geoJson.type").value("Point"))
+                .andExpect(jsonPath("$.geoJson.coordinates").isArray())
+                .andExpect(jsonPath("$.geoJson.coordinates.length()").value(2))
                 .andReturn().getResponse().getContentAsString();
 
         org.junit.jupiter.api.Assertions.assertAll(
@@ -185,6 +188,40 @@ class PublicApiTest {
                 () -> org.junit.jupiter.api.Assertions.assertFalse(
                         detailBody.contains("6.8229") || listBody.contains("39.20841"),
                         "detail must not contain precise coordinates"));
+    }
+
+    @Test
+    void publicLocationIsFuzzedDeterministically() throws Exception {
+        ReportCategory category = readInTx(() -> seedCategory());
+        Report report = readInTx(() -> seedFullDataReport(category, seedUser(),
+                "Deterministic fuzz check", Report.Status.SUBMITTED));
+        String code = report.getCode();
+
+        String first = mockMvc.perform(get("/api/v1/reports/public/" + code))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.latitude").isNumber())
+                .andExpect(jsonPath("$.longitude").isNumber())
+                .andReturn().getResponse().getContentAsString();
+        String second = mockMvc.perform(get("/api/v1/reports/public/" + code))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        com.fasterxml.jackson.databind.JsonNode a = mapper.readTree(first);
+        com.fasterxml.jackson.databind.JsonNode b = mapper.readTree(second);
+        org.junit.jupiter.api.Assertions.assertAll(
+                () -> org.junit.jupiter.api.Assertions.assertEquals(
+                        a.get("latitude").asDouble(), b.get("latitude").asDouble(), 0.0,
+                        "fuzzed latitude must be stable across requests"),
+                () -> org.junit.jupiter.api.Assertions.assertEquals(
+                        a.get("longitude").asDouble(), b.get("longitude").asDouble(), 0.0,
+                        "fuzzed longitude must be stable across requests"),
+                () -> org.junit.jupiter.api.Assertions.assertNotEquals(-6.82299876,
+                        a.get("latitude").asDouble(), 1e-6,
+                        "fuzzed latitude must differ from the precise value"),
+                () -> org.junit.jupiter.api.Assertions.assertNotEquals(39.20841234,
+                        a.get("longitude").asDouble(), 1e-6,
+                        "fuzzed longitude must differ from the precise value"));
     }
 
     @Test
@@ -260,6 +297,49 @@ class PublicApiTest {
 
         mockMvc.perform(get("/api/v1/reports/public")
                         .param("dateFrom", "2026-10-10").param("dateTo", "2026-10-01"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+    }
+
+    @Test
+    void publicListRejectsInvalidGeoFilters() throws Exception {
+        // Malformed / out-of-range / reversed bbox values (parsing is cross-dialect;
+        // happy-path spatial execution is covered by PostgreSQL IT).
+        mockMvc.perform(get("/api/v1/reports/public").param("bbox", "1,2,3"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+
+        mockMvc.perform(get("/api/v1/reports/public").param("bbox", "a,b,c,d"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+
+        mockMvc.perform(get("/api/v1/reports/public")
+                        .param("bbox", "40,-7,39,-6"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+
+        mockMvc.perform(get("/api/v1/reports/public")
+                        .param("bbox", "200,-10,210,-5"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+
+        mockMvc.perform(get("/api/v1/reports/public").param("near", "5,30"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+
+        mockMvc.perform(get("/api/v1/reports/public")
+                        .param("near", "-6.8,39.2,-1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+
+        mockMvc.perform(get("/api/v1/reports/public")
+                        .param("near", "95,39.2,5"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+
+        // bbox and near are mutually exclusive
+        mockMvc.perform(get("/api/v1/reports/public")
+                        .param("bbox", "39,-7,40,-6").param("near", "-6.8,39.2,5"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
     }

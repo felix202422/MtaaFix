@@ -353,4 +353,45 @@ class CitizenApiTest {
                         .header("Authorization", token))
                 .andExpect(status().isNotFound());
     }
+
+    // --- Phase 8: geographic persistence & FR-11.5 GeoJSON ---
+
+    @Test
+    void creatingReportAtNullIslandIsRejected() throws Exception {
+        User citizen = seedUser(User.Role.CITIZEN);
+        String token = bearer(citizen);
+        String categoryId = seedCategory();
+        mockMvc.perform(post("/api/v1/reports")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"categoryId\":\"" + categoryId + "\","
+                                + "\"title\":\"Null island report\","
+                                + "\"description\":\"at 0,0\","
+                                + "\"location\":{\"latitude\":0.0,\"longitude\":0.0,\"srid\":4326}}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void authorizedReportExposesExactLocationAndGeoJson() throws Exception {
+        User citizen = seedUser(User.Role.CITIZEN);
+        String token = bearer(citizen);
+        String categoryId = seedCategory();
+        MvcResult result = mockMvc.perform(post("/api/v1/reports")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"categoryId\":\"" + categoryId + "\","
+                                + "\"title\":\"GeoJSON test report\","
+                                + "\"description\":\"exact location visible to owner\","
+                                + "\"location\":{\"latitude\":-6.82,\"longitude\":39.21,\"srid\":4326}}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.location.latitude").value(-6.82))
+                .andExpect(jsonPath("$.location.longitude").value(39.21))
+                .andExpect(jsonPath("$.geoJson.type").value("Point"))
+                .andExpect(jsonPath("$.geoJson.coordinates[0]").value(39.21))
+                .andExpect(jsonPath("$.geoJson.coordinates[1]").value(-6.82))
+                .andReturn();
+        JsonNode body = MAPPER.readTree(result.getResponse().getContentAsString());
+        org.junit.jupiter.api.Assertions.assertEquals(-6.82,
+                body.get("location").get("latitude").asDouble(), 1e-9);
+    }
 }

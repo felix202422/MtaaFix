@@ -52,6 +52,13 @@ media:
   max-file-size-bytes: ${MEDIA_MAX_FILE_SIZE_BYTES:20971520}
   storage-dir: ${MEDIA_STORAGE_DIR:./uploads}
 
+# Public location generalization (FR-11.4): deterministic HMAC offset per report.
+# Production MUST set GEO_FUZZ_SECRET to a stable secret value.
+geo:
+  fuzz-secret: ${GEO_FUZZ_SECRET:mtaafix-local-dev-geo-fuzz-secret}
+  fuzz-min-meters: ${GEO_FUZZ_MIN_METERS:150}
+  fuzz-max-meters: ${GEO_FUZZ_MAX_METERS:600}
+
 logging:
   level:
     com.mtaafix: ${LOGGING_LEVEL_COM_MTAAFIX:INFO}
