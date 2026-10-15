@@ -93,13 +93,18 @@
 | GET `/actuator/health` | Public | — | Health check |
 | GET `/swagger-ui/**`, `/v3/api-docs/**` | Bearer | ADMINISTRATOR | OpenAPI |
 
+### Public (unauthenticated, CORS-enabled) — Phase 6
+| GET `/reports/public` | Public | — | Explore feed: status/categoryId/q/dateFrom/dateTo filters; coords rounded to 2dp; no identity/media/comments (FR-8.3, FR-8.5) |
+| GET `/reports/public/{code}` | Public | — | Detail by `MTF-YYYY-NNNNNN` code: high-level timeline (status+timestamp only), `duplicateOfCode`, `resolvedAt`/`closedAt` (FR-8.4) |
+| GET `/categories/public` | Public | — | Category filter list |
+| GET `/stats/public` | Public | — | Aggregate counts only: total/submitted/resolved/categories (FR-8.1) |
+
+CORS: `cors.allowed-origins` (env `CORS_ALLOWED_ORIGINS`, default `http://localhost:5173`) applied to `/api/**` — GET/POST/PUT/DELETE/OPTIONS with Authorization/Content-Type/Accept headers.
+
 ## 3. Planned endpoints (SRS-tracked; NOT implemented)
 
 | Method & path | Purpose | SRS | Phase |
 | ------------- | ------- | --- | ----- |
-| GET `/reports/public` | Public explore feed (FR-8.3) | FR-8.3 | 6 |
-| GET `/reports/public/{code}` | Public detail by reference (FR-8.4) | FR-8.4 | 6 |
-| GET `/categories/public` | Public filter list | FR-8.3 | 6 |
 | PUT `/categories/{id}`, POST `/categories/{id}/activate|deactivate` | Category management (FR-5.1) | FR-5.1 | 9 |
 | GET/PUT `/users`, POST `/users/{id}/activate` etc. | User management (FR-12.1) | FR-12.1 | 9 |
 | GET/POST `/organizations`, membership APIs | Org management (FR-5.3) | FR-5.3 | 9 |

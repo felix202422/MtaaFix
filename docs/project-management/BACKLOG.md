@@ -132,24 +132,34 @@ Dependencies flow: Phase 2 ∥ Phase 3 → Phase 4 → Phase 5 → Phase 6 → P
 
 ## Phase 6 — Public website
 
-### B-6.1 Web app scaffold
+### B-6.1 Web app scaffold ✅ DONE (Phase 6)
 - Vite + React + TS + Tailwind + Router wired; env config; API client with error/
   auth handling (Part 11.1).
 - **AC:** `npm ci && npm run build` green; CI web step activates (web/src exists);
   404 route works.
 - **Phase:** 6 · **Depends:** B-2.1
 
-### B-6.2 Public APIs
-- **AC:** `/reports/public`, `/reports/public/{code}`, `/categories/public` return
-  only public fields (SRS §5); reporter identity/phone/precise-sensitive-location
-  never serialized (test with full-data report); pagination + filters per FR-8.3.
+### B-6.2 Public APIs ✅ DONE (Phase 6)
+- **AC:** `/reports/public`, `/reports/public/{code}`, `/categories/public`,
+  `/stats/public` return only public fields (SRS §5); reporter identity/phone/
+  media/comments never serialized (test with full-data report); pagination +
+  filters per FR-8.3; coords rounded to 2dp (replaced by FR-11.4 fuzzing in
+  Phase 8); CORS from `CORS_ALLOWED_ORIGINS`.
 - **Phase:** 6 · **Depends:** B-5.2, B-5.3
 
-### B-6.3 Pages 1–4
-- **AC:** Each page functional against real APIs (no dead buttons/fake charts,
-  Part 10); responsive at B-2.3 breakpoints; accessibility spot-check; privacy review
-  vs SRS §5.
+### B-6.3 Pages 1–4 ✅ DONE (Phase 6)
+- **AC:** Landing (hero + stats + how-it-works summary + recent reports),
+  how-it-works (7-step lifecycle + roles), explore (search/filter/paginate),
+  public detail (generalized location, high-level timeline, honest no-media
+  state), `/report` info route (citizen sign-in arrives Phase 7), 404 route.
+  Responsive, a11y spot-checked, privacy reviewed vs SRS §5.
 - **Phase:** 6 · **Depends:** B-6.1, B-6.2
+- **Deferrals (owner decisions 2026-10-15):** map view → Phase 8; public media
+  payloads → Phase 10/13 (needs visibility classification + storage); coordinate
+  fuzzing → Phase 8 (2dp rounding interim). No report-level visibility flag
+  exists yet — all reports are public at field level only; public timeline
+  excludes T8 (citizen cancel) and T9r (reassign) per REPORT_LIFECYCLE "Public"
+  column.
 
 ---
 

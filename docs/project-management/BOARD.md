@@ -3,9 +3,20 @@
 Local tracking board (GitHub `gh` CLI unavailable; revisit if auth is fixed).
 Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
-Last updated: 2026-10-14.
+Last updated: 2026-10-15.
 
-## Current phase: Phase 5 APPROVED (2026-10-14) — next: Phase 6 (not started)
+## Current phase: Phase 6 COMPLETE (pending approval 2026-10-15) — stop here for owner gate
+
+## Phase 6 — Public website (COMPLETE — pending approval)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Public APIs | DONE | `/reports/public`, `/reports/public/{code}`, `/categories/public`, `/stats/public`; 2dp coord rounding; CORS |
+| Pages 1–4 + `/report` info + 404 | DONE | Landing, how-it-works, explore, detail; Router + Layout + LinkButton |
+| Web tests | DONE | Vitest + Testing Library, 22/22; wired to `npm run test` + CI |
+| Privacy review | DONE | No identity/media/comments; high-level timeline only |
+| Live smoke | DONE | PG backend + Vite; **caught real `lower(bytea)`/untyped-Instant-null bug H2 missed** — fixed |
+| Deferrals | NOTED | Map → Phase 8; public media → Phase 10/13; fuzzing → Phase 8 (owner decisions) |
 
 ## Phase 2 — Design system & UI foundation (COMPLETE — APPROVED 2026-10-13)
 
@@ -110,7 +121,8 @@ Last updated: 2026-10-14.
 |-------|--------|-------|
 | Phase 4 - AuthN/Z | Complete (approved 2026-10-14) | Matrix enforcement + scoping + audit + tests done |
 | Phase 5 - Core reporting workflow | Complete (approved 2026-10-14) | 12-state machine, unique codes, comments/media, lifecycle endpoints; deferrals noted in report |
-| Phase 6–7 — Public site + citizen web | READY | All dependencies approved (2, 4, 5); Phase 6 next after gate |
+| Phase 6 - Public website | Complete (pending approval 2026-10-15) | 4 public pages + public APIs + privacy; real-PG smoke caught/fixed H2-masked query bug |
+| Phase 7 - Citizen web | READY | Blocked only by Phase 6 gate |
 
 ## Environment notes
 

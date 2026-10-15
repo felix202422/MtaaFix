@@ -1,5 +1,7 @@
 export { Button } from './Button';
 export type { ButtonProps } from './Button';
+export { LinkButton } from './LinkButton';
+export type { LinkButtonProps } from './LinkButton';
 export { Field, TextAreaField } from './Field';
 export type { FieldProps, TextAreaFieldProps } from './Field';
 export { Card } from './Card';

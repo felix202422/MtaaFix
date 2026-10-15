@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.7.0] — 2026-10-15
+### Phase 6 - Public website
+Implemented the public transparency surface (SRS FR-8.1–8.5, Part 10 pages 1–4).
+
+**Backend (public read APIs, all `permitAll`)**
+- `GET /api/v1/reports/public` — explore feed with `status`/`categoryId`/`q`/
+  `dateFrom`/`dateTo` filters, pagination, `reportedAt DESC`; coordinates
+  rounded to 2 decimals (interim until FR-11.4 fuzzing, Phase 8)
+- `GET /api/v1/reports/public/{code}` — detail by `MTF-YYYY-NNNNNN` code:
+  high-level public timeline (status + timestamp only), `duplicateOfCode`,
+  `resolvedAt`/`closedAt`; 404 `RESOURCE_NOT_FOUND` for unknown codes
+- `GET /api/v1/categories/public`, `GET /api/v1/stats/public` (aggregate counts)
+- Privacy: no reporter identity, phone, comments, or media serialized
+- CORS from existing `cors.allowed-origins` property (was previously unused)
+- **Bug found by real-PG smoke (not visible under H2):** `findPublic` used
+  `lower(concat('%', :q, '%'))`, which PostgreSQL rejected (`function
+  lower(bytea) does not exist` / `could not determine data type of parameter`),
+  and null `Instant` filters were untyped in `is null` checks. Fixed by binding
+  a pre-built LIKE pattern and non-null sentinel date bounds.
+
+**Web (`web/`)**
+- React Router app: landing, how-it-works, explore (search + filters +
+  pagination), public report detail, `/report` info route, 404 page; shared
+  Layout with skip-link + ARIA landmarks; `LinkButton` for valid link-buttons
+- `lib/api.ts` typed client (envelope parsing, `ApiError`, timeout/network
+  mapping); `lib/status.ts` status labels/tones
+- Vitest + Testing Library added (`npm run test`): 22 tests across API client,
+  status helpers, routes/404, explore filters, detail privacy/timeline
+- CI web step now runs `npm ci && npm run lint && npm run test && npm run build`
+
+**Verified:** backend `mvn verify` green (62 H2 tests + 3/3 PG integration);
+web lint/typecheck/build/test green; live smoke on PG (port 8085) + Vite dev
+(5173): all public endpoints, filters, 400/404 paths, CORS preflight, privacy
+assertions, resolved-report timeline, stats. Owner decisions: map → Phase 8,
+public media payloads → Phase 10/13, `/report` info-only until Phase 7 auth.
+
 ## [0.6.0] — 2026-10-14
 ### Phase 5 - Core reporting workflow
 **Approved by owner 2026-10-14.** Implemented the

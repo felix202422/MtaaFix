@@ -36,6 +36,12 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.listAll());
     }
 
+    @Operation(summary = "Get all categories (public, unauthenticated filter list for FR-8.3)")
+    @GetMapping("/public")
+    public ResponseEntity<List<CategoryDto>> listPublic() {
+        return ResponseEntity.ok(categoryService.listAll());
+    }
+
     @Operation(summary = "Create a new category (admin only)")
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRATOR')")

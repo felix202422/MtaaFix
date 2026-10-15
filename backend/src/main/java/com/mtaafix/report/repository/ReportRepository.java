@@ -36,6 +36,30 @@ public interface ReportRepository extends JpaRepository<Report, String> {
 
     Optional<Report> findByCode(String code);
 
+    @Query("""
+            select r from Report r
+            left join fetch r.category
+            where (:status is null or r.status = :status)
+            and (:categoryId is null or r.category.id = :categoryId)
+            and (:pattern is null or lower(r.title) like :pattern
+                or lower(r.description) like :pattern)
+            and r.reportedAt >= :dateFrom
+            and r.reportedAt <= :dateTo
+            """)
+    Page<Report> findPublic(@Param("status") Status status,
+            @Param("categoryId") String categoryId, @Param("pattern") String pattern,
+            @Param("dateFrom") java.time.Instant dateFrom,
+            @Param("dateTo") java.time.Instant dateTo, Pageable pageable);
+
+    @Query("""
+            select r from Report r
+            left join fetch r.category
+            left join fetch r.duplicateOf
+            left join fetch r.statusHistory
+            where r.code = :code
+            """)
+    Optional<Report> findPublicByCode(@Param("code") String code);
+
     @Query("select o from Organisation o where o.id = :id")
     Optional<Organisation> findOrganisationById(@Param("id") String id);
 
