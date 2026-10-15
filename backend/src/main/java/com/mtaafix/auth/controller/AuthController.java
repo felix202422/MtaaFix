@@ -6,6 +6,7 @@ import com.mtaafix.user.dto.AuthResponse;
 import com.mtaafix.user.dto.LoginRequest;
 import com.mtaafix.user.dto.RegisterRequest;
 import com.mtaafix.user.dto.RefreshRequest;
+import com.mtaafix.user.dto.UpdateProfileRequest;
 import com.mtaafix.user.dto.UserDto;
 import com.mtaafix.user.service.UserService;
 import com.mtaafix.security.JwtTokenProvider;
@@ -18,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -69,5 +71,13 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserDto> me(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(userService.toDto(user));
+    }
+
+    @Operation(summary = "Update own profile (full name / mobile only)")
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/me")
+    public ResponseEntity<UserDto> updateMe(@AuthenticationPrincipal User user,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(userService.updateProfile(user, request));
     }
 }

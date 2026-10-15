@@ -45,6 +45,7 @@ cors:
 
 media:
   max-file-size-bytes: ${MEDIA_MAX_FILE_SIZE_BYTES:20971520}
+  storage-dir: ${MEDIA_STORAGE_DIR:./uploads}
 
 logging:
   level:

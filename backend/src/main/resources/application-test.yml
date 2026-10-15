@@ -18,3 +18,5 @@ jwt:
   secret: min-32-char-secret-restart-2026-more
   access-token-expiration: 900000
   refresh-token-expiration: 604800000
+media:
+  storage-dir: ./target/test-uploads

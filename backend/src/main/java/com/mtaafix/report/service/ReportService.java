@@ -57,11 +57,12 @@ public class ReportService {
     private final ReportLifecycle lifecycle;
     private final ReportCodeGenerator codeGenerator;
     private final AuditService auditService;
+    private final MediaStorageService mediaStorageService;
 
     public ReportService(ReportRepository reportRepository, UserRepository userRepository,
             NotificationService notificationService, AssignmentRepository assignmentRepository,
             ReportLifecycle lifecycle, ReportCodeGenerator codeGenerator,
-            AuditService auditService) {
+            AuditService auditService, MediaStorageService mediaStorageService) {
         this.reportRepository = reportRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
@@ -69,6 +70,7 @@ public class ReportService {
         this.lifecycle = lifecycle;
         this.codeGenerator = codeGenerator;
         this.auditService = auditService;
+        this.mediaStorageService = mediaStorageService;
     }
 
     @Transactional
@@ -370,6 +372,19 @@ public class ReportService {
     }
 
     @Transactional
+    public ReportDto cancel(String id, User user) {
+        Report report = load(id);
+        assertCreator(report, user, "Only the report creator can cancel this report.");
+        lifecycle.apply(report, LifecycleAction.CANCEL, user,
+                "Cancelled by the report creator before review.", "CANCELLED_BY_CITIZEN");
+        report = reportRepository.save(report);
+        auditReport("REPORT_CANCELLED", user, report);
+        notifyUser(report.getUser(), Type.REPORT_REJECTED, report,
+                "Report cancelled", "You cancelled report " + report.getCode() + ".");
+        return ReportMapper.toDto(report);
+    }
+
+    @Transactional
     public ReportDto update(String id, UpdateReportRequest request, User user) {
         Report report = load(id);
         if (!user.getId().equals(report.getUser().getId())) {
@@ -447,8 +462,92 @@ public class ReportService {
         if (!privileged && !uploader && !legacyOwner) {
             throw new AccessDeniedException("Only the uploader can remove this media.");
         }
+        String storedName = media.getFileName();
         media.getReport().getMedia().remove(media);
         reportRepository.save(media.getReport());
+        mediaStorageService.delete(storedName);
+    }
+
+    /**
+     * Multipart photo upload (Phase 7, FR-9.1/9.2): validates MIME allowlist,
+     * magic bytes and ≤20 MiB, stores on local disk and records metadata.
+     * Local-disk storage is a documented Phase 13 placeholder.
+     */
+    @Transactional
+    public ReportDto uploadMedia(String id, User user,
+            org.springframework.web.multipart.MultipartFile file) {
+        Report report = load(id);
+        assertCanRead(report, user);
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Uploaded file must not be empty.");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null
+                || !ALLOWED_MEDIA_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            throw new IllegalArgumentException(
+                    "Unsupported media MIME type; allowed: image/jpeg, image/png, image/webp (FR-9.2).");
+        }
+        if (file.getSize() > MAX_MEDIA_BYTES) {
+            throw new IllegalArgumentException("Media size must not exceed 20 MiB (FR-9.2).");
+        }
+        byte[] head;
+        try {
+            head = file.getBytes();
+        } catch (java.io.IOException ex) {
+            throw new IllegalArgumentException("Could not read the uploaded file.");
+        }
+        if (head.length < 12 || !matchesMagicBytes(head, contentType)) {
+            throw new IllegalArgumentException(
+                    "Uploaded file content does not match its declared image type (FR-9.2).");
+        }
+        String originalName = file.getOriginalFilename() != null
+                ? file.getOriginalFilename() : "photo";
+        MediaStorageService.StoredObject stored;
+        try {
+            stored = mediaStorageService.store(file, contentType);
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException("Could not store the uploaded file.");
+        }
+        ReportMedia media = new ReportMedia(stored.storedName(), originalName, contentType,
+                file.getSize(), "/api/v1/media/pending", ReportMedia.MediaType.PHOTO, report,
+                user);
+        report.getMedia().add(media);
+        report = reportRepository.save(report);
+        media.setUrl("/api/v1/media/" + media.getId() + "/content");
+        reportRepository.save(report);
+        return ReportMapper.toDto(report);
+    }
+
+    @Transactional(readOnly = true)
+    public MediaContent getMediaContent(String mediaId, User user) {
+        ReportMedia media = reportRepository.findMediaById(mediaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Media", mediaId));
+        assertCanRead(media.getReport(), user);
+        java.nio.file.Path path;
+        try {
+            path = mediaStorageService.resolve(media.getFileName());
+        } catch (java.io.IOException ex) {
+            throw new ResourceNotFoundException("Media content", mediaId);
+        }
+        if (!java.nio.file.Files.exists(path)) {
+            throw new ResourceNotFoundException("Media content", mediaId);
+        }
+        return new MediaContent(path, media.getContentType());
+    }
+
+    public record MediaContent(java.nio.file.Path path, String contentType) {
+    }
+
+    private static boolean matchesMagicBytes(byte[] head, String contentType) {
+        return switch (contentType.toLowerCase()) {
+            case "image/png" -> (head[0] & 0xFF) == 0x89 && head[1] == 'P' && head[2] == 'N'
+                    && head[3] == 'G';
+            case "image/webp" -> head[0] == 'R' && head[1] == 'I' && head[2] == 'F'
+                    && head[3] == 'F' && head[8] == 'W' && head[9] == 'E' && head[10] == 'B'
+                    && head[11] == 'P';
+            default -> (head[0] & 0xFF) == 0xFF && (head[1] & 0xFF) == 0xD8
+                    && (head[2] & 0xFF) == 0xFF;
+        };
     }
 
     private Report load(String id) {

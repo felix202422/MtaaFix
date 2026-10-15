@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -220,5 +221,23 @@ public class ReportController {
         return ResponseEntity.ok(reportService.addMedia(id, user, request.fileName(),
                 request.originalName(), request.contentType(), request.sizeBytes(), request.url(),
                 request.mediaType()));
+    }
+
+    @Operation(summary = "Upload a photo file (multipart; Phase 7 citizen wizard, FR-9.1/9.2)")
+    @PostMapping(value = "/{id}/media/upload", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ReportDto> uploadMedia(
+            @Parameter(description = "Report id") @PathVariable String id,
+            @RequestPart("file") org.springframework.web.multipart.MultipartFile file,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(reportService.uploadMedia(id, user, file));
+    }
+
+    @Operation(summary = "Cancel own report before review (T8; creator + SUBMITTED only)")
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('CITIZEN')")
+    public ResponseEntity<ReportDto> cancel(@Parameter(description = "Report id") @PathVariable String id,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(reportService.cancel(id, user));
     }
 }

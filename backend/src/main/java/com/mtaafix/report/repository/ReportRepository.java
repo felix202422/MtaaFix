@@ -70,6 +70,21 @@ public interface ReportRepository extends JpaRepository<Report, String> {
 
     long countByUserIdAndStatus(String userId, Status status);
 
+    @Query("""
+            select r from Report r
+            where r.user.id = :userId
+            and r.status in (com.mtaafix.report.domain.Report.Status.NEEDS_INFORMATION,
+                com.mtaafix.report.domain.Report.Status.RESOLVED)
+            order by r.updatedAt desc
+            """)
+    List<Report> findAttentionReportsByUserId(@Param("userId") String userId);
+
+    @Query("select count(r) from Report r where r.user.id = :userId "
+            + "and r.status <> com.mtaafix.report.domain.Report.Status.CLOSED "
+            + "and r.status <> com.mtaafix.report.domain.Report.Status.REJECTED "
+            + "and r.status <> com.mtaafix.report.domain.Report.Status.DUPLICATE")
+    long countActiveByUserId(@Param("userId") String userId);
+
     long countByOrganisationId(String organisationId);
 
     long countByOrganisationIdAndStatus(String organisationId, Status status);

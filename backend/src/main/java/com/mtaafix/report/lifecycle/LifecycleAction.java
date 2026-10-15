@@ -6,6 +6,7 @@ public enum LifecycleAction {
     RESUBMIT,
     VERIFY,
     REJECT,
+    CANCEL,
     MARK_DUPLICATE,
     ASSIGN,
     START_WORK,

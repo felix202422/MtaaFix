@@ -43,6 +43,9 @@ public class ReportLifecycle {
         RULES.put(LifecycleAction.REJECT, List.of(
                 new Rule(Report.Status.UNDER_REVIEW, Report.Status.REJECTED,
                         EnumSet.of(User.Role.MODERATOR, User.Role.ADMINISTRATOR))));
+        RULES.put(LifecycleAction.CANCEL, List.of(
+                new Rule(Report.Status.SUBMITTED, Report.Status.REJECTED,
+                        EnumSet.of(User.Role.CITIZEN))));
         RULES.put(LifecycleAction.MARK_DUPLICATE, List.of(
                 new Rule(Report.Status.UNDER_REVIEW, Report.Status.DUPLICATE,
                         EnumSet.of(User.Role.MODERATOR, User.Role.ADMINISTRATOR))));

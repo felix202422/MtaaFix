@@ -25,16 +25,46 @@ public class DashboardService {
         long submittedReports = reportRepository.countByUserIdAndStatus(user.getId(), Report.Status.SUBMITTED);
         long verifiedReports = reportRepository.countByUserIdAndStatus(user.getId(), Report.Status.VERIFIED);
         long closedReports = reportRepository.countByUserIdAndStatus(user.getId(), Report.Status.CLOSED);
+        long needsInfoCount = reportRepository.countByUserIdAndStatus(user.getId(),
+                Report.Status.NEEDS_INFORMATION);
+        long resolvedAwaitingConfirmCount = reportRepository.countByUserIdAndStatus(user.getId(),
+                Report.Status.RESOLVED);
+        long activeCount = reportRepository.countActiveByUserId(user.getId());
+        java.util.List<UserDashboardDto.AttentionReport> attention = reportRepository
+                .findAttentionReportsByUserId(user.getId()).stream()
+                .limit(5)
+                .map(r -> new UserDashboardDto.AttentionReport(r.getId(), r.getCode(), r.getTitle(),
+                        r.getStatus().name()))
+                .toList();
 
         return new UserDashboardDto(
-                "MTF-" + user.getId().substring(0, 8).toUpperCase(),
+                initialsOf(user.getFullName()),
                 user.getFullName(),
                 user.getRole().name(),
                 totalReports,
                 submittedReports,
                 verifiedReports,
-                closedReports
+                closedReports,
+                needsInfoCount,
+                resolvedAwaitingConfirmCount,
+                activeCount,
+                attention
         );
+    }
+
+    private static String initialsOf(String fullName) {
+        if (fullName == null || fullName.isBlank()) {
+            return "MTF";
+        }
+        String[] parts = fullName.trim().split("\\s+");
+        StringBuilder sb = new StringBuilder("MTF");
+        if (parts.length > 0 && !parts[0].isEmpty()) {
+            sb.append(parts[0].charAt(0));
+        }
+        if (parts.length > 1 && !parts[parts.length - 1].isEmpty()) {
+            sb.append(parts[parts.length - 1].charAt(0));
+        }
+        return sb.toString().toUpperCase();
     }
 
     public DashboardStatsDto getOrganizationStats(String orgId, User user) {

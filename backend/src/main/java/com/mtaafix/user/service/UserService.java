@@ -8,6 +8,7 @@ import com.mtaafix.user.domain.User;
 import com.mtaafix.user.domain.User.Role;
 import com.mtaafix.user.dto.AuthResponse;
 import com.mtaafix.user.dto.RegisterRequest;
+import com.mtaafix.user.dto.UpdateProfileRequest;
 import com.mtaafix.user.dto.UserDto;
 import com.mtaafix.user.repository.UserRepository;
 import com.mtaafix.security.JwtTokenProvider;
@@ -75,6 +76,17 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", email));
         return toDto(user);
+    }
+
+    public UserDto updateProfile(User user, UpdateProfileRequest request) {
+        if (request.fullName() == null || request.fullName().isBlank()) {
+            throw new IllegalArgumentException("Full name must not be blank.");
+        }
+        user.setFullName(request.fullName().trim());
+        if (request.mobile() != null) {
+            user.setMobile(request.mobile().isBlank() ? null : request.mobile().trim());
+        }
+        return toDto(userRepository.save(user));
     }
 
     public UserDto toDto(User user) {
