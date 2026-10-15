@@ -68,3 +68,137 @@ export interface PublicReportFilters {
   page?: number;
   size?: number;
 }
+
+export type UserRole =
+  | 'CITIZEN'
+  | 'MODERATOR'
+  | 'ADMINISTRATOR'
+  | 'FIELD_WORKER'
+  | 'ORGANIZATION_ADMIN';
+
+export interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  mobile: string | null;
+  role: UserRole;
+  organisationId: string | null;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresIn: number;
+  user: User;
+}
+
+export interface UpdateProfileInput {
+  fullName: string;
+  mobile?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+}
+
+export interface Location {
+  latitude: number;
+  longitude: number;
+  srid?: number;
+}
+
+export interface StatusHistoryEntry {
+  fromStatus: ReportStatus | null;
+  toStatus: ReportStatus;
+  userId: string | null;
+  timestamp: string;
+  comment: string | null;
+  reasonCode: string | null;
+}
+
+export interface ReportMedia {
+  id: string;
+  fileName: string;
+  originalName: string;
+  contentType: string;
+  sizeBytes: number;
+  url: string;
+  mediaType: string;
+}
+
+export interface ReportComment {
+  id: string;
+  content: string;
+  userId: string | null;
+  timestamp: string;
+}
+
+export interface Report {
+  id: string;
+  code: string;
+  title: string;
+  description: string | null;
+  location: Location | null;
+  reportedAt: string;
+  status: ReportStatus;
+  score: number | null;
+  categoryId: string;
+  assignmentId: string | null;
+  organisationId: string | null;
+  assigneeId: string | null;
+  duplicateOfId: string | null;
+  statusHistory: StatusHistoryEntry[];
+  media: ReportMedia[];
+  comments: ReportComment[];
+}
+
+export interface AttentionReport {
+  id: string;
+  code: string;
+  title: string;
+  status: ReportStatus;
+}
+
+export interface Dashboard {
+  initials: string;
+  name: string;
+  role: string;
+  totalReports: number;
+  submittedReports: number;
+  verifiedReports: number;
+  closedReports: number;
+  needsInfoCount: number;
+  resolvedAwaitingConfirmCount: number;
+  activeCount: number;
+  attentionReports: AttentionReport[];
+}
+
+export type NotificationType =
+  | 'REPORT_SUBMITTED'
+  | 'REPORT_VERIFIED'
+  | 'REPORT_ASSIGNED'
+  | 'REPORT_RESOLVED'
+  | 'REPORT_CLOSED'
+  | 'REPORT_REJECTED'
+  | 'REPORT_NEEDS_INFO'
+  | 'REPORT_RESUBMITTED'
+  | 'REPORT_DUPLICATE'
+  | 'REPORT_COMPLETED'
+  | 'REPORT_RETURNED'
+  | 'REPORT_REOPENED'
+  | 'REPORT_DISPUTED'
+  | 'REPORT_IN_PROGRESS'
+  | 'REPORT_COMMENTED';
+
+export interface Notification {
+  id: string;
+  title: string;
+  body: string;
+  type: NotificationType;
+  isRead: boolean;
+  timestamp: string;
+  reportId: string | null;
+}

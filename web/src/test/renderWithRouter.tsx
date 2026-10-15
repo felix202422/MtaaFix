@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react';
 import { MemoryRouter, useRoutes } from 'react-router-dom';
 import { routes } from '../App';
+import { AuthProvider } from '../app/AuthProvider';
+import { ToastProvider } from '../design-system';
 
 export function renderRoute(path: string) {
   function RouteElement() {
@@ -8,7 +10,11 @@ export function renderRoute(path: string) {
   }
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <RouteElement />
+      <ToastProvider>
+        <AuthProvider>
+          <RouteElement />
+        </AuthProvider>
+      </ToastProvider>
     </MemoryRouter>,
   );
 }

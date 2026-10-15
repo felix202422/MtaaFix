@@ -74,8 +74,8 @@ describe('routes', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: /report an issue/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/requires a citizen account/i)).toBeInTheDocument();
+    expect(screen.getByText(/sign in to start/i)).toBeInTheDocument();
     const main = screen.getByRole('main');
-    expect(within(main).getByRole('link', { name: /explore reports/i })).toBeInTheDocument();
+    expect(within(main).getByRole('link', { name: /sign in to report/i })).toBeInTheDocument();
   });
 });

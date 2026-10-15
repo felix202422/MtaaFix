@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { UserMenu } from './UserMenu';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `text-sm font-medium transition-colors hover:text-brand-green-deep ${
@@ -30,6 +31,7 @@ export function Layout() {
             <NavLink to="/explore" className={navLinkClass}>
               Explore reports
             </NavLink>
+            <UserMenu />
           </nav>
         </div>
       </header>
