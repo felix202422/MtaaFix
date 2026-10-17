@@ -13,7 +13,7 @@ class AuthState {
   final User? user;
   final String? message;
 
-  AuthState({
+  const AuthState({
     this.status = AuthStatus.initial,
     this.user,
     this.message,
