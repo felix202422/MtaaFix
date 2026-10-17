@@ -150,24 +150,24 @@ Traceability column maps to master spec inventory parts.
 ### 3.3 Review and moderation
 | ID | Requirement | MVP | Trace |
 | -- | ----------- | --- | ----- |
-| FR-3.1 | A moderator can list reports in SUBMITTED / UNDER_REVIEW / NEEDS_INFORMATION (review queue) | Backend only in MVP | P17 |
-| FR-3.2 | A moderator can claim a report for review (SUBMITTED → UNDER_REVIEW) | Backend only | Part 4.3 |
-| FR-3.3 | A moderator can verify a report (UNDER_REVIEW → VERIFIED) | Backend only | Part 4.3 |
-| FR-3.4 | A moderator can reject a report with a mandatory reason (UNDER_REVIEW → REJECTED) | Backend only | Part 4.3 |
-| FR-3.5 | A moderator can request more information (UNDER_REVIEW → NEEDS_INFORMATION) with a mandatory message; citizen may then edit and resubmit | Backend only | Part 4.2 |
-| FR-3.6 | A moderator can mark a report DUPLICATE with a mandatory link to the canonical report | Backend only | Part 4.6 |
+| FR-3.1 | A moderator can list reports in SUBMITTED / UNDER_REVIEW / NEEDS_INFORMATION (review queue) | Yes (Phase 9) | P17 |
+| FR-3.2 | A moderator can claim a report for review (SUBMITTED → UNDER_REVIEW) | Yes (Phase 9) | Part 4.3 |
+| FR-3.3 | A moderator can verify a report (UNDER_REVIEW → VERIFIED) | Yes (Phase 9) | Part 4.3 |
+| FR-3.4 | A moderator can reject a report with a mandatory reason (UNDER_REVIEW → REJECTED) | Yes (Phase 9) | Part 4.3 |
+| FR-3.5 | A moderator can request more information (UNDER_REVIEW → NEEDS_INFORMATION) with a mandatory message; citizen may then edit and resubmit | Yes (Phase 9) | Part 4.2 |
+| FR-3.6 | A moderator can mark a report DUPLICATE with a mandatory link to the canonical report | Yes (Phase 9) | Part 4.6 |
 | FR-3.7 | Every moderation decision is recorded in status history with actor, timestamp, and reason; a notification is sent to the citizen | Yes (backend) | Part 4.5 |
 | FR-3.8 | No arbitrary status changes: only transitions in [REPORT_LIFECYCLE.md](../design/REPORT_LIFECYCLE.md) are permitted | Yes | Part 4.3 |
 
 ### 3.4 Assignment and field work
 | ID | Requirement | MVP | Trace |
 | -- | ----------- | --- | ----- |
-| FR-4.1 | An admin or org manager can assign a VERIFIED report to an organization and optionally a specific field worker (VERIFIED → ASSIGNED) | Backend only | Part 4.3, P18 |
+| FR-4.1 | An admin or org manager can assign a VERIFIED report to an organization and optionally a specific field worker (VERIFIED → ASSIGNED) | Yes (Phase 9) | Part 4.3, P18 |
 | FR-4.2 | An assignment tracks assignee, organization, status (PENDING/IN_PROGRESS/COMPLETED/CANCELLED), timestamps | Yes | Part 6.3 |
 | FR-4.3 | A field worker can view only assignments assigned to them; can start work (ASSIGNED → IN_PROGRESS) | Backend only | Part 3.6, P26 |
 | FR-4.4 | A field worker can submit completion with required evidence (IN_PROGRESS → RESOLUTION_REVIEW) | Backend only | Part 4.7 |
 | FR-4.5 | An authorized reviewer (moderator/admin) approves (RESOLUTION_REVIEW → RESOLVED) or returns to IN_PROGRESS | Backend only | Part 4.7 |
-| FR-4.6 | Reassignment of an ASSIGNED/IN_PROGRESS report to a different eligible party is recorded in history | Backend only | P18 |
+| FR-4.6 | Reassignment of an ASSIGNED/IN_PROGRESS report to a different eligible party is recorded in history | Yes (Phase 9) | P18 |
 | FR-4.7 | A field worker cannot self-assign unrelated tasks, cannot skip RESOLUTION_REVIEW, and cannot modify system settings | Yes | Part 3.6 |
 
 ### 3.5 Categories and organizations
@@ -175,7 +175,7 @@ Traceability column maps to master spec inventory parts.
 | -- | ----------- | --- | ----- |
 | FR-5.1 | Report categories are stored in the database and admin-managed (create, edit, activate/deactivate, ordering); no code changes to add a category | Yes | Part 2.2, P20 |
 | FR-5.2 | Categories support a primary/secondary hierarchy | Yes | Part 2.2 |
-| FR-5.3 | An administrator can manage organizations (name, contact, description) | Backend only | P21 |
+| FR-5.3 | An administrator can manage organizations (name, contact, description) | Yes (Phase 9) | P21 |
 | FR-5.4 | New registrations are CITIZEN only; staff roles (MODERATOR, ADMINISTRATOR, FIELD_WORKER, ORGANIZATION_ADMIN) are granted by administrators and audited | Yes | Part 3.4, P19 |
 
 ### 3.6 Notifications
@@ -191,7 +191,7 @@ Traceability column maps to master spec inventory parts.
 | -- | ----------- | --- | ----- |
 | FR-7.1 | A citizen dashboard shows own report summary, recent reports, and attention-required items | Yes (web Phase 7) | P8 |
 | FR-7.2 | `GET /dashboard/me` returns the citizen's aggregated stats | Yes (backend exists) | P8 |
-| FR-7.3 | Organization stats and global stats endpoints exist for authorized roles | Backend only | P14, P23 |
+| FR-7.3 | Organization stats and global stats endpoints exist for authorized roles | Yes (Phase 9) | P14, P23 |
 | FR-7.4 | All displayed metrics derive from real data; fabricated statistics are prohibited | Yes | Part 10 |
 
 ### 3.8 Public website
@@ -216,7 +216,7 @@ Traceability column maps to master spec inventory parts.
 | ID | Requirement | MVP | Trace |
 | -- | ----------- | --- | ----- |
 | FR-10.1 | Significant security, administrative, and workflow events are recorded (actor, action, entity, timestamp, outcome) | Yes | Part 12.6, P22 |
-| FR-10.2 | Org-scoped audit visible to org admins; global audit to administrators | Backend only | Part 3.4 |
+| FR-10.2 | Org-scoped audit visible to org admins; global audit to administrators | Yes (Phase 9) | Part 3.4 |
 | FR-10.3 | Audit records contain no passwords, tokens, or unnecessary sensitive personal data; they are protected from modification | Yes | Part 6.6, 12.6 |
 
 ### 3.11 Geography
@@ -231,9 +231,9 @@ Traceability column maps to master spec inventory parts.
 ### 3.12 Administration
 | ID | Requirement | MVP | Trace |
 | -- | ----------- | --- | ----- |
-| FR-12.1 | Admins manage users: search, activate/deactivate, role changes (audited) | Backend only | P19 |
-| FR-12.2 | Admins manage categories (FR-5.1) and organizations (FR-5.3) | Backend only | P20–21 |
-| FR-12.3 | System settings (reporting rules, upload limits, notification toggles) — minimal config in MVP via env; full settings UI post-MVP | Config-only in MVP | P24 |
+| FR-12.1 | Admins manage users: search, activate/deactivate, role changes (audited) | Yes (Phase 9) | P19 |
+| FR-12.2 | Admins manage categories (FR-5.1) and organizations (FR-5.3) | Yes (Phase 9) | P20–21 |
+| FR-12.3 | System settings (reporting rules, upload limits, notification toggles) — minimal config in MVP via env; full settings UI post-MVP | Yes (Phase 9, read-only effective config) | P24 |
 | FR-12.4 | High-risk operations (role grants, org changes, settings) require ADMINISTRATOR and are audited | Yes | D2, Part 3.7 |
 
 ---

@@ -5,11 +5,95 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.10.0] — 2026-10-17
+### Phase 9 - Administration and moderation
+Implemented administration, moderation, and organisation management per master spec
+Phase 9 (SRS FR-3.x, FR-4.1/4.6, FR-5.3/5.4, FR-7.3, FR-10.2, FR-12.x, Part 10
+pages 14–24) — membership model, user/organisation/category administration, filtered
+audit, admin dashboard, analytics, read-only settings, and the 11-page admin web
+section. **Approval gate pending.**
+
+**Backend — membership model (owner decision D-P9.1)**
+- Flyway `V4__administration_and_organization_members.sql` — new
+  `organization_members` table (unique user, single org per user), backfills
+  `users.organisation_id`, then drops that column; adds
+  `categories.display_order`/`is_active`, `organizations.is_active`, and
+  `audit_logs.outcome`
+- `OrganisationMembership` domain + repository + `OrganisationMembershipService`
+  (org role grant requires membership; role change away from an org role removes the
+  membership; `orgIdOfOrNull` drives ORG_ADMIN scoping)
+
+**Backend — administration endpoints**
+- `GET /users?q=&role=&active=` (paged search), `PUT /users/{id}/role`,
+  `PUT /users/{id}/active` — ADMINISTRATOR only, audited
+  (`USER_ROLE_CHANGED`, `USER_ACTIVATED`/`USER_DEACTIVATED`); self role change → 400;
+  demoting/deactivating the last active admin → 409
+- `GET/POST/PUT /organizations`, `PUT /organizations/{id}/active`,
+  `GET/POST /organizations/{id}/members`, `DELETE .../members/{userId}` — admin CRUD +
+  membership add (grants org role) / remove (affiliation only, role kept, documented);
+  audited (`ORGANIZATION_*`, `MEMBERSHIP_*`); inactive org → 409 on assignment
+- Categories: `GET /categories?includeInactive=true`,
+  `PUT /categories/{id}/active?value=`, `PUT /categories/{id}/order`;
+  public list hides inactive; inactive category on report create → 400; audited
+  (`CATEGORY_*`)
+- `GET /dashboard/admin` (MOD/ADMIN): byStatus, 14-day activity, byCategory,
+  moderation queue, unassigned/assigned workload, attention, recent reports
+- `GET /analytics/summary` (MOD/ADMIN/ORG_ADMIN): from/to/categoryId/status/orgId/bbox
+  filters — **PostgreSQL-native spatial SQL** (H2 covers validation 400s only); ORG_ADMIN
+  without membership → 403; foreign `orgId` forced to own org
+- `GET /audit` (ADMIN global) + `GET /audit/organizations/{id}` (ORG_ADMIN own scope)
+  gain `action`/`actorId`/`entityType`/`entityId`/`outcome`/`from`/`to` filters with
+  `actorEmail` enrichment
+- `GET /settings` — ADMIN only, read-only effective configuration (FR-12.3, owner
+  decision D-P9.2): reporting rules, security TTLs, privacy/geographic, integrations;
+  secrets masked (`fuzzSecretConfigured`/`fuzzSecretIsDefault` booleans, no values)
+- `GET /reports` staff list gains `q` (code/title/description) + `assignment`
+  (assigned|unassigned) filters (P15); `UserDto` exposes `active`
+- **Bugs found & fixed during live smoke:** audit filters with null `Instant`
+  params → PG `could not determine data type of parameter $13` (fixed via
+  `cast(:from as timestamp)` pattern); unknown paths → 500 (now 404
+  `RESOURCE_NOT_FOUND` via `NoResourceFoundException` handler); malformed JSON bodies
+  → 500 (now 400 `MALFORMED_REQUEST`); path-variable type mismatch already → 400
+  `INVALID_PARAMETER`
+
+**Web (`web/`) — admin section (pages 14–24)**
+- Nested role-guarded routes under `/admin` (`RequireAuth roles=…`; citizen → `/app`,
+  unauthenticated → `/login`); `Admin` entry in the account menu for staff roles
+- New `pages/admin/`: dashboard (P14), report management + full report details with
+  lifecycle actions (P15/P16), review queue with reject-reason/duplicate dialogs
+  (P17), assignment board (P18), user management with role/active controls (P19),
+  categories incl. deactivate/reorder (P20), organisations + members (P21), filtered
+  audit log (P22), analytics with date/category/status/org/geographic filters (P23),
+  read-only settings (P24); shared `AdminPageShell` + role-filtered `adminNav`
+- `api.ts` gains 30+ admin methods; admin DTOs added to `types.ts`
+
+**Tests / verification**
+- Backend `mvn verify` (H2 + live PostGIS): **105/105 green** (new
+  `AdministrationApiTest` 13; PG IT +2: V4 migration shape incl. dropped
+  `users.organisation_id`, analytics summary executes on PostgreSQL)
+- Web: lint/typecheck/build green, **47/47 tests** (new `Phase9.test.tsx` 11: route
+  guards, staff menu link, user role/active flows, category deactivate, audit
+  filters, settings read-only/no-leak, staff list; test timeouts raised for
+  parallel-load flakiness)
+- Live smoke PG :8085: **68/68 green** — registration→SQL promotion→login; settings
+  masked; dashboard+analytics on PG; citizen 403s (users/settings/audit/dashboard/
+  analytics) + anonymous 401 + unknown path 404; role change audited with
+  actorEmail/outcome + filters + bad-timestamp 400; category deactivate→hidden→
+  create-400→reactivate; org create + member add granting FIELD_WORKER + org-scoped
+  audit; full lifecycle create(SUBMITTED)→claim→verify→assign (worker sees it via
+  `/assignments/me`), needs-info→resubmit, reject; inactive-org assign → 409 with org
+  guard message
+
+**Known follow-ups:** settings are read-only by design (mutations env-driven,
+post-MVP editor); `MODERATOR` assign stays **N** (matrix §2.3 revisited, kept — owner
+decision D-P9.3); GET-on-nonexistent-method 405 gap still returns 500 (405 outside
+allowed status list, pre-existing decision).
+
 ## [0.9.0] — 2026-10-15
 ### Phase 8 - Geographic capabilities
 Implemented geographic functionality per master spec Phase 8 (SRS FR-11.x, Part 6.4)
 — coordinate validation, PostGIS spatial queries, map interactions, geographic filters,
-location privacy, indexes, and tests. **Approval gate pending.**
+location privacy, indexes, and tests. **Approved 2026-10-15.**
 
 **Backend — geographic primitives (new `com.mtaafix.common.geo`)**
 - `LocationGeneralizer` — public location fuzzing (FR-11.4): deterministic

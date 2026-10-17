@@ -31,7 +31,7 @@
 | Rate limits | Not yet implemented; assessment Phase 17 (NFR-7) |
 | CORS | Configured origins only (`CORS_ALLOWED_ORIGINS`) |
 
-## 2. Implemented endpoints (verified in code, 2026-10-15)
+## 2. Implemented endpoints (verified in code, 2026-10-17)
 
 ### Auth — `AuthController`
 | Method & path | Auth | Role | Notes |
@@ -47,7 +47,7 @@
 | Method & path | Auth | Role | Notes |
 | ------------- | ---- | ---- | ----- |
 | POST `/reports` | Bearer | Any authenticated (citizen flow) | Creates SUBMITTED; returns code (FR-2.2); `categoryId` required (Phase 5); `location` validated ±90/±180 and implausible (0,0) → 400 (FR-11.2) |
-| GET `/reports` | Bearer | Scoped by role (citizen=own, worker=assigned, org admin=org, mod/admin=all) | Filters: `status`, `categoryId`, `orgId`; `page`/`size` (0-based, size ≤ 100) (Phase 5) |
+| GET `/reports` | Bearer | Scoped by role (citizen=own, worker=assigned, org admin=org, mod/admin=all) | Filters: `status`, `categoryId`, `orgId`; staff (mod/admin/org/worker) also `q` (code/title/description text search) + `assignment`=`assigned|unassigned` (P15, Phase 9); `page`/`size` (0-based, size ≤ 100) (Phase 5) |
 | GET `/reports/{id}` | Bearer | Scoped (matrix area 1) | Includes statusHistory, comments, media; response carries **exact** `location` + `geoJson` (authorized surfaces only, FR-11.5) |
 | PUT `/reports/{id}` | Bearer | Owner, state-limited (FR-2.6) | Only SUBMITTED/NEEDS_INFORMATION (Phase 5); note: PUT not PATCH — deviation from legacy API.md, accepted |
 | POST `/reports/{id}/submit` | Bearer | Moderator/admin (T2/T17) | Enforced (Phase 4): MODERATOR or ADMINISTRATOR; also claims REOPENED→UNDER_REVIEW |
@@ -77,8 +77,31 @@
 | GET `/media/{id}/content` | Bearer | Report readers (ownership/moderation scope) | Raw bytes (`image/jpeg|png|webp`), inline; authenticated — used by web via blob fetch (FR-9.3) |
 
 ### Categories — `CategoryController`
-| GET `/categories` | Bearer | Any | List |
+| GET `/categories` | Bearer | Any | List (active-only for non-admin) |
+| GET `/categories?includeInactive=true` | Bearer | ADMINISTRATOR | Admin list incl. inactive (P20, Phase 9) |
 | POST `/categories` | Bearer | Admin (A) | Create |
+| PUT `/categories/{id}` | Bearer | Admin (A) | Update name/description (P20, Phase 9) |
+| PUT `/categories/{id}/active?value=true|false` | Bearer | Admin (A) | Activate/deactivate; hidden from `/categories/public` when inactive; audited (Phase 9) |
+| PUT `/categories/{id}/order` | Bearer | Admin (A) | Set `displayOrder` (P20, Phase 9) |
+
+### Users (administration) — `UserAdminController` (Phase 9, P19)
+| Method & path | Auth | Role | Notes |
+| ------------- | ---- | ---- | ----- |
+| GET `/users?q=&role=&active=&page=&size=` | Bearer | ADMINISTRATOR | Paged search (FR-12.1) |
+| PUT `/users/{id}/role` | Bearer | ADMINISTRATOR | `{role}`; audited `USER_ROLE_CHANGED`; self → 400; last-active-admin → 409 |
+| PUT `/users/{id}/active` | Bearer | ADMINISTRATOR | `{active}`; audited `USER_ACTIVATED`/`USER_DEACTIVATED`; last-active-admin off → 409 |
+
+### Organizations (administration) — `OrganisationController` (Phase 9, P21)
+| Method & path | Auth | Role | Notes |
+| ------------- | ---- | ---- | ----- |
+| GET `/organizations` | Bearer | Admin / org admin | Top-level array (org admin: own only) |
+| POST `/organizations` | Bearer | ADMINISTRATOR | Create; audited (FR-5.3) |
+| GET `/organizations/{id}` | Bearer | Admin / org admin | Own-scope enforced |
+| PUT `/organizations/{id}` | Bearer | ADMINISTRATOR | Update; audited |
+| PUT `/organizations/{id}/active` | Bearer | ADMINISTRATOR | `{active}`; audited; inactive org → 409 on assignment |
+| GET `/organizations/{id}/members` | Bearer | Admin / org admin | Top-level array of members |
+| POST `/organizations/{id}/members` | Bearer | Admin / org admin | `{userId, role=ORGANIZATION_ADMIN|FIELD_WORKER}` — creates membership **and** grants the org role (201, audited) |
+| DELETE `/organizations/{id}/members/{userId}` | Bearer | Admin / org admin | 204; removes affiliation only — role kept (documented) |
 
 ### Assignments — `AssignmentController`
 | GET `/assignments/me` | Bearer | Field worker | Own assignments |
@@ -88,6 +111,12 @@
 | GET `/dashboard/me` | Bearer | Any | Citizen/org aggregation; Phase 7 adds `needsInfoCount`, `resolvedAwaitingConfirmCount`, `activeCount`, `attentionReports[]` (cap 5) — FR-7.4 |
 | GET `/dashboard/organizations/{id}/stats` | Bearer | Org/admin | |
 | GET `/dashboard/stats` | Bearer | Admin/moderator (matrix row 11) | Global |
+| GET `/dashboard/admin` | Bearer | Moderator/admin | P14 admin overview: totals/byStatus, 14-day activity, byCategory, moderation queue, unassigned/assigned workload, attention, recent reports (Phase 9) |
+
+### Analytics — `AnalyticsController` (Phase 9, P23)
+| Method & path | Auth | Role | Notes |
+| ------------- | ---- | ---- | ----- |
+| GET `/analytics/summary?from=&to=&categoryId=&status=&orgId=&bbox=` | Bearer | Mod/admin/org admin | Date/category/status/org/geographic filters; **PostgreSQL-only** native spatial SQL (H2 covers validation 400s); ORG_ADMIN non-member → 403, foreign `orgId` forced to own org |
 
 ### Notifications — `NotificationController`
 | GET `/notifications` | Bearer | Any | Own, paginated |
@@ -95,8 +124,17 @@
 | POST `/notifications/read-all` | Bearer | Any | |
 
 ### Audit — `AuditController`
-| GET `/audit/organizations/{id}` | Bearer | Org/admin | Org events |
-| GET `/audit` | Bearer | Admin | Global |
+| GET `/audit/organizations/{id}` | Bearer | Org/admin | Org events (own-scope enforced), filters below |
+| GET `/audit` | Bearer | Admin | Global, filters below |
+
+Both audit endpoints accept filters (Phase 9): `action` (exact), `actorId`,
+`entityType`, `entityId`, `outcome` (`SUCCESS`/`DENIED`), `from`/`to` (ISO-8601,
+invalid → 400), `page`/`size`; entries include resolved `actorEmail`.
+
+### Settings — `SettingsController` (Phase 9, P24)
+| Method & path | Auth | Role | Notes |
+| ------------- | ---- | ---- | ----- |
+| GET `/settings` | Bearer | ADMINISTRATOR | Read-only effective configuration (FR-12.3): general, reporting rules, security TTLs/CORS, privacy + geographic fuzzing, integrations; **secrets masked** (`fuzzSecretConfigured`/`fuzzSecretIsDefault` booleans only); no mutation endpoints in MVP (D-P9.2) |
 
 ### Misc
 | GET `/actuator/health` | Public | — | Health check |
@@ -114,9 +152,6 @@ CORS: `cors.allowed-origins` (env `CORS_ALLOWED_ORIGINS`, default `http://localh
 
 | Method & path | Purpose | SRS | Phase |
 | ------------- | ------- | --- | ----- |
-| PUT `/categories/{id}`, POST `/categories/{id}/activate|deactivate` | Category management (FR-5.1) | FR-5.1 | 9 |
-| GET/PUT `/users`, POST `/users/{id}/activate` etc. | User management (FR-12.1) | FR-12.1 | 9 |
-| GET/POST `/organizations`, membership APIs | Org management (FR-5.3) | FR-5.3 | 9 |
 | POST `/auth/forgot-password`, `/auth/reset-password` | Password reset (FR-1.7) | FR-1.7 | 13 |
 
 ## 4. Corrections to legacy `docs/api/API.md`

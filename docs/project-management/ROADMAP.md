@@ -8,9 +8,13 @@
 
 ## Version History
 
+- **[0.10.0]** — Phase 9: administration and moderation (membership model V4, user/
+  org/category admin APIs, filtered audit, admin dashboard, analytics, read-only
+  settings, 11 admin web pages; 105/105 backend + 47/47 web) — **2026-10-17,
+  approval gate pending**
 - **[0.9.0]** — Phase 8: geographic capabilities (HMAC location fuzzing, bbox/near
   spatial queries, GeoJSON, Leaflet map interactions, GIST indexes; 90/90 backend +
-  36/36 web) — **2026-10-15, approval gate pending**
+  36/36 web) — **APPROVED** 2026-10-15
 - **[0.8.0]** — Phase 7: citizen web application (auth layer, 6 citizen pages, profile
   update, T8 cancel, multipart photo upload/streaming, dashboard attention; 73/73 + 3/3
   backend, 33/33 web) — **APPROVED** 2026-10-15
@@ -198,7 +202,7 @@ Delivered 2026-10-15:
   cancel → refresh, plus 401/403/400/409/oversize paths.
 - **Gate: APPROVED by owner 2026-10-15 — Phase 8 may start**
 
-## Phase 8 — Geographic Capabilities (COMPLETE — 2026-10-15, approval gate pending)
+## Phase 8 — Geographic Capabilities (COMPLETE — APPROVED 2026-10-15)
 
 Delivered 2026-10-15 (see CHANGELOG 0.9.0; BACKLOG B-8.1–B-8.4):
 - [x] Geographic persistence (FR-11.1): SRID 4326 Point (existing) + GeoJSON
@@ -222,12 +226,30 @@ Delivered 2026-10-15 (see CHANGELOG 0.9.0; BACKLOG B-8.1–B-8.4):
 - Bugs found & fixed: native-query sorted-`Pageable` → invalid `order by reportedat`
   (500); radius search missing geography index (seq scan)
 - **Exit: ✅ geographic features behave correctly and respect privacy boundaries**
-- **Gate: report delivered 2026-10-15 — awaiting owner approval**
+- **Gate: APPROVED by owner 2026-10-15 — Phase 9 may start**
 
-## Phase 9 — Administration and Moderation (NOT STARTED)
+## Phase 9 — Administration and Moderation (COMPLETE — 2026-10-17, approval gate pending)
 
-Pages 14–24. Backend endpoints for users/orgs/categories/audit largely exist;
-needs management APIs + UIs + `organization_members` + category activate/order.
+Pages 14–24. Delivered 2026-10-17 (see CHANGELOG 0.10.0; BACKLOG B-9.1–B-9.5):
+- [x] Membership model (D-P9.1): `organization_members` (Flyway V4) backfills and
+  replaces `users.organisation_id`; single org per user; org-role grant requires
+  membership; role change away from an org role removes the membership
+- [x] Administration APIs (FR-12.1/12.2): user search/role/active (audited, self-change
+  400, last-active-admin 409), organisation CRUD + members (audited; inactive org →
+  409 on assignment), category activate/order (public hides inactive; audited)
+- [x] Moderation/ops surfaces: staff report list `q`/`assignment` filters (P15),
+  `GET /dashboard/admin` panels (P14), filtered audit with `actorEmail`/`outcome` +
+  date filters (P22), PostgreSQL-native `GET /analytics/summary` with
+  date/category/status/orgId/bbox filters (P23), read-only `GET /settings` (P24, D-P9.2)
+- [x] Admin web section: 11 role-guarded pages under `/admin` (P14–P24) + staff entry
+  in the account menu
+- [x] Tests: backend 105/105 (H2 + live PG), web 47/47; live smoke PG :8085 68/68 —
+  smoke caught 3 real bugs (PG null-`Instant` audit filter 500 → `cast(...)` fix;
+  unknown path 500 → 404; malformed body 500 → 400), all fixed and re-verified
+- [x] Matrix §2.3 revisited: `MODERATOR` assign stays **N** (D-P9.3, kept)
+- **Exit: ✅ administration and moderation features behave correctly and respect role
+  boundaries**
+- **Gate: report delivered 2026-10-17 — awaiting owner approval**
 
 ## Phase 10 — Field-Worker Web Application (NOT STARTED)
 
@@ -302,7 +324,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 
 ---
 
-## Delivery Targets (updated 2026-10-14)
+## Delivery Targets (updated 2026-10-17)
 
 | Phase | Status |
 | ----- | ------ |
@@ -314,8 +336,9 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 5 | Complete (approved) |
 | 6 | Complete (approved) |
 | 7 | Complete (approved) |
-| 8 | Complete (2026-10-15; approval gate pending) |
-| 9–10 | Not started |
+| 8 | Complete (approved 2026-10-15) |
+| 9 | Complete (2026-10-17; approval gate pending) |
+| 10 | Not started |
 | 11 | Partial (scaffold) |
 | 12 | Not started |
 | 13 | Partial (in-app only) |

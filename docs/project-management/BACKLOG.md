@@ -261,6 +261,60 @@ UI (API-level only); browser-based map verification → Phase 15.
 
 ---
 
+## Phase 9 - Administration and moderation (COMPLETE - 2026-10-17, approval gate pending)
+
+### B-9.1 Organisation membership model (D-P9.1) - DONE
+- **AC:** Team membership persists in `organization_members` (single org per user),
+  backfilled from `users.organisation_id` then dropped; org-role grant requires
+  membership; removing membership keeps the user's role (documented); ORG_ADMIN
+  scoping reads membership.
+- **Phase:** 9 — **Depends:** B-4.2, B-4.3
+- **Delivered:** Flyway V4 migration + `OrganisationMembership` domain/repository/
+  service; PG IT asserts V4 applied, column dropped, table + `audit_logs.outcome`
+  present.
+
+### B-9.2 User administration + filtered audit (FR-12.1, FR-10.2, P19/P22) - DONE
+- **AC:** ADMINISTRATOR searches users and changes roles/active state, all audited;
+  self role change → 400, last-active-admin demote/deactivate → 409; audit log
+  filters by action/actor/entity/outcome/from/to with actor emails; invalid timestamp
+  → 400.
+- **Phase:** 9 — **Depends:** B-9.1, B-4.3
+- **Delivered:** `UserAdminController` (`/users` search, `/{id}/role`, `/{id}/active`),
+  audit filters on `GET /audit` + `GET /audit/organizations/{id}`; PG null-`Instant`
+  filter bug fixed (`cast(:from as timestamp)`).
+
+### B-9.3 Organisation + category management (FR-5.3, FR-12.2, P20/P21) - DONE
+- **AC:** Admin creates/updates/activates organisations and manages members (grant
+  org role audited); categories activate/deactivate + reorder, public list hides
+  inactive, inactive category rejected on report create; inactive org cannot receive
+  assignments (409).
+- **Phase:** 9 — **Depends:** B-9.1
+- **Delivered:** `OrganisationController` + `OrganisationService`; category
+  `PUT /{id}/active?value=` + `PUT /{id}/order` + `?includeInactive=true`;
+  `ORGANIZATION_*`/`MEMBERSHIP_*`/`CATEGORY_*` audit actions.
+
+### B-9.4 Admin dashboard, analytics, settings (P14/P23/P24, D-P9.2) - DONE
+- **AC:** `GET /dashboard/admin` returns moderation/workload/attention/recent panels
+  for MOD/ADMIN; analytics summary filters by date/category/status/org/bbox
+  (PostgreSQL-only spatial SQL; ORG_ADMIN forced to own org, non-member → 403);
+  settings endpoint ADMIN-only, read-only, secrets masked.
+- **Phase:** 9 — **Depends:** B-9.2, B-9.3
+- **Delivered:** `DashboardService.adminSummary`, `AnalyticsService` (native SQL),
+  `config` package (`SettingsDto`/`SettingsService`/`SettingsController`); PG IT
+  executes analytics on PostgreSQL.
+
+### B-9.5 Admin web section, pages 14-24 - DONE
+- **AC:** Eleven role-guarded `/admin` pages (dashboard, report list + details,
+  moderation queue, assignments, users, categories, organisations, audit, analytics,
+  settings) with per-role route guards and staff entry from the account menu;
+  lifecycle actions wired to backend with dialogs for reject/duplicate/needs-info.
+- **Phase:** 9 — **Depends:** B-9.2–B-9.4, B-7.1
+- **Delivered:** `pages/admin/*` (shared `AdminPageShell` + `adminNav`), `RequireAuth
+  roles=`, `api.ts` admin methods; web tests 47/47 (11 new Phase 9 tests); live smoke
+  PG 68/68.
+
+---
+
 ## Cross-cutting (scheduled, not MVP-blocking)
 
 | ID | Item | Phase | AC summary |

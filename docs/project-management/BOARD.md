@@ -3,11 +3,32 @@
 Local tracking board (GitHub `gh` CLI unavailable; revisit if auth is fixed).
 Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
-Last updated: 2026-10-15.
+Last updated: 2026-10-17.
 
-## Current phase: Phase 8 COMPLETE (2026-10-15) — approval gate pending; next: Phase 9
+## Current phase: Phase 9 COMPLETE (2026-10-17) — approval gate pending; next: Phase 10
 
-## Phase 8 — Geographic capabilities (COMPLETE — approval gate pending)
+## Phase 9 — Administration and moderation (COMPLETE — approval gate pending)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Membership model (D-P9.1) | DONE | Flyway V4 `organization_members` + backfill, drops `users.organisation_id`; `OrganisationMembershipService` (grant requires membership, role change away removes membership) |
+| User admin (P19) | DONE | `/users` search + `/{id}/role` + `/{id}/active`; audited; self-change 400, last-active-admin 409 |
+| Org management (P21) | DONE | `OrganisationController` CRUD + active + members (add grants org role, remove keeps role); inactive org assign → 409; audited |
+| Category admin (P20) | DONE | `?includeInactive=true`, `PUT /{id}/active?value=`, `PUT /{id}/order`; public hides inactive; inactive category create → 400; audited |
+| Staff report list (P15) | DONE | `GET /reports` gains `q` + `assignment` filters (role-scoped) |
+| Admin dashboard (P14) | DONE | `GET /dashboard/admin`: byStatus, 14d activity, byCategory, moderation queue, workload, attention, recent |
+| Audit filters (P22) | DONE | action/actor/entity/outcome/from/to + actorEmail enrichment; smoke found PG null-`Instant` 500 → `cast(:from as timestamp)` fix |
+| Analytics (P23) | DONE | `GET /analytics/summary` PG-native (date/category/status/orgId/bbox); H2 covers validation only; PG IT executes it |
+| Settings (P24, D-P9.2) | DONE | `GET /settings` ADMIN-only, read-only effective config; secrets masked (`fuzzSecretConfigured`/`fuzzSecretIsDefault`) |
+| Admin web — 11 pages | DONE | `pages/admin/*` (P14–P24), role-guarded `/admin` routes, staff entry in account menu; `RequireAuth roles=` |
+| Tests | DONE | backend 105/105 (H2+PG: +`AdministrationApiTest` 13, +2 PG IT); web 47/47; lint/typecheck/build green |
+| Live smoke on PG | DONE | 68/68: authz boundaries, role-change audit, category/org/member flows, full lifecycle (claim→verify→assign, needs-info→resubmit, reject), inactive-org 409 with guard message |
+| Error-hardening fixes | DONE | unknown path 500 → 404, malformed JSON 500 → 400 (new handlers, caught by smoke) |
+| Matrix §2.3 revisit (D-P9.3) | DONE | MODERATOR assign stays **N** — reviewed at Phase 9, kept |
+| Docs sync | DONE | CHANGELOG 0.10.0, ROADMAP/BACKLOG/BOARD Phase 9 sections, API_DESIGN rows, SRS markers, matrix note |
+| Phase 9 report + gate | DONE | Report delivered 2026-10-17 — **awaiting owner approval** |
+
+## Phase 8 — Geographic capabilities (COMPLETE — APPROVED 2026-10-15)
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -22,7 +43,7 @@ Last updated: 2026-10-15.
 | Tests | DONE | backend 90/90 (H2 + PG 5/5 incl. sorted path); web 36/36; lint/typecheck/build green |
 | Live smoke on PG | DONE | port 8085: fuzz determinism + differs-exact, spatial filter counts, 400s (null-island/bbox+near/malformed), exact geoJson authorized |
 | Docs sync | DONE | CHANGELOG 0.9.0, ROADMAP/BACKLOG/BOARD Phase 8 sections, API_DESIGN public-feed row |
-| Phase 8 report + gate | DONE | Report delivered 2026-10-15 — **awaiting owner approval** |
+| Phase 8 report + gate | DONE | Report delivered 2026-10-15 — **APPROVED 2026-10-15** |
 
 ## Phase 7 — Citizen web application (COMPLETE — APPROVED 2026-10-15)
 
@@ -161,7 +182,8 @@ Last updated: 2026-10-15.
 | Phase 5 - Core reporting workflow | Complete (approved 2026-10-14) | 12-state machine, unique codes, comments/media, lifecycle endpoints; deferrals noted in report |
 | Phase 6 - Public website | Complete (approved 2026-10-15) | 4 public pages + public APIs + privacy; real-PG smoke caught/fixed H2-masked query bug |
 | Phase 7 - Citizen web | Complete (approved 2026-10-15) | Auth layer + 6 citizen pages; profile/T8-cancel/multipart/dashboard-attention backend; live smoke caught 2 real bugs (code counter, oversize 500) — both fixed |
-| Phase 8 - Geographic capabilities | Complete (2026-10-15 — awaiting approval gate) | PostGIS bbox/near queries, Leaflet map, HMAC coord fuzzing, V3 geography index; live smoke + IT hardening caught 1 real bug (sorted Pageable → 500) — fixed |
+| Phase 8 - Geographic capabilities | Complete (approved 2026-10-15) | PostGIS bbox/near queries, Leaflet map, HMAC coord fuzzing, V3 geography index; live smoke + IT hardening caught 1 real bug (sorted Pageable → 500) — fixed |
+| Phase 9 - Administration and moderation | Complete (2026-10-17 — awaiting approval gate) | Membership V4, user/org/category admin, filtered audit, admin dashboard + analytics + read-only settings, 11 admin pages; live smoke caught 3 real bugs (PG audit filter 500, unknown-path 500, malformed-body 500) — all fixed |
 
 ## Environment notes
 

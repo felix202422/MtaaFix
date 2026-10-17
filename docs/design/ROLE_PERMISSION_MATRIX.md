@@ -47,17 +47,24 @@ Legend: **Y** = allowed · **N** = denied · **S** = self/own-scope only ·
   mark duplicate (link required). No user/category/org/settings management — explicitly
   "should not automatically receive every system-administration permission" (Part 3.3).
 - Cannot assign reports (area 7 = N): assignment belongs to ADMINISTRATOR / ORG_ADMIN.
-  Rationale: separation of review and execution duties; owner may revisit in Phase 9.
+  Rationale: separation of review and execution duties. **Phase 9 revisit (D-P9.3):
+  reviewed and kept — MODERATOR assign remains N.**
 
 ### 2.4 ADMINISTRATOR (incl. system-admin scope A)
 - Scope **A** operations (audited per FR-10.1): user role grants, org CRUD, category
   CRUD, system settings, global audit access, Swagger/OpenAPI access.
 - Regular admin powers: review reports, assign, view all analytics.
+- Phase 9 (implemented): also manages organisation members (grant/remove), category
+  activate/order, user active state; reads the global audit log with filters and the
+  read-only settings endpoint.
 
 ### 2.5 ORGANIZATION_ADMIN
 - Strictly org-scoped: cannot see other orgs' private data (Part 3.5).
 - Assignment power limited to reports already VERIFIED and within their organization's
   remit; reassignment recorded in history (FR-4.6).
+- Phase 9 (D-P9.1): "own organisation" resolves through `organization_members` —
+  exactly one organisation per user; membership grant/revoke is audited, and an
+  ORG_ADMIN without a valid membership loses org-scoped access (403).
 
 ### 2.6 FIELD_WORKER
 - Assignment-scoped only: view assigned tasks, start work, submit completion with
