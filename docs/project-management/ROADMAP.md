@@ -10,8 +10,8 @@
 
 - **[0.10.0]** — Phase 9: administration and moderation (membership model V4, user/
   org/category admin APIs, filtered audit, admin dashboard, analytics, read-only
-  settings, 11 admin web pages; 105/105 backend + 47/47 web) — **2026-10-17,
-  approval gate pending**
+  settings, 11 admin web pages; 105/105 backend + 47/47 web) — **APPROVED**
+  2026-10-17
 - **[0.9.0]** — Phase 8: geographic capabilities (HMAC location fuzzing, bbox/near
   spatial queries, GeoJSON, Leaflet map interactions, GIST indexes; 90/90 backend +
   36/36 web) — **APPROVED** 2026-10-15
@@ -228,7 +228,7 @@ Delivered 2026-10-15 (see CHANGELOG 0.9.0; BACKLOG B-8.1–B-8.4):
 - **Exit: ✅ geographic features behave correctly and respect privacy boundaries**
 - **Gate: APPROVED by owner 2026-10-15 — Phase 9 may start**
 
-## Phase 9 — Administration and Moderation (COMPLETE — 2026-10-17, approval gate pending)
+## Phase 9 — Administration and Moderation (COMPLETE — APPROVED 2026-10-17)
 
 Pages 14–24. Delivered 2026-10-17 (see CHANGELOG 0.10.0; BACKLOG B-9.1–B-9.5):
 - [x] Membership model (D-P9.1): `organization_members` (Flyway V4) backfills and
@@ -249,7 +249,7 @@ Pages 14–24. Delivered 2026-10-17 (see CHANGELOG 0.10.0; BACKLOG B-9.1–B-9.5
 - [x] Matrix §2.3 revisited: `MODERATOR` assign stays **N** (D-P9.3, kept)
 - **Exit: ✅ administration and moderation features behave correctly and respect role
   boundaries**
-- **Gate: report delivered 2026-10-17 — awaiting owner approval**
+- **Gate: APPROVED by owner 2026-10-17 — Phase 10 may start**
 
 ## Phase 10 — Field-Worker Web Application (NOT STARTED)
 
@@ -337,7 +337,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 6 | Complete (approved) |
 | 7 | Complete (approved) |
 | 8 | Complete (approved 2026-10-15) |
-| 9 | Complete (2026-10-17; approval gate pending) |
+| 9 | Complete (approved 2026-10-17) |
 | 10 | Not started |
 | 11 | Partial (scaffold) |
 | 12 | Not started |

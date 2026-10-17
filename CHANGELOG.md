@@ -11,7 +11,7 @@ Implemented administration, moderation, and organisation management per master s
 Phase 9 (SRS FR-3.x, FR-4.1/4.6, FR-5.3/5.4, FR-7.3, FR-10.2, FR-12.x, Part 10
 pages 14–24) — membership model, user/organisation/category administration, filtered
 audit, admin dashboard, analytics, read-only settings, and the 11-page admin web
-section. **Approval gate pending.**
+section. **Approved by owner 2026-10-17.**
 
 **Backend — membership model (owner decision D-P9.1)**
 - Flyway `V4__administration_and_organization_members.sql` — new

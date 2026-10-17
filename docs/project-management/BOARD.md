@@ -5,9 +5,9 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-17.
 
-## Current phase: Phase 9 COMPLETE (2026-10-17) — approval gate pending; next: Phase 10
+## Current phase: Phase 9 APPROVED (2026-10-17) — next: Phase 10 (not started)
 
-## Phase 9 — Administration and moderation (COMPLETE — approval gate pending)
+## Phase 9 — Administration and moderation (COMPLETE — APPROVED 2026-10-17)
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -26,7 +26,7 @@ Last updated: 2026-10-17.
 | Error-hardening fixes | DONE | unknown path 500 → 404, malformed JSON 500 → 400 (new handlers, caught by smoke) |
 | Matrix §2.3 revisit (D-P9.3) | DONE | MODERATOR assign stays **N** — reviewed at Phase 9, kept |
 | Docs sync | DONE | CHANGELOG 0.10.0, ROADMAP/BACKLOG/BOARD Phase 9 sections, API_DESIGN rows, SRS markers, matrix note |
-| Phase 9 report + gate | DONE | Report delivered 2026-10-17 — **awaiting owner approval** |
+| Phase 9 report + approval gate | DONE | Approved by owner 2026-10-17; docs flipped to APPROVED |
 
 ## Phase 8 — Geographic capabilities (COMPLETE — APPROVED 2026-10-15)
 
@@ -183,7 +183,7 @@ Last updated: 2026-10-17.
 | Phase 6 - Public website | Complete (approved 2026-10-15) | 4 public pages + public APIs + privacy; real-PG smoke caught/fixed H2-masked query bug |
 | Phase 7 - Citizen web | Complete (approved 2026-10-15) | Auth layer + 6 citizen pages; profile/T8-cancel/multipart/dashboard-attention backend; live smoke caught 2 real bugs (code counter, oversize 500) — both fixed |
 | Phase 8 - Geographic capabilities | Complete (approved 2026-10-15) | PostGIS bbox/near queries, Leaflet map, HMAC coord fuzzing, V3 geography index; live smoke + IT hardening caught 1 real bug (sorted Pageable → 500) — fixed |
-| Phase 9 - Administration and moderation | Complete (2026-10-17 — awaiting approval gate) | Membership V4, user/org/category admin, filtered audit, admin dashboard + analytics + read-only settings, 11 admin pages; live smoke caught 3 real bugs (PG audit filter 500, unknown-path 500, malformed-body 500) — all fixed |
+| Phase 9 - Administration and moderation | Complete (approved 2026-10-17) | Membership V4, user/org/category admin, filtered audit, admin dashboard + analytics + read-only settings, 11 admin pages; live smoke caught 3 real bugs (PG audit filter 500, unknown-path 500, malformed-body 500) — all fixed |
 
 ## Environment notes
 

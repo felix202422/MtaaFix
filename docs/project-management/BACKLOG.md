@@ -165,7 +165,7 @@ Dependencies flow: Phase 2 ∥ Phase 3 → Phase 4 → Phase 5 → Phase 6 → P
 
 ## Phase 7 — Citizen web
 
-All four items **delivered 2026-10-15** (see CHANGELOG 0.8.0; approval gate pending).
+All four items **delivered and approved 2026-10-15** (see CHANGELOG 0.8.0).
 
 ### B-7.1 Auth pages (login/register) — DONE
 - **AC:** Real `/auth/*` integration; token storage strategy documented; duplicate
@@ -210,7 +210,7 @@ All four items **delivered 2026-10-15** (see CHANGELOG 0.8.0; approval gate pend
 
 ## Phase 8 — Geographic capabilities
 
-All four items **delivered 2026-10-15** (see CHANGELOG 0.9.0; approval gate pending).
+All four items **delivered and approved 2026-10-15** (see CHANGELOG 0.9.0).
 
 ### B-8.1 Coordinate validation + GeoJSON representation — DONE
 - **AC:** Lat/lng range validation enforced (FR-11.2) incl. implausible null-island
@@ -261,7 +261,7 @@ UI (API-level only); browser-based map verification → Phase 15.
 
 ---
 
-## Phase 9 - Administration and moderation (COMPLETE - 2026-10-17, approval gate pending)
+## Phase 9 - Administration and moderation (COMPLETE - approved 2026-10-17)
 
 ### B-9.1 Organisation membership model (D-P9.1) - DONE
 - **AC:** Team membership persists in `organization_members` (single org per user),
