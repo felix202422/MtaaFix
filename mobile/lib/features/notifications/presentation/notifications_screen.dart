@@ -5,25 +5,24 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        backgroundColor: Colors.orange.shade600,
-      ),
+      appBar: AppBar(title: const Text('Notifications')),
       body: ListView.builder(
         itemCount: 5,
         itemBuilder: (context, index) {
           return ListTile(
             leading: CircleAvatar(
-              backgroundColor: Colors.orange.shade100,
+              backgroundColor: colors.primaryContainer,
               child: Icon(
                 Icons.notifications_active_rounded,
-                color: Colors.orange.shade600,
+                color: colors.onPrimaryContainer,
               ),
             ),
             title: const Text('New report assigned'),
-            subtitle: const Text('Your report has been assigned to a moderator'),
-            trailing: const Icon(Icons.check_circle, color: Colors.green),
+            subtitle:
+                const Text('Your report has been assigned to a moderator'),
+            trailing: Icon(Icons.check_circle, color: colors.primary),
           );
         },
       ),

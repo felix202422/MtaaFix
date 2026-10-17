@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
+import 'package:mtaafix_mobile/core/widgets/snackbars.dart';
+
 class ReportFormScreen extends StatelessWidget {
   const ReportFormScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Report Issue'),
-        backgroundColor: Colors.orange.shade600,
-      ),
+      appBar: AppBar(title: const Text('Report Issue')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -23,7 +23,7 @@ class ReportFormScreen extends StatelessWidget {
             Container(
               height: 200,
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: colors.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(
@@ -33,21 +33,41 @@ class ReportFormScreen extends StatelessWidget {
             const SizedBox(height: 24),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(
-                labelText: 'Subject',
-                border: OutlineInputBorder(),
+                labelText: 'Category',
               ),
               items: const [
                 DropdownMenuItem(value: 'POTHOLE', child: Text('Pothole')),
-                DropdownMenuItem(value: 'LIGHT', child: Text('Broken Streetlight')),
-                DropdownMenuItem(value: 'DAMAGE', child: Text('Damaged Road')),
-                DropdownMenuItem(value: 'GARBAGE', child: Text('Garbage Accumulation')),
-                DropdownMenuItem(value: 'DRAIN', child: Text('Blocked Drainage')),
+                DropdownMenuItem(
+                  value: 'LIGHT',
+                  child: Text('Broken Streetlight'),
+                ),
+                DropdownMenuItem(
+                  value: 'DAMAGE',
+                  child: Text('Damaged Road'),
+                ),
+                DropdownMenuItem(
+                  value: 'GARBAGE',
+                  child: Text('Garbage Accumulation'),
+                ),
+                DropdownMenuItem(
+                  value: 'DRAIN',
+                  child: Text('Blocked Drainage'),
+                ),
                 DropdownMenuItem(value: 'WATER', child: Text('Water Leak')),
                 DropdownMenuItem(value: 'FLOOD', child: Text('Flooding')),
-                DropdownMenuItem(value: 'WRK', child: Text('Damaged Infrastructure')),
+                DropdownMenuItem(
+                  value: 'WRK',
+                  child: Text('Damaged Infrastructure'),
+                ),
                 DropdownMenuItem(value: 'TREE', child: Text('Fallen Tree')),
-                DropdownMenuItem(value: 'ELEC', child: Text('Damaged Electrical')),
-                DropdownMenuItem(value: 'SAFETY', child: Text('Unsafe Area')),
+                DropdownMenuItem(
+                  value: 'ELEC',
+                  child: Text('Damaged Electrical'),
+                ),
+                DropdownMenuItem(
+                  value: 'SAFETY',
+                  child: Text('Unsafe Area'),
+                ),
                 DropdownMenuItem(value: 'OTHER', child: Text('Other')),
               ],
               onChanged: (value) {},
@@ -56,7 +76,6 @@ class ReportFormScreen extends StatelessWidget {
             TextFormField(
               decoration: const InputDecoration(
                 labelText: 'Title',
-                border: OutlineInputBorder(),
               ),
               maxLines: 1,
             ),
@@ -64,7 +83,6 @@ class ReportFormScreen extends StatelessWidget {
             TextFormField(
               decoration: const InputDecoration(
                 labelText: 'Description',
-                border: OutlineInputBorder(),
               ),
               maxLines: 4,
             ),
@@ -72,7 +90,12 @@ class ReportFormScreen extends StatelessWidget {
             ElevatedButton.icon(
               icon: const Icon(Icons.add_photo_alternate_rounded),
               label: const Text('Add Photo/Video'),
-              onPressed: () {},
+              onPressed: () {
+                showAppSnack(
+                  context,
+                  'Photo capture arrives with the mobile reporting phase.',
+                );
+              },
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -80,8 +103,9 @@ class ReportFormScreen extends StatelessWidget {
               height: 48,
               child: ElevatedButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Report submitted')),
+                  showAppSnack(
+                    context,
+                    'Report submission arrives with the mobile reporting phase.',
                   );
                   Navigator.pop(context);
                 },
