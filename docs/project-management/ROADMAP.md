@@ -10,7 +10,8 @@
 
 - **[0.12.0]** — Phase 11: Flutter application foundation (navigation + route
   guards, secure token storage, auth-state wiring, platform configuration,
-  themed screens, 29/29 Flutter tests, debug APK) — approval pending
+  themed screens, 29/29 Flutter tests, debug APK) — **APPROVED**
+  2026-10-17
 - **[0.11.0]** — Phase 10: field-worker web application (worker dashboard + task
   details pages, assignment progression, completion evidence, reviewer return,
   worker-scoping tests; 106/106 backend + 57/57 web) — **APPROVED**
@@ -283,7 +284,7 @@ Pages 25–26. Delivered 2026-10-17 (see CHANGELOG 0.11.0; BACKLOG B-10.1–B-10
   bypassing the lifecycle**
 - **Gate: APPROVED by owner 2026-10-17 — Phase 11 may start**
 
-## Phase 11 — Flutter Application Foundation (COMPLETE — PENDING APPROVAL 2026-10-17)
+## Phase 11 — Flutter Application Foundation (COMPLETE — APPROVED 2026-10-17)
 
 Delivered 2026-10-17 (see CHANGELOG 0.12.0; BACKLOG B-11.1–B-11.5):
 - [x] Project inspection/creation — `flutter create --org tz.co.mtaafix`
@@ -311,7 +312,7 @@ Delivered 2026-10-17 (see CHANGELOG 0.12.0; BACKLOG B-11.1–B-11.5):
 - Gaps: report form/media/map submission are themed placeholders (Phase 12);
   forgot-password → Phase 13; iOS build unexecutable on Windows (B-X.4)
 - **Exit: ✅ the application builds and provides a reliable foundation for mobile features**
-- **Gate: PENDING — Part 17 report delivered 2026-10-17; Phase 12 requires owner approval**
+- **Gate: APPROVED by owner 2026-10-17 — Phase 12 may start**
 
 ## Phase 12 — Flutter Citizen Features (NOT STARTED)
 
@@ -389,7 +390,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 8 | Complete (approved 2026-10-15) |
 | 9 | Complete (approved 2026-10-17) |
 | 10 | Complete (approved 2026-10-17) |
-| 11 | Complete (pending approval 2026-10-17) |
+| 11 | Complete (approved 2026-10-17) |
 | 12 | Not started |
 | 13 | Partial (in-app only) |
 | 14–23 | Not started |

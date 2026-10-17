@@ -5,9 +5,9 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-17.
 
-## Current phase: Phase 11 COMPLETE (2026-10-17) — owner approval gate pending; next: Phase 12 (awaiting approval)
+## Current phase: Phase 11 APPROVED (2026-10-17) — next: Phase 12 (not started)
 
-## Phase 11 — Flutter application foundation (COMPLETE — PENDING APPROVAL 2026-10-17)
+## Phase 11 — Flutter application foundation (COMPLETE — APPROVED 2026-10-17)
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -21,7 +21,7 @@ Last updated: 2026-10-17.
 | Tests | DONE | `flutter analyze` 0 issues; `flutter test` 29/29 (api client 8, auth controller 8, router 8, theme 2, token store 2, widget journey 1) |
 | Debug build | DONE | `flutter build apk --debug` → `app-debug.apk` |
 | Docs sync | DONE | CHANGELOG 0.12.0, ROADMAP/BACKLOG/BOARD Phase 11 sections, DESIGN_SYSTEM follow-up note |
-| Phase 11 report + approval gate | TODO | Part 17 report delivered 2026-10-17; Phase 12 gated on owner approval |
+| Phase 11 report + approval gate | DONE | Approved by owner 2026-10-17; docs flipped to APPROVED |
 
 ## Phase 10 — Field-worker web application (COMPLETE — APPROVED 2026-10-17)
 
@@ -217,7 +217,7 @@ Last updated: 2026-10-17.
 | Phase 8 - Geographic capabilities | Complete (approved 2026-10-15) | PostGIS bbox/near queries, Leaflet map, HMAC coord fuzzing, V3 geography index; live smoke + IT hardening caught 1 real bug (sorted Pageable → 500) — fixed |
 | Phase 9 - Administration and moderation | Complete (approved 2026-10-17) | Membership V4, user/org/category admin, filtered audit, admin dashboard + analytics + read-only settings, 11 admin pages; live smoke caught 3 real bugs (PG audit filter 500, unknown-path 500, malformed-body 500) — all fixed |
 | Phase 10 - Field-worker web application | Complete (approved 2026-10-17) | Worker dashboard + task details pages, progress/evidence, admin return action, worker-scoping tests, PublicApiTest flake fix; live smoke 50/50 found 1 deferred gap (non-JSON content type → 500) |
-| Phase 11 - Flutter application foundation | Complete (pending approval 2026-10-17) | Route guards, secure token storage, auth wiring, themed screens, Android config fixed (AAPT `configChanges` + NDK 28.2), iOS scaffolded (needs macOS); 29/29 Flutter tests + debug APK |
+| Phase 11 - Flutter application foundation | Complete (approved 2026-10-17) | Route guards, secure token storage, auth wiring, themed screens, Android config fixed (AAPT `configChanges` + NDK 28.2), iOS scaffolded (needs macOS); 29/29 Flutter tests + debug APK |
 
 ## Environment notes
 

@@ -357,7 +357,7 @@ UI (API-level only); browser-based map verification → Phase 15.
 
 ---
 
-## Phase 11 - Flutter application foundation (COMPLETE - pending approval 2026-10-17)
+## Phase 11 - Flutter application foundation (COMPLETE - approved 2026-10-17)
 
 ### B-11.1 Navigation with auth guards - DONE
 - **AC:** Every screen is reachable through a central named-route table;
