@@ -22,6 +22,7 @@ const citizen = {
   email: 'citizen@example.com',
   fullName: 'Asha Juma',
   mobile: '+255712345678',
+  active: true,
   role: 'CITIZEN',
   organisationId: null,
 };

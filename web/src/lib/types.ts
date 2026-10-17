@@ -91,6 +91,7 @@ export interface User {
   email: string;
   fullName: string;
   mobile: string | null;
+  active: boolean;
   role: UserRole;
   organisationId: string | null;
 }
@@ -112,6 +113,9 @@ export interface Category {
   name: string;
   slug: string;
   type: string;
+  parentId?: string | null;
+  active?: boolean;
+  displayOrder?: number | null;
 }
 
 export interface Location {
@@ -213,3 +217,142 @@ export interface Notification {
   timestamp: string;
   reportId: string | null;
 }
+
+// --- Phase 9: administration and moderation (P14-P24) ---
+
+export interface AdminRecentReport {
+  id: string;
+  code: string;
+  title: string;
+  status: ReportStatus;
+  categoryId: string | null;
+  organisationId: string | null;
+  reportedAt: string;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+export interface AdminDashboard {
+  totalReports: number;
+  byStatus: Record<string, number>;
+  newLast7Days: number;
+  activity14d: { date: string; count: number }[];
+  byCategory: { categoryId: string | null; name: string; count: number }[];
+  moderationQueue: {
+    submitted: number;
+    underReview: number;
+    needsInformation: number;
+    resolutionReview: number;
+    items: AdminRecentReport[];
+  };
+  workload: {
+    unassigned: number;
+    assigned: number;
+    byOrganisation: { organisationId: string | null; name: string; assignedCount: number }[];
+    byWorker: { userId: string | null; name: string | null; activeAssignments: number }[];
+  };
+  attention: {
+    needsInformation: number;
+    resolvedAwaitingConfirm: number;
+    needsInfoItems: AdminRecentReport[];
+  };
+  recent: AdminRecentReport[];
+}
+
+export interface AnalyticsSummary {
+  from: string | null;
+  to: string | null;
+  organisationId: string | null;
+  categoryId: string | null;
+  status: string | null;
+  bbox: string | null;
+  total: number;
+  byStatus: Record<string, number>;
+  byCategory: { categoryId: string | null; name: string; count: number }[];
+  weekly: { weekStart: string; count: number }[];
+  avgResolutionHours: number | null;
+  unassigned: number;
+  organisations: { organisationId: string | null; name: string; assignedReports: number }[];
+}
+
+export interface AuditLogEntry {
+  id: string;
+  action: string;
+  actorId: string | null;
+  actorEmail: string | null;
+  entityType: string | null;
+  entityId: string | null;
+  outcome: string | null;
+  details: string | null;
+  createdAt: string;
+}
+
+export interface AuditLogFilters {
+  action?: string;
+  actorId?: string;
+  entityType?: string;
+  entityId?: string;
+  outcome?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface Organisation {
+  id: string;
+  name: string;
+  slug: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  description: string | null;
+  logoUrl: string | null;
+  active: boolean;
+  memberCount: number;
+}
+
+export interface OrganisationMember {
+  userId: string;
+  email: string;
+  fullName: string;
+  role: UserRole;
+  active: boolean;
+  joinedAt: string | null;
+}
+
+export interface SystemSettings {
+  general: { applicationName: string; applicationTimeZone: string };
+  reporting: {
+    maxUploadBytes: number;
+    multipartMaxFileSize: string;
+    allowedMediaTypes: string[];
+    notifications: { inAppEnabled: boolean; emailEnabled: boolean; emailNote: string };
+  };
+  security: {
+    accessTokenTtlSeconds: number;
+    refreshTokenTtlSeconds: number;
+    corsAllowedOrigins: string;
+  };
+  privacy: { locationFuzzing: string; rolesSeeingPreciseLocations: string[] };
+  geographic: {
+    fuzzMinMeters: number;
+    fuzzMaxMeters: number;
+    fuzzSecretConfigured: boolean;
+    fuzzSecretIsDefault: boolean;
+  };
+  integrations: { mapTiles: string; email: string; push: string };
+}
+
+export interface AdminReportFilters {
+  status?: string;
+  categoryId?: string;
+  orgId?: string;
+  q?: string;
+  assignment?: 'assigned' | 'unassigned';
+  page?: number;
+  size?: number;
+}
+
+/** Staff user row (FR-12.1; includes the account status flag). */
+export type AdminUser = User;

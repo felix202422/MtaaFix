@@ -93,6 +93,18 @@ export function UserMenu() {
           >
             Profile
           </Link>
+          {(user.role === 'MODERATOR' ||
+            user.role === 'ADMINISTRATOR' ||
+            user.role === 'ORGANIZATION_ADMIN') && (
+            <Link
+              to="/admin"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2 text-sm font-semibold text-brand-green-deep transition-colors hover:bg-canvas"
+            >
+              Admin
+            </Link>
+          )}
           <button
             type="button"
             role="menuitem"

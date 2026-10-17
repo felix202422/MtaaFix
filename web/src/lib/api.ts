@@ -1,8 +1,16 @@
 import type {
+  AdminDashboard,
+  AdminReportFilters,
+  AdminUser,
+  AnalyticsSummary,
+  AuditLogEntry,
+  AuditLogFilters,
   AuthResponse,
   Category,
   Dashboard,
   Notification,
+  Organisation,
+  OrganisationMember,
   PagedResponse,
   PublicCategory,
   PublicReportDetail,
@@ -10,8 +18,10 @@ import type {
   PublicReportSummary,
   PublicStats,
   Report,
+  SystemSettings,
   UpdateProfileInput,
   User,
+  UserRole,
 } from './types';
 
 const BASE_URL: string =
@@ -443,5 +453,314 @@ export const api = {
   },
   markAllNotificationsRead(options: RequestOptions = {}): Promise<void> {
     return request<void>('/notifications/read-all', { ...options, method: 'POST' });
+  },
+
+  // --- Phase 9: administration and moderation (P14-P24) ---
+
+  // P14 admin dashboard (MODERATOR, ADMINISTRATOR).
+  getAdminDashboard(options: RequestOptions = {}): Promise<AdminDashboard> {
+    return request<AdminDashboard>('/dashboard/admin', options);
+  },
+
+  // P15 report management (role-scoped by the backend).
+  listStaffReports(
+    filters: AdminReportFilters = {},
+    options: RequestOptions = {},
+  ): Promise<PagedResponse<Report>> {
+    const params = new URLSearchParams();
+    if (filters.status) params.set('status', filters.status);
+    if (filters.categoryId) params.set('categoryId', filters.categoryId);
+    if (filters.orgId) params.set('orgId', filters.orgId);
+    if (filters.q) params.set('q', filters.q);
+    if (filters.assignment) params.set('assignment', filters.assignment);
+    if (filters.page !== undefined) params.set('page', String(filters.page));
+    if (filters.size !== undefined) params.set('size', String(filters.size));
+    const query = params.toString();
+    return request<PagedResponse<Report>>(`/reports${query ? `?${query}` : ''}`, options);
+  },
+
+  // P19 user management (ADMINISTRATOR only).
+  searchUsers(
+    filters: { q?: string; role?: string; active?: boolean; page?: number; size?: number } = {},
+    options: RequestOptions = {},
+  ): Promise<PagedResponse<AdminUser>> {
+    const params = new URLSearchParams();
+    if (filters.q) params.set('q', filters.q);
+    if (filters.role) params.set('role', filters.role);
+    if (filters.active !== undefined) params.set('active', String(filters.active));
+    if (filters.page !== undefined) params.set('page', String(filters.page));
+    if (filters.size !== undefined) params.set('size', String(filters.size));
+    const query = params.toString();
+    return request<PagedResponse<AdminUser>>(`/users${query ? `?${query}` : ''}`, options);
+  },
+  changeUserRole(id: string, role: UserRole, options: RequestOptions = {}): Promise<AdminUser> {
+    return request<AdminUser>(`/users/${encodeURIComponent(id)}/role`, {
+      ...options,
+      method: 'PUT',
+      body: { role },
+    });
+  },
+  setUserActive(id: string, active: boolean, options: RequestOptions = {}): Promise<AdminUser> {
+    return request<AdminUser>(`/users/${encodeURIComponent(id)}/active`, {
+      ...options,
+      method: 'PUT',
+      body: { active },
+    });
+  },
+
+  // P20 category management (ADMINISTRATOR only).
+  listAdminCategories(options: RequestOptions = {}): Promise<Category[]> {
+    return request<Category[]>('/categories?includeInactive=true', options);
+  },
+  createCategory(
+    input: { name: string; slug: string; type: string; displayOrder?: number },
+    options: RequestOptions = {},
+  ): Promise<Category> {
+    return request<Category>('/categories', { ...options, method: 'POST', body: input });
+  },
+  updateCategory(
+    id: string,
+    input: { name?: string; slug?: string; type?: string; parentId?: string | null },
+    options: RequestOptions = {},
+  ): Promise<Category> {
+    return request<Category>(`/categories/${encodeURIComponent(id)}`, {
+      ...options,
+      method: 'PUT',
+      body: input,
+    });
+  },
+  setCategoryActive(id: string, active: boolean, options: RequestOptions = {}): Promise<Category> {
+    return request<Category>(
+      `/categories/${encodeURIComponent(id)}/active?value=${active ? 'true' : 'false'}`,
+      { ...options, method: 'PUT' },
+    );
+  },
+  setCategoryOrder(
+    id: string,
+    displayOrder: number,
+    options: RequestOptions = {},
+  ): Promise<Category> {
+    return request<Category>(`/categories/${encodeURIComponent(id)}/order`, {
+      ...options,
+      method: 'PUT',
+      body: { displayOrder },
+    });
+  },
+
+  // P21 organisation management (ADMIN writes; ORG_ADMIN reads/own members).
+  listOrganisations(options: RequestOptions = {}): Promise<Organisation[]> {
+    return request<Organisation[]>('/organizations', options);
+  },
+  createOrganisation(
+    input: { name: string; slug: string; email?: string; phone?: string; address?: string },
+    options: RequestOptions = {},
+  ): Promise<Organisation> {
+    return request<Organisation>('/organizations', { ...options, method: 'POST', body: input });
+  },
+  updateOrganisation(
+    id: string,
+    input: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      address?: string;
+      description?: string;
+      logoUrl?: string;
+    },
+    options: RequestOptions = {},
+  ): Promise<Organisation> {
+    return request<Organisation>(`/organizations/${encodeURIComponent(id)}`, {
+      ...options,
+      method: 'PUT',
+      body: input,
+    });
+  },
+  setOrganisationActive(
+    id: string,
+    active: boolean,
+    options: RequestOptions = {},
+  ): Promise<Organisation> {
+    return request<Organisation>(`/organizations/${encodeURIComponent(id)}/active`, {
+      ...options,
+      method: 'PUT',
+      body: { active },
+    });
+  },
+  listOrganisationMembers(
+    id: string,
+    options: RequestOptions = {},
+  ): Promise<OrganisationMember[]> {
+    return request<OrganisationMember[]>(
+      `/organizations/${encodeURIComponent(id)}/members`,
+      options,
+    );
+  },
+  addOrganisationMember(
+    id: string,
+    input: { userId: string; role: 'ORGANIZATION_ADMIN' | 'FIELD_WORKER' },
+    options: RequestOptions = {},
+  ): Promise<OrganisationMember> {
+    return request<OrganisationMember>(`/organizations/${encodeURIComponent(id)}/members`, {
+      ...options,
+      method: 'POST',
+      body: input,
+    });
+  },
+  removeOrganisationMember(
+    id: string,
+    userId: string,
+    options: RequestOptions = {},
+  ): Promise<void> {
+    return request<void>(
+      `/organizations/${encodeURIComponent(id)}/members/${encodeURIComponent(userId)}`,
+      { ...options, method: 'DELETE' },
+    );
+  },
+
+  // P22 audit logs (ADMINISTRATOR global; ORG_ADMIN scoped to own organisation).
+  getAuditLog(
+    filters: AuditLogFilters = {},
+    options: RequestOptions = {},
+  ): Promise<PagedResponse<AuditLogEntry>> {
+    const params = new URLSearchParams();
+    if (filters.action) params.set('action', filters.action);
+    if (filters.actorId) params.set('actorId', filters.actorId);
+    if (filters.entityType) params.set('entityType', filters.entityType);
+    if (filters.entityId) params.set('entityId', filters.entityId);
+    if (filters.outcome) params.set('outcome', filters.outcome);
+    if (filters.from) params.set('from', filters.from);
+    if (filters.to) params.set('to', filters.to);
+    if (filters.page !== undefined) params.set('page', String(filters.page));
+    if (filters.size !== undefined) params.set('size', String(filters.size));
+    const query = params.toString();
+    return request<PagedResponse<AuditLogEntry>>(`/audit${query ? `?${query}` : ''}`, options);
+  },
+  getOrganisationAuditLog(
+    organisationId: string,
+    filters: AuditLogFilters = {},
+    options: RequestOptions = {},
+  ): Promise<PagedResponse<AuditLogEntry>> {
+    const params = new URLSearchParams();
+    if (filters.action) params.set('action', filters.action);
+    if (filters.actorId) params.set('actorId', filters.actorId);
+    if (filters.entityType) params.set('entityType', filters.entityType);
+    if (filters.entityId) params.set('entityId', filters.entityId);
+    if (filters.outcome) params.set('outcome', filters.outcome);
+    if (filters.from) params.set('from', filters.from);
+    if (filters.to) params.set('to', filters.to);
+    if (filters.page !== undefined) params.set('page', String(filters.page));
+    if (filters.size !== undefined) params.set('size', String(filters.size));
+    const query = params.toString();
+    return request<PagedResponse<AuditLogEntry>>(
+      `/audit/organizations/${encodeURIComponent(organisationId)}${query ? `?${query}` : ''}`,
+      options,
+    );
+  },
+
+  // P23 analytics (MODERATOR, ADMINISTRATOR, ORG_ADMIN).
+  getAnalyticsSummary(
+    filters: {
+      from?: string;
+      to?: string;
+      categoryId?: string;
+      status?: string;
+      orgId?: string;
+      bbox?: string;
+    } = {},
+    options: RequestOptions = {},
+  ): Promise<AnalyticsSummary> {
+    const params = new URLSearchParams();
+    if (filters.from) params.set('from', filters.from);
+    if (filters.to) params.set('to', filters.to);
+    if (filters.categoryId) params.set('categoryId', filters.categoryId);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.orgId) params.set('orgId', filters.orgId);
+    if (filters.bbox) params.set('bbox', filters.bbox);
+    const query = params.toString();
+    return request<AnalyticsSummary>(`/analytics/summary${query ? `?${query}` : ''}`, options);
+  },
+
+  // P24 system settings (ADMINISTRATOR only; read-only in MVP, FR-12.3).
+  getSettings(options: RequestOptions = {}): Promise<SystemSettings> {
+    return request<SystemSettings>('/settings', options);
+  },
+
+  // Moderation lifecycle actions (P16/P17; roles enforced server-side).
+  submitReport(id: string, options: RequestOptions = {}): Promise<Report> {
+    return request<Report>(`/reports/${encodeURIComponent(id)}/submit`, {
+      ...options,
+      method: 'POST',
+    });
+  },
+  reportNeedsInfo(id: string, message: string, options: RequestOptions = {}): Promise<Report> {
+    return request<Report>(`/reports/${encodeURIComponent(id)}/needs-info`, {
+      ...options,
+      method: 'POST',
+      body: { message },
+    });
+  },
+  reportVerify(id: string, options: RequestOptions = {}): Promise<Report> {
+    return request<Report>(`/reports/${encodeURIComponent(id)}/verify`, {
+      ...options,
+      method: 'POST',
+    });
+  },
+  reportReject(
+    id: string,
+    input: { reasonCode: string; comment: string },
+    options: RequestOptions = {},
+  ): Promise<Report> {
+    return request<Report>(`/reports/${encodeURIComponent(id)}/reject`, {
+      ...options,
+      method: 'POST',
+      body: input,
+    });
+  },
+  reportDuplicate(
+    id: string,
+    canonicalReportRef: string,
+    options: RequestOptions = {},
+  ): Promise<Report> {
+    return request<Report>(`/reports/${encodeURIComponent(id)}/duplicate`, {
+      ...options,
+      method: 'POST',
+      body: { canonicalReportRef },
+    });
+  },
+  reportAssign(
+    id: string,
+    input: { assigneeId: string; organisationId?: string },
+    options: RequestOptions = {},
+  ): Promise<Report> {
+    return request<Report>(`/reports/${encodeURIComponent(id)}/assign`, {
+      ...options,
+      method: 'POST',
+      body: input,
+    });
+  },
+  reportStart(id: string, options: RequestOptions = {}): Promise<Report> {
+    return request<Report>(`/reports/${encodeURIComponent(id)}/start`, {
+      ...options,
+      method: 'POST',
+    });
+  },
+  reportResolve(id: string, options: RequestOptions = {}): Promise<Report> {
+    return request<Report>(`/reports/${encodeURIComponent(id)}/resolve`, {
+      ...options,
+      method: 'POST',
+    });
+  },
+  reportClose(id: string, options: RequestOptions = {}): Promise<Report> {
+    return request<Report>(`/reports/${encodeURIComponent(id)}/close`, {
+      ...options,
+      method: 'POST',
+    });
+  },
+  reportReopen(id: string, justification: string, options: RequestOptions = {}): Promise<Report> {
+    return request<Report>(`/reports/${encodeURIComponent(id)}/reopen`, {
+      ...options,
+      method: 'POST',
+      body: { justification },
+    });
   },
 };

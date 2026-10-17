@@ -19,6 +19,17 @@ import { NotificationsPage } from './pages/app/NotificationsPage';
 import { ProfilePage } from './pages/app/ProfilePage';
 import { ReportTrackingPage } from './pages/app/ReportTrackingPage';
 import { ReportWizardPage } from './pages/app/ReportWizardPage';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminReportsPage } from './pages/admin/AdminReportsPage';
+import { AdminReportDetailsPage } from './pages/admin/AdminReportDetailsPage';
+import { AdminModerationPage } from './pages/admin/AdminModerationPage';
+import { AdminAssignmentsPage } from './pages/admin/AdminAssignmentsPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
+import { AdminOrganizationsPage } from './pages/admin/AdminOrganizationsPage';
+import { AdminAuditPage } from './pages/admin/AdminAuditPage';
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
 
 export const routes: RouteObject[] = [
   {
@@ -42,6 +53,68 @@ export const routes: RouteObject[] = [
           { path: 'reports/:id', element: <ReportTrackingPage /> },
           { path: 'notifications', element: <NotificationsPage /> },
           { path: 'profile', element: <ProfilePage /> },
+        ],
+      },
+      {
+        path: '/admin',
+        element: <RequireAuth />,
+        children: [
+          {
+            element: <RequireAuth roles={['MODERATOR', 'ADMINISTRATOR']} />,
+            children: [{ index: true, element: <AdminDashboardPage /> }],
+          },
+          {
+            path: 'reports',
+            element: (
+              <RequireAuth
+                roles={['MODERATOR', 'ADMINISTRATOR', 'ORGANIZATION_ADMIN', 'FIELD_WORKER']}
+              />
+            ),
+            children: [
+              { index: true, element: <AdminReportsPage /> },
+              { path: ':id', element: <AdminReportDetailsPage /> },
+            ],
+          },
+          {
+            path: 'moderation',
+            element: <RequireAuth roles={['MODERATOR', 'ADMINISTRATOR']} />,
+            children: [{ index: true, element: <AdminModerationPage /> }],
+          },
+          {
+            path: 'assignments',
+            element: <RequireAuth roles={['ADMINISTRATOR', 'ORGANIZATION_ADMIN']} />,
+            children: [{ index: true, element: <AdminAssignmentsPage /> }],
+          },
+          {
+            path: 'users',
+            element: <RequireAuth roles={['ADMINISTRATOR']} />,
+            children: [{ index: true, element: <AdminUsersPage /> }],
+          },
+          {
+            path: 'categories',
+            element: <RequireAuth roles={['ADMINISTRATOR']} />,
+            children: [{ index: true, element: <AdminCategoriesPage /> }],
+          },
+          {
+            path: 'organizations',
+            element: <RequireAuth roles={['ADMINISTRATOR', 'ORGANIZATION_ADMIN']} />,
+            children: [{ index: true, element: <AdminOrganizationsPage /> }],
+          },
+          {
+            path: 'audit',
+            element: <RequireAuth roles={['ADMINISTRATOR', 'ORGANIZATION_ADMIN']} />,
+            children: [{ index: true, element: <AdminAuditPage /> }],
+          },
+          {
+            path: 'analytics',
+            element: <RequireAuth roles={['MODERATOR', 'ADMINISTRATOR', 'ORGANIZATION_ADMIN']} />,
+            children: [{ index: true, element: <AdminAnalyticsPage /> }],
+          },
+          {
+            path: 'settings',
+            element: <RequireAuth roles={['ADMINISTRATOR']} />,
+            children: [{ index: true, element: <AdminSettingsPage /> }],
+          },
         ],
       },
       { path: '/design', element: <DesignGallery /> },
