@@ -357,6 +357,66 @@ UI (API-level only); browser-based map verification → Phase 15.
 
 ---
 
+## Phase 11 - Flutter application foundation (COMPLETE - pending approval 2026-10-17)
+
+### B-11.1 Navigation with auth guards - DONE
+- **AC:** Every screen is reachable through a central named-route table;
+  protected routes redirect signed-out users to sign-in, signed-in users are
+  redirected away from auth surfaces, and unknown routes render a 404 screen
+  (never a red error screen); the splash screen restores the session before
+  choosing the destination.
+- **Phase:** 11 — **Depends:** B-11.2
+- **Delivered:** `lib/app/router.dart` (`Routes` + `generateRoute` guards),
+  `NotFoundScreen`, `SplashScreen` bootstrap; `router_test.dart` covers
+  guards, splash flow and the 404 route.
+
+### B-11.2 API client + secure token storage - DONE
+- **AC:** All HTTP goes through one client with a configurable base URL
+  (`--dart-define=MTAAFIX_API_BASE`), bearer auth, a single refresh-and-retry
+  on 401 that persists rotated tokens, and typed errors (`statusCode 0` =
+  unreachable); tokens persist encrypted at rest and are injectable in tests
+  without platform channels.
+- **Phase:** 11 — **Depends:** auth endpoints (Phase 4)
+- **Delivered:** `lib/core/network/api_client.dart` + `api_exception.dart`,
+  `lib/core/storage/token_store.dart` (`SecureTokenStore` /
+  `InMemoryTokenStore`, `flutter_secure_storage`); 8 API-client tests cover
+  success/error/network/empty-body/bearer/refresh/rotation/clear-vs-keep.
+
+### B-11.3 Authentication state + real auth screens - DONE
+- **AC:** The app restores a persisted session (`GET /auth/me`) at boot;
+  login/register/logout drive a single observable auth state; unreachable
+  server during restore keeps tokens (error surfaced), rejected credentials
+  clear them; the register flow establishes a session immediately after
+  account creation.
+- **Phase:** 11 — **Depends:** B-11.1, B-11.2
+- **Delivered:** `AuthController` + `AuthScope`, real sign-in/register screens
+  (password rules, confirm, optional mobile), profile screen bound to the
+  session with sign-out confirmation; 8 auth-controller tests + the
+  boot→sign-in→"My Reports" widget test.
+
+### B-11.4 Theme migration + shared components - DONE
+- **AC:** No screen uses hardcoded `Colors.orange`; loading, empty/error and
+  toast/feedback states come from shared components; unknown routes show a
+  friendly 404 with a way back.
+- **Phase:** 11 — **Depends:** Phase 2 theme groundwork
+- **Delivered:** `lib/core/widgets/{feedback_view,loading_view,snackbars}.dart`;
+  report list/form, notifications, login/register/profile migrated to the
+  M3 theme; placeholder `auth_page.dart` removed; `theme_test.dart`.
+
+### B-11.5 Platform configuration + initial tests + build - DONE
+- **AC:** Android manifest is build-valid (dev cleartext HTTP, valid
+  `configChanges` flags) with the plugin-required NDK installed; iOS carries
+  display name, usage descriptions and a dev ATS exception; `flutter analyze`
+  is clean, the test suite passes, and a debug APK builds.
+- **Phase:** 11 — **Depends:** B-11.1–B-11.4
+- **Delivered:** Android/iOS manifests per above (NDK 28.2.13676358 installed
+  via `android sdk install` — `sdkmanager` shim crashes in this environment);
+  `flutter analyze` 0 issues, `flutter test` 29/29,
+  `flutter build apk --debug` → `app-debug.apk`; iOS build requires macOS
+  (documented limitation, B-X.4).
+
+---
+
 ## Cross-cutting (scheduled, not MVP-blocking)
 
 | ID | Item | Phase | AC summary |
@@ -364,5 +424,5 @@ UI (API-level only); browser-based map verification → Phase 15.
 | B-X.1 | Password reset flow | 13 | Token expiring, non-disclosing responses, email provider integration |
 | B-X.2 | Notification delivery separation | 13 | deliveredAt ≠ createdAt; failure handling |
 | B-X.3 | `organization_members` + org scoping UI | 9 | Membership CRUD; matrix O-scopes enforced |
-| B-X.4 | iOS project scaffold | 11 | `flutter build ios` succeeds on macOS CI-or-local; until then documented limitation |
-| B-X.5 | Mobile token persistence + wiring | 11–12 | Login→session→report flow against real backend |
+| B-X.4 | iOS project scaffold | 11 | `flutter build ios` succeeds on macOS CI-or-local; until then documented limitation — `ios/Runner` scaffolded Phase 11, build unexecutable on Windows |
+| B-X.5 | Mobile token persistence + wiring | 11–12 | Login→session→report flow against real backend — session restore/login/logout done Phase 11; report submission against the API lands with Phase 12 |

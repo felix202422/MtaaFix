@@ -5,7 +5,23 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-17.
 
-## Current phase: Phase 10 APPROVED (2026-10-17) — next: Phase 11 (not started)
+## Current phase: Phase 11 COMPLETE (2026-10-17) — owner approval gate pending; next: Phase 12 (awaiting approval)
+
+## Phase 11 — Flutter application foundation (COMPLETE — PENDING APPROVAL 2026-10-17)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Project completeness | DONE | `flutter create --org tz.co.mtaafix`: Android Gradle (`.kts`) build + `MainActivity`, `ios/Runner` project, `analysis_options.yaml`, mobile `README.md` |
+| Navigation + guards | DONE | `lib/app/router.dart` named-route table; protected → sign-in, signed-in away from auth surfaces, unknown → `NotFoundScreen`; splash restores the session before redirecting |
+| Theme migration + shared components | DONE | Report list/form, notifications, login/register/profile off hardcoded `Colors.orange` onto the M3 theme; `LoadingView`/`FeedbackView`/`showAppSnack`; placeholder `auth_page.dart` removed |
+| API integration + error handling | DONE | `ApiClient`: dart-define base URL, 15 s timeout, bearer auth, one refresh-and-retry with rotation, typed `ApiException` (0 = network), multipart upload helper |
+| Authentication state | DONE | `AuthController`/`AuthScope`: restore → `GET /auth/me`, login, register→auto-login, logout; network failure keeps tokens, rejected credentials clear them |
+| Android config | DONE | Dev cleartext HTTP; `configChanges` fixed (invalid `displaySize\|displayCutout` flags failed AAPT); NDK 28.2.13676358 installed (`sdkmanager` shim crashes → `android sdk install`) |
+| iOS config | DONE | Display name, camera/photo/location usage descriptions, ATS dev exception; **build unexecutable on Windows** (needs macOS — B-X.4) |
+| Tests | DONE | `flutter analyze` 0 issues; `flutter test` 29/29 (api client 8, auth controller 8, router 8, theme 2, token store 2, widget journey 1) |
+| Debug build | DONE | `flutter build apk --debug` → `app-debug.apk` |
+| Docs sync | DONE | CHANGELOG 0.12.0, ROADMAP/BACKLOG/BOARD Phase 11 sections, DESIGN_SYSTEM follow-up note |
+| Phase 11 report + approval gate | TODO | Part 17 report delivered 2026-10-17; Phase 12 gated on owner approval |
 
 ## Phase 10 — Field-worker web application (COMPLETE — APPROVED 2026-10-17)
 
@@ -105,7 +121,7 @@ Last updated: 2026-10-17.
 | Component library | DONE | Button, Field, TextAreaField, Card, Badge, Modal, Toast, EmptyState, LoadingState, ErrorState |
 | `/design` gallery + layout previews | DONE | Landing, auth, dashboard, report wizard — presentational only |
 | DESIGN_SYSTEM.md | DONE | Tokens, status map, breakpoints, manual a11y checklist |
-| Flutter theme groundwork | DONE | `mobile/lib/app/theme.dart` wired in; `flutter analyze` green; Phase 11 migrates screens |
+| Flutter theme groundwork | DONE | `mobile/lib/app/theme.dart` wired in; `flutter analyze` green; screens migrated onto it in Phase 11 |
 | CI lint step | DONE | `npm run lint` in web CI step |
 | Verify lint + build + flutter | DONE | `eslint .` 0 issues; `tsc` + `vite build` green; analyze clean |
 | Phase 2 report + approval gate | DONE | Approved by owner 2026-10-13 |
@@ -201,6 +217,7 @@ Last updated: 2026-10-17.
 | Phase 8 - Geographic capabilities | Complete (approved 2026-10-15) | PostGIS bbox/near queries, Leaflet map, HMAC coord fuzzing, V3 geography index; live smoke + IT hardening caught 1 real bug (sorted Pageable → 500) — fixed |
 | Phase 9 - Administration and moderation | Complete (approved 2026-10-17) | Membership V4, user/org/category admin, filtered audit, admin dashboard + analytics + read-only settings, 11 admin pages; live smoke caught 3 real bugs (PG audit filter 500, unknown-path 500, malformed-body 500) — all fixed |
 | Phase 10 - Field-worker web application | Complete (approved 2026-10-17) | Worker dashboard + task details pages, progress/evidence, admin return action, worker-scoping tests, PublicApiTest flake fix; live smoke 50/50 found 1 deferred gap (non-JSON content type → 500) |
+| Phase 11 - Flutter application foundation | Complete (pending approval 2026-10-17) | Route guards, secure token storage, auth wiring, themed screens, Android config fixed (AAPT `configChanges` + NDK 28.2), iOS scaffolded (needs macOS); 29/29 Flutter tests + debug APK |
 
 ## Environment notes
 

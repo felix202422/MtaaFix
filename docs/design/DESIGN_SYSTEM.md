@@ -92,5 +92,6 @@ Layout previews (presentational, design validation only — not product UI): lan
 
 - ADR: gallery route `/design` (in-repo, no Storybook); ESLint pinned to v9 for jsx-a11y compatibility; Tailwind v4 CSS-first tokens.
 - Phase 6–7: build real product pages from these components against real APIs (no dead controls in product surfaces).
-- Phase 11: mobile component library, screen migrations off hardcoded `Colors.orange`, shared status mapping.
+- Phase 11 (done): shared mobile widgets (`LoadingView`, `FeedbackView`, snackbars) and
+  screen migration off hardcoded `Colors.orange`; shared status→badge mapping lands with the Phase 12 citizen screens.
 - Phase 15: Playwright + axe automated accessibility checks, visual regression.

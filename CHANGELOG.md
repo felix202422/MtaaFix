@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.12.0] — 2026-10-17
+### Phase 11 - Flutter application foundation
+Established the reliable mobile architecture per master spec Phase 11 — project
+completeness, navigation, mobile theme, shared components, API integration,
+authentication state, error handling, Android/iOS configuration, and the initial
+test suite. Approval gate pending.
+
+**Mobile — core foundation**
+- Project completeness: `flutter create --org tz.co.mtaafix` scaffolding —
+  Android Gradle (`.kts`) build + `MainActivity`, iOS `Runner/` project,
+  `analysis_options.yaml`, project `README.md`
+- `ApiClient`: base URL via `--dart-define=MTAAFIX_API_BASE` (default
+  `http://10.0.2.2:8080/api/v1`), 15 s timeout, bearer headers, **one**
+  401 → refresh-and-retry with rotated-token persistence, typed
+  `ApiException` (`statusCode 0` = unreachable server), best-effort logout,
+  multipart upload helper for evidence photos
+- `TokenStore` abstraction — `flutter_secure_storage` (encrypted at rest) in
+  production, `InMemoryTokenStore` injected in tests (no platform channels)
+- `AuthController` + `AuthScope`: session restore (`GET /auth/me`), login,
+  register→auto-login, logout; unreachable server during restore **keeps**
+  tokens (connectivity error surfaced), rejected credentials **clear** them
+- Navigation: central named-route table with guards (protected → sign-in,
+  signed-in away from auth surfaces, unknown → `NotFoundScreen`), splash
+  performs the real session restore before redirecting
+
+**Mobile — screens and shared components**
+- Real sign-in/register screens (password rules, confirm field, optional
+  mobile), profile screen bound to the session with sign-out confirmation
+- Report list/form and notifications migrated onto the MtaaFix theme (no more
+  hardcoded `Colors.orange`); shared `LoadingView`, `FeedbackView`,
+  `showAppSnack` components; placeholder `auth_page.dart` removed
+- Forgot-password surfaces "not available yet" (reset flow → Phase 13);
+  report submit/media/map are themed placeholders wired for Phase 12
+
+**Platform configuration**
+- Android: dev cleartext HTTP (`usesCleartextTraffic`), `configChanges`
+  aligned to the Flutter template (the previous value contained
+  `displaySize|displayCutout`, which no platform defines — AAPT resource
+  linking failed until removed), NDK 28.2.13676358 installed (the deprecated
+  `sdkmanager` shim crashes in this environment; installed via
+  `android sdk install ndk/28.2.13676358`)
+- iOS: display name "MtaaFix", camera/photo-library/location usage
+  descriptions, ATS dev exception (`NSAllowsArbitraryLoads` +
+  `NSAllowsLocalNetworking`)
+
+**Verification**
+- `flutter analyze` — 0 issues; `flutter test` — **29/29** (API client
+  parse/error/network/refresh flows, auth controller lifecycle, route guards,
+  boot→sign-in→"My Reports" widget journey, theme, token store)
+- `flutter build apk --debug` — `app-debug.apk` built
+- iOS build unexecutable on Windows (needs macOS/Xcode — documented
+  limitation, backlog B-X.4)
+
 ## [0.11.0] — 2026-10-17
 ### Phase 10 - Field-worker web application
 Implemented the field-worker web application per master spec Phase 10 (SRS FR-4.2–4.5,

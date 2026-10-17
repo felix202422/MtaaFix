@@ -8,6 +8,9 @@
 
 ## Version History
 
+- **[0.12.0]** — Phase 11: Flutter application foundation (navigation + route
+  guards, secure token storage, auth-state wiring, platform configuration,
+  themed screens, 29/29 Flutter tests, debug APK) — approval pending
 - **[0.11.0]** — Phase 10: field-worker web application (worker dashboard + task
   details pages, assignment progression, completion evidence, reviewer return,
   worker-scoping tests; 106/106 backend + 57/57 web) — **APPROVED**
@@ -87,7 +90,7 @@ Delivered 2026-10-13:
   (tokens, status mapping, responsive breakpoints, manual a11y checklist)
 - [x] Minimal brand assets — wordmark + `web/public/favicon.svg`
 - [x] Shared Flutter theme groundwork — `mobile/lib/app/theme.dart` wired into
-  `mobile/lib/app.dart` (screens still use hardcoded colors; Phase 11)
+  `mobile/lib/app.dart` (screens migrated off hardcoded colors in Phase 11)
 - [x] CI: web step now runs lint + build; `npm run lint` added
 - Verified: `npm run lint`, `npm run build` (tsc + vite), `flutter analyze` all green
 
@@ -280,13 +283,35 @@ Pages 25–26. Delivered 2026-10-17 (see CHANGELOG 0.11.0; BACKLOG B-10.1–B-10
   bypassing the lifecycle**
 - **Gate: APPROVED by owner 2026-10-17 — Phase 11 may start**
 
-## Phase 11 — Flutter Application Foundation (PARTIAL)
+## Phase 11 — Flutter Application Foundation (COMPLETE — PENDING APPROVAL 2026-10-17)
 
-Present: analyze-clean scaffold (splash/login/register/report screens, ApiClient),
-shared theme groundwork (`mobile/lib/app/theme.dart`, Phase 2).
-Remaining: navigation hardening, screen migration off hardcoded colors, secure
-token storage, Android/iOS project completeness (iOS folder missing), auth-state
-wiring, initial tests.
+Delivered 2026-10-17 (see CHANGELOG 0.12.0; BACKLOG B-11.1–B-11.5):
+- [x] Project inspection/creation — `flutter create --org tz.co.mtaafix`
+  completed project scaffolding: Android Gradle (`.kts`) build + manifest,
+  iOS `Runner/` project (build requires macOS), `analysis_options.yaml`,
+  mobile `README.md`
+- [x] Navigation — central named-route table with guards (protected → sign-in,
+  signed-in redirected away from auth surfaces, unknown → `NotFoundScreen`);
+  splash runs the real session restore before redirecting
+- [x] Mobile theme + shared components — all screens migrated off hardcoded
+  `Colors.orange`; `LoadingView`, `FeedbackView`, `showAppSnack`
+- [x] API integration — `ApiClient` (dart-define base URL, 15 s timeout,
+  bearer auth, single refresh-and-retry with rotation, typed
+  `ApiException`, multipart upload)
+- [x] Authentication state — `AuthController`/`AuthScope` restore →
+  `GET /auth/me`, login, register→auto-login, logout; network failure during
+  restore keeps tokens, rejected credentials clear them
+- [x] Error handling — network/401/403 typed errors, empty-body tolerance,
+  user-facing messages; splash failure paths
+- [x] Android/iOS requirements — dev cleartext HTTP, valid `configChanges`
+  (removed invalid `displaySize|displayCutout` flags that failed AAPT), NDK
+  28.2.13676358 installed; iOS usage descriptions + ATS dev exception
+- [x] Initial tests — `flutter analyze` 0 issues; `flutter test` 29/29;
+  `flutter build apk --debug` → `app-debug.apk`
+- Gaps: report form/media/map submission are themed placeholders (Phase 12);
+  forgot-password → Phase 13; iOS build unexecutable on Windows (B-X.4)
+- **Exit: ✅ the application builds and provides a reliable foundation for mobile features**
+- **Gate: PENDING — Part 17 report delivered 2026-10-17; Phase 12 requires owner approval**
 
 ## Phase 12 — Flutter Citizen Features (NOT STARTED)
 
@@ -364,7 +389,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 8 | Complete (approved 2026-10-15) |
 | 9 | Complete (approved 2026-10-17) |
 | 10 | Complete (approved 2026-10-17) |
-| 11 | Partial (scaffold) |
+| 11 | Complete (pending approval 2026-10-17) |
 | 12 | Not started |
 | 13 | Partial (in-app only) |
 | 14–23 | Not started |
