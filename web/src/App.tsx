@@ -30,6 +30,8 @@ import { AdminOrganizationsPage } from './pages/admin/AdminOrganizationsPage';
 import { AdminAuditPage } from './pages/admin/AdminAuditPage';
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
+import { WorkerDashboardPage } from './pages/worker/WorkerDashboardPage';
+import { WorkerTaskDetailsPage } from './pages/worker/WorkerTaskDetailsPage';
 
 export const routes: RouteObject[] = [
   {
@@ -115,6 +117,14 @@ export const routes: RouteObject[] = [
             element: <RequireAuth roles={['ADMINISTRATOR']} />,
             children: [{ index: true, element: <AdminSettingsPage /> }],
           },
+        ],
+      },
+      {
+        path: '/worker',
+        element: <RequireAuth roles={['FIELD_WORKER']} />,
+        children: [
+          { index: true, element: <WorkerDashboardPage /> },
+          { path: 'report/:id', element: <WorkerTaskDetailsPage /> },
         ],
       },
       { path: '/design', element: <DesignGallery /> },

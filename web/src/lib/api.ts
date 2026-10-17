@@ -3,6 +3,7 @@ import type {
   AdminReportFilters,
   AdminUser,
   AnalyticsSummary,
+  Assignment,
   AuditLogEntry,
   AuditLogFilters,
   AuthResponse,
@@ -480,6 +481,9 @@ export const api = {
   },
 
   // P19 user management (ADMINISTRATOR only).
+  getMyAssignments(options: RequestOptions = {}): Promise<Assignment[]> {
+    return request<Assignment[]>('/assignments/me', options);
+  },
   searchUsers(
     filters: { q?: string; role?: string; active?: boolean; page?: number; size?: number } = {},
     options: RequestOptions = {},
@@ -742,6 +746,20 @@ export const api = {
     return request<Report>(`/reports/${encodeURIComponent(id)}/start`, {
       ...options,
       method: 'POST',
+    });
+  },
+  reportComplete(id: string, completionNote: string, options: RequestOptions = {}): Promise<Report> {
+    return request<Report>(`/reports/${encodeURIComponent(id)}/complete`, {
+      ...options,
+      method: 'POST',
+      body: { completionNote },
+    });
+  },
+  reportReturn(id: string, comment: string, options: RequestOptions = {}): Promise<Report> {
+    return request<Report>(`/reports/${encodeURIComponent(id)}/return`, {
+      ...options,
+      method: 'POST',
+      body: { comment },
     });
   },
   reportResolve(id: string, options: RequestOptions = {}): Promise<Report> {

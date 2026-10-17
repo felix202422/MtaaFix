@@ -31,6 +31,7 @@ export function AdminReportDetailsPage() {
   const [duplicateRef, setDuplicateRef] = useState('');
   const [reopenJustification, setReopenJustification] = useState('');
   const [commentText, setCommentText] = useState('');
+  const [returnComment, setReturnComment] = useState('');
 
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
   const [selectedOrg, setSelectedOrg] = useState('');
@@ -387,6 +388,27 @@ export function AdminReportDetailsPage() {
                 >
                   Approve completion (resolve)
                 </Button>
+                <div className="flex flex-col gap-2">
+                  <TextAreaField
+                    label="Return comment (required)"
+                    placeholder="Explain what still needs work"
+                    value={returnComment}
+                    onChange={(event) => setReturnComment(event.target.value)}
+                  />
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={busy || !returnComment.trim()}
+                    onClick={() =>
+                      void run(
+                        () => api.reportReturn(report.id, returnComment.trim()),
+                        'Completion claim returned to active work.',
+                      )
+                    }
+                  >
+                    Return to work
+                  </Button>
+                </div>
                 <Button
                   size="sm"
                   variant="secondary"

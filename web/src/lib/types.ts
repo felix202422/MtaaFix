@@ -170,6 +170,20 @@ export interface Report {
   comments: ReportComment[];
 }
 
+export type AssignmentStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+
+export interface Assignment {
+  id: string;
+  assigneeId: string | null;
+  organisationId: string | null;
+  status: AssignmentStatus;
+  reportId: string;
+  reportCode: string;
+  reportTitle: string;
+  assignedAt: string | null;
+  completedAt: string | null;
+}
+
 export interface AttentionReport {
   id: string;
   code: string;
