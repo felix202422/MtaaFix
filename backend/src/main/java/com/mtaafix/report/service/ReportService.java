@@ -58,11 +58,13 @@ public class ReportService {
     private final ReportCodeGenerator codeGenerator;
     private final AuditService auditService;
     private final MediaStorageService mediaStorageService;
+    private final com.mtaafix.user.service.OrganisationMembershipService membershipService;
 
     public ReportService(ReportRepository reportRepository, UserRepository userRepository,
             NotificationService notificationService, AssignmentRepository assignmentRepository,
             ReportLifecycle lifecycle, ReportCodeGenerator codeGenerator,
-            AuditService auditService, MediaStorageService mediaStorageService) {
+            AuditService auditService, MediaStorageService mediaStorageService,
+            com.mtaafix.user.service.OrganisationMembershipService membershipService) {
         this.reportRepository = reportRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
@@ -71,12 +73,18 @@ public class ReportService {
         this.codeGenerator = codeGenerator;
         this.auditService = auditService;
         this.mediaStorageService = mediaStorageService;
+        this.membershipService = membershipService;
     }
 
     @Transactional
     public ReportDto create(CreateReportRequest request, User creator) {
         ReportCategory category = reportRepository.findCategoryById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", request.categoryId()));
+        if (!category.isActive()) {
+            throw new IllegalArgumentException(
+                    "Category is deactivated and cannot receive new reports: "
+                            + request.categoryId());
+        }
         Report report = ReportMapper.toEntity(request, category, creator);
         assertPlausibleLocation(report.getLocation());
         report.setCode(codeGenerator.next());
@@ -102,14 +110,25 @@ public class ReportService {
     }
 
     @Transactional(readOnly = true)
-    public PagedResponse<ReportDto> list(String status, String categoryId, String orgId, User user,
-            Pageable pageable) {
+    public PagedResponse<ReportDto> list(String status, String categoryId, String orgId,
+            String q, String assignment, User user, Pageable pageable) {
         Status statusEnum = null;
         if (status != null && !status.isBlank()) {
             try {
                 statusEnum = Status.valueOf(status);
             } catch (IllegalArgumentException ex) {
                 throw new IllegalArgumentException("Unknown status filter: " + status);
+            }
+        }
+        String pattern = (q == null || q.isBlank()) ? null
+                : "%" + q.trim().toLowerCase() + "%";
+        Boolean assigned = null;
+        if (assignment != null && !assignment.isBlank()) {
+            switch (assignment.trim().toLowerCase()) {
+                case "assigned" -> assigned = Boolean.TRUE;
+                case "unassigned" -> assigned = Boolean.FALSE;
+                default -> throw new IllegalArgumentException(
+                        "Unknown assignment filter: " + assignment);
             }
         }
         String scopedOrgId = orgId;
@@ -119,8 +138,9 @@ public class ReportService {
             case CITIZEN -> userId = user.getId();
             case FIELD_WORKER -> assigneeId = user.getId();
             case ORGANIZATION_ADMIN -> {
-                if (user.getOrganisationId() != null) {
-                    scopedOrgId = user.getOrganisationId();
+                String ownOrgId = membershipService.orgIdOfOrNull(user);
+                if (ownOrgId != null) {
+                    scopedOrgId = ownOrgId;
                 } else {
                     userId = user.getId();
                 }
@@ -128,7 +148,7 @@ public class ReportService {
             case MODERATOR, ADMINISTRATOR -> { }
         }
         Page<Report> page = reportRepository.findByScope(statusEnum, categoryId, scopedOrgId, userId,
-                assigneeId, pageable);
+                assigneeId, pattern, assigned, pageable);
         List<ReportDto> content = page.getContent().stream()
                 .map(ReportMapper::toDto)
                 .toList();
@@ -412,6 +432,11 @@ public class ReportService {
         if (request.categoryId() != null) {
             ReportCategory category = reportRepository.findCategoryById(request.categoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category", request.categoryId()));
+            if (!category.isActive()) {
+                throw new IllegalArgumentException(
+                        "Category is deactivated and cannot receive new reports: "
+                                + request.categoryId());
+            }
             report.setCategory(category);
         }
         if (request.score() != null) report.setScore(request.score());
@@ -588,18 +613,22 @@ public class ReportService {
 
     private Organisation resolveOrganisation(String organisationId, User assignee, User actor) {
         String resolved = organisationId;
-        if (resolved == null && assignee.getOrganisationId() != null) {
-            resolved = assignee.getOrganisationId();
+        if (resolved == null && assignee != null) {
+            resolved = membershipService.orgIdOfUserId(assignee.getId());
         }
         if (resolved == null && actor.getRole() == Role.ORGANIZATION_ADMIN) {
-            resolved = actor.getOrganisationId();
+            resolved = membershipService.orgIdOfOrNull(actor);
         }
         if (resolved == null) {
             return null;
         }
         final String orgId = resolved;
-        return reportRepository.findOrganisationById(orgId)
+        Organisation org = reportRepository.findOrganisationById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organisation", orgId));
+        if (!org.isActive()) {
+            throw new IllegalStateException("Organisation is deactivated: " + orgId);
+        }
+        return org;
     }
 
     private void auditReport(String action, User actor, Report report) {
@@ -624,8 +653,9 @@ public class ReportService {
             return;
         }
         if (user.getRole() == Role.ORGANIZATION_ADMIN) {
-            if (report.getOrganisation() != null && user.getOrganisationId() != null
-                    && user.getOrganisationId().equals(report.getOrganisation().getId())) {
+            String ownOrgId = membershipService.orgIdOfOrNull(user);
+            if (report.getOrganisation() != null && ownOrgId != null
+                    && ownOrgId.equals(report.getOrganisation().getId())) {
                 return;
             }
             throw new AccessDeniedException("Report is outside your organisation scope.");
@@ -644,8 +674,9 @@ public class ReportService {
         if (user.getRole() != Role.ORGANIZATION_ADMIN) {
             return;
         }
-        if (report.getOrganisation() != null && user.getOrganisationId() != null
-                && user.getOrganisationId().equals(report.getOrganisation().getId())) {
+        String ownOrgId = membershipService.orgIdOfOrNull(user);
+        if (report.getOrganisation() != null && ownOrgId != null
+                && ownOrgId.equals(report.getOrganisation().getId())) {
             return;
         }
         throw new AccessDeniedException("Report is outside your organisation scope.");

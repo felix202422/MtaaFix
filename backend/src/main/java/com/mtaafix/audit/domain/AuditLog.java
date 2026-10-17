@@ -12,7 +12,8 @@ import org.hibernate.type.SqlTypes;
 @Table(name = "audit_logs", indexes = {
         @Index(name = "idx_audit_logs_actor", columnList = "actor_id"),
         @Index(name = "idx_audit_logs_entity", columnList = "entity_type, entity_id"),
-        @Index(name = "idx_audit_logs_created", columnList = "created_at")
+        @Index(name = "idx_audit_logs_created", columnList = "created_at"),
+        @Index(name = "idx_audit_logs_action", columnList = "action")
 })
 public class AuditLog extends BaseEntity {
 
@@ -28,6 +29,10 @@ public class AuditLog extends BaseEntity {
     @Column(name = "entity_id", length = 255)
     private String entityId;
 
+    /** FR-10.1: outcome of the event (SUCCESS/DENIED); null on legacy rows. */
+    @Column(name = "outcome", length = 20)
+    private String outcome;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "details", columnDefinition = "jsonb")
     private String details;
@@ -41,6 +46,14 @@ public class AuditLog extends BaseEntity {
         this.entityType = entityType;
         this.entityId = entityId;
         this.details = details;
+    }
+
+    public String getOutcome() {
+        return outcome;
+    }
+
+    public void setOutcome(String outcome) {
+        this.outcome = outcome;
     }
 
     public String getAction() {

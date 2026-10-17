@@ -55,17 +55,22 @@ public class ReportController {
         return ResponseEntity.status(201).body(report);
     }
 
-    @Operation(summary = "List reports (role-scoped; status/categoryId filters, pagination)")
+    @Operation(summary = "List reports (role-scoped; status/categoryId/orgId/q/assignment "
+            + "filters, pagination)")
     @GetMapping
     public ResponseEntity<PagedResponse<ReportDto>> list(
             @Parameter(description = "Status filter") @RequestParam(required = false) String status,
             @Parameter(description = "Category id filter") @RequestParam(required = false) String categoryId,
             @Parameter(description = "Organisation id filter (staff only)") @RequestParam(required = false) String orgId,
+            @Parameter(description = "Text search over code, title and description (P15)")
+            @RequestParam(required = false) String q,
+            @Parameter(description = "Assignment filter: assigned | unassigned (P15)")
+            @RequestParam(required = false) String assignment,
             @Parameter(description = "Page (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal User user) {
         int safeSize = Math.max(1, Math.min(size, 100));
-        return ResponseEntity.ok(reportService.list(status, categoryId, orgId, user,
+        return ResponseEntity.ok(reportService.list(status, categoryId, orgId, q, assignment, user,
                 PageRequest.of(page, safeSize, Sort.by(Sort.Direction.DESC, "reportedAt"))));
     }
 

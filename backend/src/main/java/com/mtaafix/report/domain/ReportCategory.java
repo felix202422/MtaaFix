@@ -33,6 +33,14 @@ public class ReportCategory extends BaseEntity {
     @Column(name = "parent_id")
     private String parentId;
 
+    /** FR-5.1: inactive categories cannot be chosen for new reports (V4). */
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
+
+    /** FR-5.1: admin-defined display ordering (V4). */
+    @Column(name = "display_order", nullable = false)
+    private int displayOrder;
+
     public ReportCategory() {
     }
 
@@ -72,5 +80,21 @@ public class ReportCategory extends BaseEntity {
 
     public void setParentId(String parentId) {
         this.parentId = parentId;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public int getDisplayOrder() {
+        return displayOrder;
+    }
+
+    public void setDisplayOrder(int displayOrder) {
+        this.displayOrder = displayOrder;
     }
 }

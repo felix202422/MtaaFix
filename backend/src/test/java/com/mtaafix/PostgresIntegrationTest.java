@@ -32,6 +32,9 @@ class PostgresIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private com.mtaafix.dashboard.service.AnalyticsService analyticsService;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -105,6 +108,91 @@ class PostgresIntegrationTest {
                 .getResultList();
         assertTrue(indexes.stream().anyMatch("idx_reports_location"::equals),
                 "FR-11.3 requires a GIST index on reports.location");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void phase9AdministrationMigrationApplied() {
+        List<Object[]> versions = entityManager
+                .createNativeQuery("SELECT version, success FROM flyway_schema_history")
+                .getResultList();
+        assertTrue(versions.stream().anyMatch(v -> "4".equals(String.valueOf(v[0]))),
+                "Phase 9 V4 administration migration must be applied");
+        assertTrue(versions.stream().allMatch(v -> Boolean.TRUE.equals(v[1])));
+
+        Long dropped = (Long) entityManager.createNativeQuery(
+                        "SELECT count(*) FROM information_schema.columns "
+                                + "WHERE table_name = 'users' AND column_name = 'organisation_id'")
+                .getSingleResult();
+        assertEquals(0L, dropped,
+                "users.organisation_id must be dropped in favour of organization_members (D-P9.1)");
+
+        Long membership = (Long) entityManager.createNativeQuery(
+                        "SELECT count(*) FROM information_schema.tables "
+                                + "WHERE table_name = 'organization_members'")
+                .getSingleResult();
+        assertTrue(membership > 0, "organization_members table must exist (D-P9.1)");
+
+        Long outcome = (Long) entityManager.createNativeQuery(
+                        "SELECT count(*) FROM information_schema.columns "
+                                + "WHERE table_name = 'audit_logs' AND column_name = 'outcome'")
+                .getSingleResult();
+        assertTrue(outcome > 0, "audit_logs.outcome must exist (FR-10 outcome field)");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void analyticsSummaryExecutesOnPostgres() {
+        User owner = new User();
+        owner.setEmail("analytics-it-" + System.nanoTime() + "@example.com");
+        owner.setPasswordHash("hash");
+        owner.setFullName("Analytics IT User");
+        owner.setRole(User.Role.CITIZEN);
+        userRepository.save(owner);
+
+        User admin = new User();
+        admin.setEmail("analytics-admin-" + System.nanoTime() + "@example.com");
+        admin.setPasswordHash("hash");
+        admin.setFullName("Analytics IT Admin");
+        admin.setRole(User.Role.ADMINISTRATOR);
+        userRepository.save(admin);
+
+        com.mtaafix.report.domain.ReportCategory category = entityManager.find(
+                com.mtaafix.report.domain.ReportCategory.class,
+                "5f0a0001-0000-4000-8000-000000000001");
+        assertNotNull(category);
+
+        org.locationtech.jts.geom.GeometryFactory gf =
+                new org.locationtech.jts.geom.GeometryFactory();
+        org.locationtech.jts.geom.Point point = gf.createPoint(
+                new org.locationtech.jts.geom.Coordinate(39.2084, -6.8229));
+        point.setSRID(4326);
+        Report report = new Report(category, "Analytics IT report", "summary input",
+                point, null, owner);
+        report.setCode("MTF-ANALYTICS-" + System.nanoTime());
+        reportRepository.save(report);
+        entityManager.flush();
+
+        com.mtaafix.dashboard.dto.AnalyticsSummaryDto summary =
+                analyticsService.summarize(java.time.Instant.EPOCH,
+                        java.time.Instant.parse("9999-12-31T23:59:59Z"),
+                        null, null, null, null, admin);
+        assertTrue(summary.total() >= 1, "Seeded report must appear in the summary");
+        assertNotNull(summary.byStatus());
+        assertNotNull(summary.weekly());
+        assertNotNull(summary.organisations());
+
+        com.mtaafix.dashboard.dto.AnalyticsSummaryDto bboxSummary =
+                analyticsService.summarize(null, null, null, null, null,
+                        "39.0,-7.0,40.0,-6.0", admin);
+        assertTrue(bboxSummary.total() >= 1,
+                "bbox filter over Dar es Salaam must include the seeded report");
+
+        com.mtaafix.dashboard.dto.AnalyticsSummaryDto outsideBox =
+                analyticsService.summarize(null, null, null, null, null,
+                        "10.0,10.0,11.0,11.0", admin);
+        assertEquals(0L, outsideBox.total(),
+                "bbox filter outside Dar es Salaam must exclude the seeded report");
     }
 
     @Test

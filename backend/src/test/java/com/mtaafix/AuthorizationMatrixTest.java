@@ -66,6 +66,9 @@ class AuthorizationMatrixTest {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    @Autowired
+    private com.mtaafix.user.repository.OrganisationMembershipRepository membershipRepository;
+
     private User seedUser(User.Role role) {
         return seedUser(role, null);
     }
@@ -73,8 +76,12 @@ class AuthorizationMatrixTest {
     private User seedUser(User.Role role, String organisationId) {
         User user = new User("matrix-" + System.nanoTime() + "@mtaafix.test",
                 BCrypt.hashpw(PASSWORD, BCrypt.gensalt()), "Matrix User", "+255711111111", role);
-        user.setOrganisationId(organisationId);
-        return userRepository.save(user);
+        user = userRepository.save(user);
+        if (organisationId != null) {
+            membershipRepository.save(new com.mtaafix.user.domain.OrganisationMembership(
+                    user.getId(), organisationId, role));
+        }
+        return user;
     }
 
     private String login(User user) throws Exception {

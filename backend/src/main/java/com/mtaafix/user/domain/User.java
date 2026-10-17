@@ -44,9 +44,6 @@ public class User extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
-    @Column(name = "organisation_id")
-    private String organisationId;
-
     public User() {
     }
 
@@ -104,13 +101,5 @@ public class User extends BaseEntity {
 
     public void setActive(boolean active) {
         this.active = active;
-    }
-
-    public String getOrganisationId() {
-        return organisationId;
-    }
-
-    public void setOrganisationId(String organisationId) {
-        this.organisationId = organisationId;
     }
 }

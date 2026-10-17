@@ -33,6 +33,10 @@ public class Organisation extends BaseEntity {
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
 
+    /** P21: account status; deactivated orgs cannot receive new assignments (V4). */
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
+
     public Organisation() {
     }
 
@@ -95,5 +99,13 @@ public class Organisation extends BaseEntity {
 
     public void setLogoUrl(String logoUrl) {
         this.logoUrl = logoUrl;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }

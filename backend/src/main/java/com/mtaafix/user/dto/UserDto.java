@@ -9,6 +9,7 @@ public record UserDto(
         @Schema(description = "Email") String email,
         @Schema(description = "Full name") String fullName,
         @Schema(description = "Mobile number") String mobile,
+        @Schema(description = "Active account (FR-12.1)") boolean active,
         @Schema(description = "Role") Role role,
         @Schema(description = "Organisation id") String organisationId) {
 

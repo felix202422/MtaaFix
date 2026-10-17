@@ -46,4 +46,12 @@ public class DashboardController {
     public ResponseEntity<DashboardStatsDto> stats() {
         return ResponseEntity.ok(dashboardService.getGlobalStats());
     }
+
+    @Operation(summary = "Admin dashboard panels (P14: cards, activity, distribution, "
+            + "moderation queue, workload, attention, recent reports)")
+    @GetMapping("/admin")
+    @PreAuthorize("hasAnyRole('MODERATOR','ADMINISTRATOR')")
+    public ResponseEntity<com.mtaafix.dashboard.dto.AdminDashboardDto> admin() {
+        return ResponseEntity.ok(dashboardService.getAdminDashboard());
+    }
 }

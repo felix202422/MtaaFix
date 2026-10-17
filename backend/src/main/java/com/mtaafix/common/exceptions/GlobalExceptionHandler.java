@@ -36,6 +36,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(apiError);
     }
 
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handleTypeMismatch(
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex,
+            WebRequest request) {
+        log.warn("Parameter mismatch for '{}' on path {}", ex.getName(),
+                request.getDescription(false));
+        ApiError apiError = ApiError.of(
+                HttpStatus.BAD_REQUEST,
+                "INVALID_PARAMETER",
+                "Parameter '" + ex.getName() + "' has an invalid value.",
+                request.getDescription(false),
+                Map.of());
+        return ResponseEntity.badRequest().body(apiError);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex,
             WebRequest request) {
@@ -140,6 +155,34 @@ public class GlobalExceptionHandler {
                 request.getDescription(false),
                 Map.of());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiError);
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleMessageNotReadable(
+            org.springframework.http.converter.HttpMessageNotReadableException ex,
+            WebRequest request) {
+        log.warn("Malformed request body on path {}", request.getDescription(false));
+        ApiError apiError = ApiError.of(
+                HttpStatus.BAD_REQUEST,
+                "MALFORMED_REQUEST",
+                "The request body could not be parsed.",
+                request.getDescription(false),
+                Map.of());
+        return ResponseEntity.badRequest().body(apiError);
+    }
+
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleNoResourceFound(
+            org.springframework.web.servlet.resource.NoResourceFoundException ex,
+            WebRequest request) {
+        log.warn("No resource for path {}", request.getDescription(false));
+        ApiError apiError = ApiError.of(
+                HttpStatus.NOT_FOUND,
+                "RESOURCE_NOT_FOUND",
+                "The requested resource was not found.",
+                request.getDescription(false),
+                Map.of());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
     }
 
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
