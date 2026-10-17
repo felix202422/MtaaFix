@@ -106,6 +106,36 @@ class PublicApiTest {
         return reportRepository.save(report);
     }
 
+    private static final double PRECISE_LAT = -6.82299876;
+    private static final double PRECISE_LNG = 39.20841234;
+
+    /** Great-circle distance in meters. */
+    private static double haversineMeters(double lat1, double lng1, double lat2, double lng2) {
+        double radius = 6_371_000.0;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return 2 * radius * Math.asin(Math.sqrt(a));
+    }
+
+    /**
+     * Distance between the payload's generalized coordinates and the precise
+     * point. Privacy invariant: public coordinates are always >= 100m away
+     * (fuzz minimum is 150m; margin covers JSON rounding). A string-contains
+     * check against the precise values is NOT reliable: with an east/west
+     * fuzz bearing the generalized latitude keeps the precise digits.
+     */
+    private static double generalizedDistance(com.fasterxml.jackson.databind.JsonNode payload) {
+        double lat = payload.path("latitude").asDouble(Double.NaN);
+        double lng = payload.path("longitude").asDouble(Double.NaN);
+        if (Double.isNaN(lat) || Double.isNaN(lng)) {
+            throw new AssertionError("public payload is missing generalized coordinates");
+        }
+        return haversineMeters(lat, lng, PRECISE_LAT, PRECISE_LNG);
+    }
+
     @Test
     void publicListIsAccessibleWithoutAuthAndReturnsPagedShape() throws Exception {
         ReportCategory category = readInTx(() -> seedCategory());
@@ -152,9 +182,18 @@ class PublicApiTest {
                 () -> org.junit.jupiter.api.Assertions.assertFalse(
                         listBody.contains("street-pothole.jpg"),
                         "public list must not contain media"),
-                () -> org.junit.jupiter.api.Assertions.assertFalse(
-                        listBody.contains("6.8229") || listBody.contains("39.20841"),
-                        "public list must not contain precise coordinates"));
+                () -> {
+                    try {
+                        double meters = generalizedDistance(
+                                new com.fasterxml.jackson.databind.ObjectMapper()
+                                        .readTree(listBody).path("content").path(0));
+                        org.junit.jupiter.api.Assertions.assertTrue(meters >= 100.0,
+                                "public list coordinates must be generalized >=100m from the"
+                                        + " precise point, got " + meters + "m");
+                    } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+                        throw new AssertionError("public list payload is not JSON", ex);
+                    }
+                });
 
         String detailBody = mockMvc.perform(get("/api/v1/reports/public/" + code))
                 .andExpect(status().isOk())
@@ -185,9 +224,18 @@ class PublicApiTest {
                 () -> org.junit.jupiter.api.Assertions.assertFalse(
                         detailBody.contains("userId"),
                         "detail must not expose user ids"),
-                () -> org.junit.jupiter.api.Assertions.assertFalse(
-                        detailBody.contains("6.8229") || listBody.contains("39.20841"),
-                        "detail must not contain precise coordinates"));
+                () -> {
+                    try {
+                        double meters = generalizedDistance(
+                                new com.fasterxml.jackson.databind.ObjectMapper()
+                                        .readTree(detailBody));
+                        org.junit.jupiter.api.Assertions.assertTrue(meters >= 100.0,
+                                "detail coordinates must be generalized >=100m from the precise"
+                                        + " point, got " + meters + "m");
+                    } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+                        throw new AssertionError("detail payload is not JSON", ex);
+                    }
+                });
     }
 
     @Test
@@ -216,12 +264,14 @@ class PublicApiTest {
                 () -> org.junit.jupiter.api.Assertions.assertEquals(
                         a.get("longitude").asDouble(), b.get("longitude").asDouble(), 0.0,
                         "fuzzed longitude must be stable across requests"),
-                () -> org.junit.jupiter.api.Assertions.assertNotEquals(-6.82299876,
-                        a.get("latitude").asDouble(), 1e-6,
-                        "fuzzed latitude must differ from the precise value"),
-                () -> org.junit.jupiter.api.Assertions.assertNotEquals(39.20841234,
-                        a.get("longitude").asDouble(), 1e-6,
-                        "fuzzed longitude must differ from the precise value"));
+                () -> org.junit.jupiter.api.Assertions.assertTrue(
+                        generalizedDistance(a) >= 100.0,
+                        "fuzzed point must be >=100m from the precise location, got "
+                                + generalizedDistance(a) + "m"),
+                () -> org.junit.jupiter.api.Assertions.assertTrue(
+                        generalizedDistance(b) >= 100.0,
+                        "fuzzed point must be >=100m from the precise location, got "
+                                + generalizedDistance(b) + "m"));
     }
 
     @Test

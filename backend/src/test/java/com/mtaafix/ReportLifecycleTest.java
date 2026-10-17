@@ -645,4 +645,64 @@ class ReportLifecycleTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("INVALID_STATUS_TRANSITION"));
     }
+
+    @Test
+    void workerOnlySeesAndActsOnTheirOwnAssignments() throws Exception {
+        User citizen = seedUser(User.Role.CITIZEN);
+        User workerA = seedUser(User.Role.FIELD_WORKER);
+        User workerB = seedUser(User.Role.FIELD_WORKER);
+        User moderator = seedUser(User.Role.MODERATOR);
+        User admin = seedUser(User.Role.ADMINISTRATOR);
+        String cToken = bearer(citizen);
+        String mToken = bearer(moderator);
+        String aToken = bearer(admin);
+        String w1Token = bearer(workerA);
+        String w2Token = bearer(workerB);
+        String categoryId = seedCategory();
+
+        String id = createReport(cToken, categoryId);
+        act(mToken, id, "submit", null);
+        act(mToken, id, "verify", null);
+        mockMvc.perform(post("/api/v1/reports/" + id + "/assign")
+                        .header("Authorization", aToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"assigneeId\":\"" + workerA.getId() + "\"}"))
+                .andExpect(status().isOk());
+
+        // Worker B has no visibility into or control over worker A's assignment.
+        mockMvc.perform(get("/api/v1/reports/" + id)
+                        .header("Authorization", w2Token))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/v1/reports/" + id + "/start")
+                        .header("Authorization", w2Token))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/v1/reports/" + id + "/complete")
+                        .header("Authorization", w2Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"completionNote\":\"not mine\"}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/v1/reports/" + id + "/comments")
+                        .header("Authorization", w2Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"sneaky note\"}"))
+                .andExpect(status().isForbidden());
+
+        // Assignment lists are strictly self-scoped.
+        mockMvc.perform(get("/api/v1/assignments/me")
+                        .header("Authorization", w1Token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+        mockMvc.perform(get("/api/v1/assignments/me")
+                        .header("Authorization", w2Token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        // Worker A retains full permitted access to their own assignment.
+        mockMvc.perform(get("/api/v1/reports/" + id)
+                        .header("Authorization", w1Token))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/reports/" + id + "/start")
+                        .header("Authorization", w1Token))
+                .andExpect(status().isOk());
+    }
 }
