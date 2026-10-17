@@ -8,6 +8,9 @@
 
 ## Version History
 
+- **[0.11.0]** — Phase 10: field-worker web application (worker dashboard + task
+  details pages, assignment progression, completion evidence, reviewer return,
+  worker-scoping tests; 106/106 backend + 57/57 web) — approval pending
 - **[0.10.0]** — Phase 9: administration and moderation (membership model V4, user/
   org/category admin APIs, filtered audit, admin dashboard, analytics, read-only
   settings, 11 admin web pages; 105/105 backend + 47/47 web) — **APPROVED**
@@ -251,9 +254,31 @@ Pages 14–24. Delivered 2026-10-17 (see CHANGELOG 0.10.0; BACKLOG B-9.1–B-9.5
   boundaries**
 - **Gate: APPROVED by owner 2026-10-17 — Phase 10 may start**
 
-## Phase 10 — Field-Worker Web Application (NOT STARTED)
+## Phase 10 — Field-Worker Web Application (COMPLETE — PENDING APPROVAL 2026-10-17)
 
-Pages 25–26. Assignment progression UIs; completion evidence; authorization tests.
+Pages 25–26. Delivered 2026-10-17 (see CHANGELOG 0.11.0; BACKLOG B-10.1–B-10.4):
+- [x] Assignment visibility (FR-4.2/4.3): worker dashboard `/worker` wired to
+  `GET /assignments/me` with New / In progress / Completed groups, counts, empty
+  state, "My tasks" menu entry, `FIELD_WORKER` route guards
+- [x] Task details (P26): instructions, location + map link, status-driven actions
+  (start ASSIGNED→IN_PROGRESS, completion claim IN_PROGRESS→RESOLUTION_REVIEW with
+  T11 photo requirement surfaced from the 400), evidence upload + media grid,
+  progress comments, status history, read-only at RESOLUTION_REVIEW
+- [x] Reviewer return (FR-4.5, T12): admin report details "Return to work" action
+  → `POST /reports/{id}/return` (comment required → 400 when blank)
+- [x] Tests: backend 106/106 (new worker-scoping test: unassigned worker 403 on
+  GET/start/complete/comments, self-scoped `/assignments/me`); `PublicApiTest`
+  flaky-coordinate assertions switched to ≥100 m haversine distance (root-caused
+  HMAC-fuzz flake); web 57/57 (+10 Phase 10); lint/typecheck/build green
+- [x] Live smoke PG :8085 50/50 — full worker journey incl. multipart evidence
+  upload (`FF D8 FF`), assignee media read, T11/T12 negative paths, role gates,
+  resolve → confirm → CLOSED; 1 finding: non-JSON content type → 500
+  (`HttpMediaTypeNotSupportedException`, same documented-gap family as 405 —
+  deferred outside Phase 10)
+- **Exit: ✅ field workers can manage their assigned tasks from the web without
+  bypassing the lifecycle**
+- **Gate: PENDING — Part 17 report delivered 2026-10-17; Phase 11 requires owner
+  approval**
 
 ## Phase 11 — Flutter Application Foundation (PARTIAL)
 
@@ -338,7 +363,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 7 | Complete (approved) |
 | 8 | Complete (approved 2026-10-15) |
 | 9 | Complete (approved 2026-10-17) |
-| 10 | Not started |
+| 10 | Complete (pending approval 2026-10-17) |
 | 11 | Partial (scaffold) |
 | 12 | Not started |
 | 13 | Partial (in-app only) |

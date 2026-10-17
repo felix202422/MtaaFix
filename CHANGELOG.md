@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.11.0] — 2026-10-17
+### Phase 10 - Field-worker web application
+Implemented the field-worker web application per master spec Phase 10 (SRS FR-4.2–4.5,
+FR-4.7, Part 10 pages 25–26) — assignment visibility, task details with progress
+updates, completion evidence, reviewer return, and worker-authorization hardening.
+Approval gate pending.
+
+**Web — worker section (P25–P26)**
+- `/worker` routes under `RequireAuth roles=['FIELD_WORKER']`: dashboard (New /
+  In progress / Completed groups, counts, empty state) and a task details page
+- Task details: instructions/category, location + map link, evidence grid with photo
+  upload (20 MiB client check), status-driven actions (ASSIGNED → start work,
+  IN_PROGRESS → completion claim with the T11 photo hint, RESOLUTION_REVIEW →
+  read-only), progress comments, status history
+- Account menu gains a "My tasks" entry for FIELD_WORKER; new API client methods
+  `getMyAssignments`, `reportComplete`, `reportReturn`
+- Admin report details gains the T12 "Return to work" action
+  (`returnComment` → `POST /reports/{id}/return`)
+
+**Backend — test hardening (no production-code change)**
+- `ReportLifecycleTest.workerOnlySeesAndActsOnTheirOwnAssignments`: worker B gets
+  an empty `/assignments/me` and 403 on GET/start/complete/comments; the assignee's
+  list is self-scoped (106/106 total)
+- `PublicApiTest` flaky-coordinate fix: precise-coordinate assertions now require a
+  generalization distance ≥ 100 m (haversine) instead of digit substrings —
+  deterministic HMAC fuzzing preserves latitude digits on E/W bearings (root-caused
+  ~0.2 %/run flake; failed once with identical code, passed after the fix)
+
+**Verification**
+- Web: lint, typecheck, 57/57 tests (+10 Phase 10), production build
+- Backend: `mvn verify` 106/106 (H2 + live PG ITs)
+- Live smoke PG :8085 — 50/50 worker journey: self-scoped assignment lists (A=1,
+  B=0), unassigned worker 403 on GET/start/complete/comments, complete without
+  photo → 400 (T11 evidence), multipart `FF D8 FF` upload → 200 + assignee media
+  read, progress comment, completion → RESOLUTION_REVIEW / assignment COMPLETED,
+  return without comment → 400, return with comment → IN_PROGRESS, re-claim,
+  worker verify/resolve/return → 403, resolve → citizen confirm → CLOSED
+- Known gap (deferred, same family as the Phase 9 405 note): a POST with a
+  non-JSON content type (e.g. `application/x-www-form-urlencoded`) still maps to
+  500 via the unhandled `HttpMediaTypeNotSupportedException`; JSON clients sending
+  an empty body correctly receive 400 — outside Phase 10 scope, flagged in the
+  report
+
 ## [0.10.0] — 2026-10-17
 ### Phase 9 - Administration and moderation
 Implemented administration, moderation, and organisation management per master spec

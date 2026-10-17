@@ -164,9 +164,9 @@ Traceability column maps to master spec inventory parts.
 | -- | ----------- | --- | ----- |
 | FR-4.1 | An admin or org manager can assign a VERIFIED report to an organization and optionally a specific field worker (VERIFIED → ASSIGNED) | Yes (Phase 9) | Part 4.3, P18 |
 | FR-4.2 | An assignment tracks assignee, organization, status (PENDING/IN_PROGRESS/COMPLETED/CANCELLED), timestamps | Yes | Part 6.3 |
-| FR-4.3 | A field worker can view only assignments assigned to them; can start work (ASSIGNED → IN_PROGRESS) | Backend only | Part 3.6, P26 |
-| FR-4.4 | A field worker can submit completion with required evidence (IN_PROGRESS → RESOLUTION_REVIEW) | Backend only | Part 4.7 |
-| FR-4.5 | An authorized reviewer (moderator/admin) approves (RESOLUTION_REVIEW → RESOLVED) or returns to IN_PROGRESS | Backend only | Part 4.7 |
+| FR-4.3 | A field worker can view only assignments assigned to them; can start work (ASSIGNED → IN_PROGRESS) | Yes (Phase 10 web) | Part 3.6, P26 |
+| FR-4.4 | A field worker can submit completion with required evidence (IN_PROGRESS → RESOLUTION_REVIEW) | Yes (Phase 10 web) | Part 4.7 |
+| FR-4.5 | An authorized reviewer (moderator/admin) approves (RESOLUTION_REVIEW → RESOLVED) or returns to IN_PROGRESS | Yes (Phase 10 web return action) | Part 4.7 |
 | FR-4.6 | Reassignment of an ASSIGNED/IN_PROGRESS report to a different eligible party is recorded in history | Yes (Phase 9) | P18 |
 | FR-4.7 | A field worker cannot self-assign unrelated tasks, cannot skip RESOLUTION_REVIEW, and cannot modify system settings | Yes | Part 3.6 |
 

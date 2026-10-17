@@ -5,7 +5,23 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-17.
 
-## Current phase: Phase 9 APPROVED (2026-10-17) — next: Phase 10 (not started)
+## Current phase: Phase 10 COMPLETE (2026-10-17) — owner approval gate pending; next: Phase 11 (awaiting approval)
+
+## Phase 10 — Field-worker web application (COMPLETE — PENDING APPROVAL 2026-10-17)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Worker dashboard (P25) | DONE | `/worker` role-guarded routes, `WorkerDashboardPage` (New/In progress/Completed groups, counts, empty state), `GET /assignments/me` wiring, "My tasks" menu entry |
+| Task details (P26) | DONE | `WorkerTaskDetailsPage`: instructions, location + map link, status-driven actions (start / completion claim / read-only at review), progress comments, status history |
+| Completion evidence (FR-4.4, T11) | DONE | Evidence upload (multipart, 20 MiB client check) + media grid; backend 400 without photo surfaced on the form |
+| Reviewer return (FR-4.5, T12) | DONE | Admin report details "Return to work" → `POST /reports/{id}/return` with required comment |
+| Worker authorization tests | DONE | `ReportLifecycleTest` +1: unassigned worker 403 on GET/start/complete/comments, self-scoped `/assignments/me` |
+| PublicApiTest flake fix | DONE | Precise-coordinate checks now assert ≥100 m haversine distance (HMAC fuzzing kept latitude digits on E/W bearings; ~0.2 %/run flake root-caused) |
+| Tests | DONE | backend 106/106 (H2+PG), web 57/57 (+10 Phase 10); lint/typecheck/build green |
+| Live smoke on PG | DONE | 50/50 worker journey on :8085: scoping, 403 boundaries, T11 400, multipart upload + media read, T12 return 400/200, re-claim, role gates, resolve→confirm→CLOSED |
+| Finding: non-JSON POST → 500 | DEFERRED | `HttpMediaTypeNotSupportedException` unhandled (same gap family as 405); JSON empty body → 400 correctly; outside Phase 10 scope, flagged in report |
+| Docs sync | DONE | CHANGELOG 0.11.0, ROADMAP/BACKLOG/BOARD Phase 10 sections, SRS FR-4.3/4.4/4.5 markers |
+| Phase 10 report + approval gate | TODO | Part 17 report delivered 2026-10-17; Phase 11 gated on owner approval |
 
 ## Phase 9 — Administration and moderation (COMPLETE — APPROVED 2026-10-17)
 
@@ -184,6 +200,7 @@ Last updated: 2026-10-17.
 | Phase 7 - Citizen web | Complete (approved 2026-10-15) | Auth layer + 6 citizen pages; profile/T8-cancel/multipart/dashboard-attention backend; live smoke caught 2 real bugs (code counter, oversize 500) — both fixed |
 | Phase 8 - Geographic capabilities | Complete (approved 2026-10-15) | PostGIS bbox/near queries, Leaflet map, HMAC coord fuzzing, V3 geography index; live smoke + IT hardening caught 1 real bug (sorted Pageable → 500) — fixed |
 | Phase 9 - Administration and moderation | Complete (approved 2026-10-17) | Membership V4, user/org/category admin, filtered audit, admin dashboard + analytics + read-only settings, 11 admin pages; live smoke caught 3 real bugs (PG audit filter 500, unknown-path 500, malformed-body 500) — all fixed |
+| Phase 10 - Field-worker web application | Complete (pending approval 2026-10-17) | Worker dashboard + task details pages, progress/evidence, admin return action, worker-scoping tests, PublicApiTest flake fix; live smoke 50/50 found 1 deferred gap (non-JSON content type → 500) |
 
 ## Environment notes
 

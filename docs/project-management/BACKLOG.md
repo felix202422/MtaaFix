@@ -315,6 +315,48 @@ UI (API-level only); browser-based map verification → Phase 15.
 
 ---
 
+## Phase 10 - Field-worker web application (COMPLETE - pending approval 2026-10-17)
+
+### B-10.1 Worker dashboard, pages 25 - DONE
+- **AC:** FIELD_WORKER lands on a role-guarded `/worker` dashboard fed by
+  `GET /assignments/me`, grouped New / In progress / Completed with counts and an
+  empty state; "My tasks" appears in the account menu for field workers only.
+- **Phase:** 10 — **Depends:** B-5.x (assignment endpoints), B-7.1
+- **Delivered:** `pages/worker/WorkerDashboardPage.tsx`, `RequireAuth
+  roles=['FIELD_WORKER']` nested routes, `UserMenu` menuitem, `api.getMyAssignments`
+  + `Assignment` types.
+
+### B-10.2 Task details with progress updates (P26, FR-4.3) - DONE
+- **AC:** The task details page shows instructions/category and location + map link;
+  the worker starts (ASSIGNED → IN_PROGRESS), posts progress comments, and sees
+  status-appropriate controls only (no review-only actions at any state).
+- **Phase:** 10 — **Depends:** B-10.1, B-5.x (start/comments)
+- **Delivered:** `pages/worker/WorkerTaskDetailsPage.tsx` (status-driven actions,
+  comments form, status history); web tests assert start → completion-form flow and
+  absence of review-only controls.
+
+### B-10.3 Completion evidence (FR-4.4, T11) - DONE
+- **AC:** Completion submission is blocked by the backend's photo requirement and
+  the web surfaces the 400 message; evidence can be uploaded from the task page
+  (multipart, 20 MiB client check) and is displayed as a media grid.
+- **Phase:** 10 — **Depends:** B-10.2, B-7.4 (upload)
+- **Delivered:** upload action + media grid on the task page; smoke proves the
+  full path (no-photo 400 → multipart `FF D8 FF` upload 200 → assignee media read
+  200 → claim 200).
+
+### B-10.4 Reviewer return + authorization hardening (FR-4.5/4.7, T12) - DONE
+- **AC:** Reviewers return a report from RESOLUTION_REVIEW to IN_PROGRESS with a
+  mandatory comment from the admin report details page; a non-assignee worker
+  cannot read or act on another worker's assignment; `PublicApiTest` privacy
+  assertions are deterministic.
+- **Phase:** 10 — **Depends:** B-10.2, B-9.5
+- **Delivered:** admin "Return to work" action (`api.reportReturn`),
+  `ReportLifecycleTest.workerOnlySeesAndActsOnTheirOwnAssignments` (403 ×4 +
+  self-scoped list), `PublicApiTest` ≥100 m haversine assertions (flake fixed);
+  backend 106/106, web 57/57, live smoke 50/50.
+
+---
+
 ## Cross-cutting (scheduled, not MVP-blocking)
 
 | ID | Item | Phase | AC summary |
