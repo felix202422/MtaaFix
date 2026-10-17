@@ -5,9 +5,9 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-17.
 
-## Current phase: Phase 10 COMPLETE (2026-10-17) — owner approval gate pending; next: Phase 11 (awaiting approval)
+## Current phase: Phase 10 APPROVED (2026-10-17) — next: Phase 11 (not started)
 
-## Phase 10 — Field-worker web application (COMPLETE — PENDING APPROVAL 2026-10-17)
+## Phase 10 — Field-worker web application (COMPLETE — APPROVED 2026-10-17)
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -21,7 +21,7 @@ Last updated: 2026-10-17.
 | Live smoke on PG | DONE | 50/50 worker journey on :8085: scoping, 403 boundaries, T11 400, multipart upload + media read, T12 return 400/200, re-claim, role gates, resolve→confirm→CLOSED |
 | Finding: non-JSON POST → 500 | DEFERRED | `HttpMediaTypeNotSupportedException` unhandled (same gap family as 405); JSON empty body → 400 correctly; outside Phase 10 scope, flagged in report |
 | Docs sync | DONE | CHANGELOG 0.11.0, ROADMAP/BACKLOG/BOARD Phase 10 sections, SRS FR-4.3/4.4/4.5 markers |
-| Phase 10 report + approval gate | TODO | Part 17 report delivered 2026-10-17; Phase 11 gated on owner approval |
+| Phase 10 report + approval gate | DONE | Approved by owner 2026-10-17; docs flipped to APPROVED |
 
 ## Phase 9 — Administration and moderation (COMPLETE — APPROVED 2026-10-17)
 
@@ -200,7 +200,7 @@ Last updated: 2026-10-17.
 | Phase 7 - Citizen web | Complete (approved 2026-10-15) | Auth layer + 6 citizen pages; profile/T8-cancel/multipart/dashboard-attention backend; live smoke caught 2 real bugs (code counter, oversize 500) — both fixed |
 | Phase 8 - Geographic capabilities | Complete (approved 2026-10-15) | PostGIS bbox/near queries, Leaflet map, HMAC coord fuzzing, V3 geography index; live smoke + IT hardening caught 1 real bug (sorted Pageable → 500) — fixed |
 | Phase 9 - Administration and moderation | Complete (approved 2026-10-17) | Membership V4, user/org/category admin, filtered audit, admin dashboard + analytics + read-only settings, 11 admin pages; live smoke caught 3 real bugs (PG audit filter 500, unknown-path 500, malformed-body 500) — all fixed |
-| Phase 10 - Field-worker web application | Complete (pending approval 2026-10-17) | Worker dashboard + task details pages, progress/evidence, admin return action, worker-scoping tests, PublicApiTest flake fix; live smoke 50/50 found 1 deferred gap (non-JSON content type → 500) |
+| Phase 10 - Field-worker web application | Complete (approved 2026-10-17) | Worker dashboard + task details pages, progress/evidence, admin return action, worker-scoping tests, PublicApiTest flake fix; live smoke 50/50 found 1 deferred gap (non-JSON content type → 500) |
 
 ## Environment notes
 

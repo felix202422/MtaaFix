@@ -10,7 +10,7 @@ analyzer, or file presence) — not intentions.
 Implemented the field-worker web application per master spec Phase 10 (SRS FR-4.2–4.5,
 FR-4.7, Part 10 pages 25–26) — assignment visibility, task details with progress
 updates, completion evidence, reviewer return, and worker-authorization hardening.
-Approval gate pending.
+**Approved by owner 2026-10-17.**
 
 **Web — worker section (P25–P26)**
 - `/worker` routes under `RequireAuth roles=['FIELD_WORKER']`: dashboard (New /

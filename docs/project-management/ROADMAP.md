@@ -10,7 +10,8 @@
 
 - **[0.11.0]** — Phase 10: field-worker web application (worker dashboard + task
   details pages, assignment progression, completion evidence, reviewer return,
-  worker-scoping tests; 106/106 backend + 57/57 web) — approval pending
+  worker-scoping tests; 106/106 backend + 57/57 web) — **APPROVED**
+  2026-10-17
 - **[0.10.0]** — Phase 9: administration and moderation (membership model V4, user/
   org/category admin APIs, filtered audit, admin dashboard, analytics, read-only
   settings, 11 admin web pages; 105/105 backend + 47/47 web) — **APPROVED**
@@ -254,7 +255,7 @@ Pages 14–24. Delivered 2026-10-17 (see CHANGELOG 0.10.0; BACKLOG B-9.1–B-9.5
   boundaries**
 - **Gate: APPROVED by owner 2026-10-17 — Phase 10 may start**
 
-## Phase 10 — Field-Worker Web Application (COMPLETE — PENDING APPROVAL 2026-10-17)
+## Phase 10 — Field-Worker Web Application (COMPLETE — APPROVED 2026-10-17)
 
 Pages 25–26. Delivered 2026-10-17 (see CHANGELOG 0.11.0; BACKLOG B-10.1–B-10.4):
 - [x] Assignment visibility (FR-4.2/4.3): worker dashboard `/worker` wired to
@@ -277,8 +278,7 @@ Pages 25–26. Delivered 2026-10-17 (see CHANGELOG 0.11.0; BACKLOG B-10.1–B-10
   deferred outside Phase 10)
 - **Exit: ✅ field workers can manage their assigned tasks from the web without
   bypassing the lifecycle**
-- **Gate: PENDING — Part 17 report delivered 2026-10-17; Phase 11 requires owner
-  approval**
+- **Gate: APPROVED by owner 2026-10-17 — Phase 11 may start**
 
 ## Phase 11 — Flutter Application Foundation (PARTIAL)
 
@@ -363,7 +363,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 7 | Complete (approved) |
 | 8 | Complete (approved 2026-10-15) |
 | 9 | Complete (approved 2026-10-17) |
-| 10 | Complete (pending approval 2026-10-17) |
+| 10 | Complete (approved 2026-10-17) |
 | 11 | Partial (scaffold) |
 | 12 | Not started |
 | 13 | Partial (in-app only) |

@@ -315,7 +315,7 @@ UI (API-level only); browser-based map verification → Phase 15.
 
 ---
 
-## Phase 10 - Field-worker web application (COMPLETE - pending approval 2026-10-17)
+## Phase 10 - Field-worker web application (COMPLETE - approved 2026-10-17)
 
 ### B-10.1 Worker dashboard, pages 25 - DONE
 - **AC:** FIELD_WORKER lands on a role-guarded `/worker` dashboard fed by
