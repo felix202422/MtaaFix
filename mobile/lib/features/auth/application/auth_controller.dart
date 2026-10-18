@@ -14,6 +14,9 @@ class AuthController extends ChangeNotifier {
 
   AuthState _state = const AuthState();
 
+  /// The authenticated HTTP client (screens build feature APIs from it).
+  ApiClient get api => _api;
+
   AuthState get state => _state;
 
   bool get isAuthenticated => _state.status == AuthStatus.authenticated;
@@ -111,6 +114,28 @@ class AuthController extends ChangeNotifier {
   Future<void> logout() async {
     await _api.logout();
     _emit(const AuthState(status: AuthStatus.unauthenticated));
+  }
+
+  /// Updates the signed-in user's profile (full name / mobile only, FR-1.x)
+  /// and refreshes the in-memory session user.
+  Future<bool> updateProfile({String? fullName, String? mobile}) async {
+    try {
+      final json = await _api.put('/auth/me', {
+        if (fullName != null) 'fullName': fullName,
+        if (mobile != null) 'mobile': mobile,
+      });
+      _emit(AuthState(status: AuthStatus.authenticated, user: User.fromJson(json)));
+      return true;
+    } on ApiException catch (e) {
+      _emit(
+        AuthState(
+          status: AuthStatus.authenticated,
+          user: _state.user,
+          message: e.userMessage,
+        ),
+      );
+      return false;
+    }
   }
 
   void _emit(AuthState next) {

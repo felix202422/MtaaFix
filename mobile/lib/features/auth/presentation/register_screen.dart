@@ -47,7 +47,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (success) {
       Navigator.of(context).pushNamedAndRemoveUntil(
-        Routes.reports,
+        Routes.home,
         (route) => false,
       );
     } else {

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mtaafix_mobile/app/router.dart';
 import 'package:mtaafix_mobile/app/theme.dart';
 import 'package:mtaafix_mobile/features/auth/application/auth_scope.dart';
+import 'package:mtaafix_mobile/features/onboarding/presentation/onboarding_screen.dart';
 
 /// Brand screen shown while the persisted session is restored, then routes to
-/// the report list (signed in) or the sign-in screen.
+/// onboarding (first launch), the home shell (signed in) or the sign-in
+/// screen.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -26,10 +29,17 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _bootstrap() async {
     final auth = AuthScope.read(context);
+    final prefs = await SharedPreferences.getInstance();
+    final onboardingSeen =
+        prefs.getBool(OnboardingScreen.seenKey) ?? false;
     await auth.init();
     if (!mounted) return;
+    if (!onboardingSeen) {
+      Navigator.of(context).pushReplacementNamed(Routes.onboarding);
+      return;
+    }
     Navigator.of(context).pushReplacementNamed(
-      auth.isAuthenticated ? Routes.reports : Routes.login,
+      auth.isAuthenticated ? Routes.home : Routes.login,
     );
   }
 

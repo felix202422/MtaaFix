@@ -227,10 +227,16 @@ class ApiClient {
 
   Map<String, dynamic> _decode(http.Response response) {
     final status = response.statusCode;
-    final data = _tryDecodeMap(response.body);
     if (status >= 200 && status < 300) {
-      return data ?? <String, dynamic>{};
+      final data = _tryDecodeMap(response.body);
+      if (data != null) return data;
+      // Top-level JSON arrays (e.g. GET /categories/public) are wrapped so
+      // every caller receives a map; list consumers read ['content'].
+      final list = _tryDecodeList(response.body);
+      if (list != null) return {'content': list};
+      return <String, dynamic>{};
     }
+    final data = _tryDecodeMap(response.body);
     throw ApiException(
       statusCode: status,
       code: data?['code'] as String?,
@@ -243,6 +249,17 @@ class ApiClient {
     try {
       final decoded = jsonDecode(body);
       if (decoded is Map<String, dynamic>) return decoded;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<dynamic>? _tryDecodeList(String body) {
+    if (body.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is List) return decoded;
       return null;
     } catch (_) {
       return null;

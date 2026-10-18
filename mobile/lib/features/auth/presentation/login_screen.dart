@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (success) {
       Navigator.of(context).pushNamedAndRemoveUntil(
-        Routes.reports,
+        Routes.home,
         (route) => false,
       );
     } else {
