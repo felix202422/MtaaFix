@@ -417,6 +417,91 @@ UI (API-level only); browser-based map verification → Phase 15.
 
 ---
 
+## Phase 12 - Flutter citizen features (COMPLETE - pending approval 2026-10-18)
+
+### B-12.1 Onboarding + shell navigation - DONE
+- **AC:** First launch shows persisted onboarding; a signed-in user reaches
+  a five-tab shell (Home, My Reports, Map, Alerts, Profile) with route
+  guards intact.
+- **Phase:** 12 — **Depends:** B-11.1, B-11.3
+- **Delivered:** 3-slide `OnboardingScreen` (`onboarding.seen` flag, skip),
+  splash honouring the flag, `MainShellScreen` (IndexedStack +
+  NavigationBar), `main_shell_test.dart`.
+
+### B-12.2 Dashboard home - DONE
+- **AC:** Home shows welcome, dashboard counters from `/dashboard/me`,
+  recent reports/notifications and a primary report CTA.
+- **Phase:** 12 — **Depends:** B-12.1, B-11.2
+- **Delivered:** `HomeScreen` + `ReportsApi.dashboardStats` (flat-counter
+  mapping, verified against live backend), stats tiles, recent lists; tab
+  re-activation refresh via `MainShellTab` (stale-data defect found and
+  fixed in verification).
+
+### B-12.3 Report creation with photos + location - DONE
+- **AC:** Citizen creates/edits a report with category, title, description,
+  location (GPS with permission-denial handling or map pin) and up to 5
+  photos (camera/gallery, MIME + 20 MB checks), sees backend validation
+  errors.
+- **Phase:** 12 — **Depends:** B-12.1, B-5.x backend, B-7.4 media family
+- **Delivered:** `ReportFormScreen`, `MapPickerScreen`, `image_picker`
+  evidence sheet, geolocator path with denied/permanently-denied dialogs,
+  bare-array response wrapping for `GET /categories/public` (production bug
+  found in verification), submit → detail navigation with MTF code.
+
+### B-12.4 Report list + detail with lifecycle actions - DONE
+- **AC:** List filters/paginates and refreshes on tab activation; detail
+  shows summary, evidence, timeline, comments and status-gated actions
+  (cancel/edit, confirm/dispute, resubmit).
+- **Phase:** 12 — **Depends:** B-12.3, B-5.x lifecycle endpoints
+- **Delivered:** `ReportListScreen` (status/category/search + load-more),
+  `ReportDetailScreen` with `StatusChip` timeline, comments, action sheet
+  wired to backend transitions; emulator-verified against
+  `MTF-2026-000032` (SUBMITTED).
+
+### B-12.5 Community map - DONE
+- **AC:** Map loads, fetches reports in the viewport bbox (after camera
+  ready), shows markers/count with status/category filters and my-location.
+- **Phase:** 12 — **Depends:** B-12.1, Phase 8 public bbox API
+- **Delivered:** `MapScreen` (flutter_map + OSM), post-frame deferred first
+  bbox fetch (pre-camera bug found in verification), debounced camera-move
+  refetch, marker bottom-sheet, filters; marker verified on device.
+
+### B-12.6 Notifications feed - DONE
+- **AC:** Real notifications list with unread styling; mark-one/mark-all
+  read; tapping a linked report opens its detail.
+- **Phase:** 12 — **Depends:** B-12.1, Phase 13 in-app backend
+- **Delivered:** `NotificationsScreen` + `NotificationsApi`,
+  `Report submitted` notification created by the backend during the
+  emulator run, deep link to `ReportDetailScreen`.
+
+### B-12.7 Profile + sign-out - DONE
+- **AC:** Profile shows the session; edit dialog calls `PUT /auth/me`;
+  sign-out with confirmation returns to sign-in; privacy/about rows present.
+- **Phase:** 12 — **Depends:** B-11.3
+- **Delivered:** `ProfileScreen`, edit-profile dialog, sign-out confirmation
+  (widget-tested with `ensureVisible`), informational notification-
+  preferences row (backend preference API is Phase 13).
+
+### B-12.8 Verification: gates + device run - DONE
+- **AC:** `flutter analyze` 0 issues, full test suite green, debug APK
+  builds, core journeys run on an emulator against the live backend.
+- **Phase:** 12 — **Depends:** B-12.1–B-12.7
+- **Delivered:** analyze 0 issues, **111/111** tests, APK built with
+  `--dart-define=MTAAFIX_API_BASE=http://10.0.2.2:8085/api/v1` (host 8080
+  occupied by an unrelated service), emulator walkthrough with screenshots
+  (`%TEMP%\phase12\`), five verification defects fixed (tofu icons /
+  `uses-material-design`, bare-array decoding, map bbox timing, dashboard
+  stats shape, tab staleness).
+
+### Phase 12 known gaps
+- FR-2.4 report **date** filter: backend supports status/category/q only —
+  no date parameter (flagged, not implemented; needs backend change).
+- No change-password endpoint (mobile edit profile cannot rotate password)
+  → Phase 13 alongside B-X.1 password reset.
+- iOS build/run unexecutable on Windows (B-X.4).
+
+---
+
 ## Cross-cutting (scheduled, not MVP-blocking)
 
 | ID | Item | Phase | AC summary |

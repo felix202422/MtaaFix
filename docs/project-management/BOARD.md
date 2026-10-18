@@ -3,9 +3,29 @@
 Local tracking board (GitHub `gh` CLI unavailable; revisit if auth is fixed).
 Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
-Last updated: 2026-10-17.
+Last updated: 2026-10-18.
 
-## Current phase: Phase 11 APPROVED (2026-10-17) — next: Phase 12 (not started)
+## Current phase: Phase 12 COMPLETE (2026-10-18) — awaiting owner approval; next: Phase 13 (after approval)
+
+## Phase 12 — Flutter citizen features (COMPLETE — report delivered 2026-10-18)
+
+| Task | Status | Notes |
+| ---- | ------ | ----- |
+| Shared layer | DONE | `paged.dart`, `formatters.dart`, `status_theme.dart` (`StatusChip`), `report.dart`/`notification_item.dart`, `ReportsApi` (stats/CRUD/filters/lifecycle/comments/media/public bbox/categories), `NotificationsApi` |
+| Onboarding + shell | DONE | 3-slide onboarding (`onboarding.seen`), splash flag routing, `MainShellScreen` IndexedStack + NavigationBar with `MainShellTab` activation refetch |
+| Home dashboard | DONE | Welcome hero, flat `/dashboard/me` counters → status tiles, recent reports/notifications, CTA |
+| Report creation | DONE | Category dropdown, validation, geolocator + permission denial, map-picker pin, 5-photo `image_picker` (MIME/20 MB), backend errors surfaced |
+| List + detail | DONE | Filters/pagination/load-more; detail with timeline, comments, static map, status-gated cancel/edit/confirm/dispute/resubmit |
+| Community map | DONE | flutter_map OSM, post-frame viewport bbox, debounced camera refetch, filters, my-location, marker sheet |
+| Notifications | DONE | Unread styling, mark-read/mark-all, deep link to report detail |
+| Profile | DONE | Session details, edit dialog (`PUT /auth/me`), privacy/about, sign-out confirmation |
+| Fixes from device run | DONE | `uses-material-design` (tofu icons), bare-array `ApiClient` wrap (categories), map pre-camera bbox, dashboard stats flat shape, tab staleness |
+| Gates | DONE | `flutter analyze` 0 issues; `flutter test` **111/111**; debug APK built (`MTAAFIX_API_BASE=…:8085`) |
+| Emulator verification | DONE | Medium_Phone_API_36.1 + live backend: register → login → create `MTF-2026-000032` → detail → map marker → notifications → profile; screenshots `%TEMP%\phase12\` |
+| Docs sync | DONE | CHANGELOG 0.13.0, ROADMAP/BACKLOG/BOARD Phase 12 sections, SRS page-table 27–36 |
+| Phase 12 report + approval gate | DONE | Part 17 report delivered 2026-10-18; awaiting approval; execution stopped per master prompt |
+
+**Known gaps:** FR-2.4 date filter unsupported by backend; no change-password endpoint (Phase 13); iOS build macOS-only (B-X.4); password reset (B-X.1).
 
 ## Phase 11 — Flutter application foundation (COMPLETE — APPROVED 2026-10-17)
 

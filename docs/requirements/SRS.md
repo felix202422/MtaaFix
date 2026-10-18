@@ -288,7 +288,7 @@ reports serve public record); media retained with report; audit logs retained �
 | 8–13 Citizen Dashboard, Report Wizard, My Reports, Tracking, Notifications, Profile | Citizen web | Yes | Phase 7 |
 | 14–24 Admin/moderation/assignment/user/category/org/audit/analytics/settings | Admin web | No | Phase 9 |
 | 25–26 Field-Worker Dashboard, Task Details | Field web | No | Phase 10 |
-| 27–36 Mobile (splash→profile) | Flutter | No | Phases 11–12 |
+| 27–36 Mobile (splash→profile) | Flutter | Yes | Phases 11–12 |
 
 ---
 

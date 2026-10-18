@@ -8,6 +8,11 @@
 
 ## Version History
 
+- **[0.13.0]** — Phase 12: Flutter citizen features (onboarding, home
+  dashboard, report creation with photos/location/map-picker, list/detail
+  with lifecycle actions, community map, notifications, profile; live-backend
+  emulator verification, 111/111 Flutter tests) — **COMPLETE, pending
+  approval** 2026-10-18
 - **[0.12.0]** — Phase 11: Flutter application foundation (navigation + route
   guards, secure token storage, auth-state wiring, platform configuration,
   themed screens, 29/29 Flutter tests, debug APK) — **APPROVED**
@@ -314,10 +319,36 @@ Delivered 2026-10-17 (see CHANGELOG 0.12.0; BACKLOG B-11.1–B-11.5):
 - **Exit: ✅ the application builds and provides a reliable foundation for mobile features**
 - **Gate: APPROVED by owner 2026-10-17 — Phase 12 may start**
 
-## Phase 12 — Flutter Citizen Features (NOT STARTED)
+## Phase 12 — Flutter Citizen Features (COMPLETE - pending approval 2026-10-18)
 
 Pages 27–36 (onboarding, home, creation with camera/GPS, map, notifications,
 profile). Permission-denial handling; Android/iOS verification.
+
+- Shared layer: `paged.dart`, `formatters.dart`, `status_theme.dart`
+  (`StatusChip`), `report.dart`/`notification_item.dart` domain models,
+  `ReportsApi` (stats, CRUD, filters, lifecycle actions, comments, multipart
+  media, public bbox, categories) and `NotificationsApi`
+- Screens: onboarding (persisted flag), home dashboard with flat
+  `/dashboard/me` stat mapping, report list with filters + pagination,
+  creation/edit (category dropdown, geolocator + permission denial,
+  `image_picker` evidence with MIME/20 MB checks, map-picker pin), report
+  detail (timeline, comments, status-gated cancel/edit/confirm/dispute/
+  resubmit), community map (flutter_map, viewport bbox, markers, filters),
+  notifications feed, profile with edit dialog and sign-out
+- Shell: `MainShellScreen` with IndexedStack + NavigationBar; tabs refetch
+  on activation via a `MainShellTab` inherited notifier (stale empty states
+  after submission were caught in emulator verification)
+- Defects found & fixed during verification: missing
+  `uses-material-design` (tofu icons on device), bare-JSON-array response
+  wrapping in `ApiClient`, pre-camera map bbox fetch, dashboard stats
+  nested-vs-flat shape, first-mount-only tab data
+- Gate: `flutter analyze` 0 issues, `flutter test` **111/111**,
+  `flutter build apk --debug` green, live-backend emulator run (register →
+  login → create report `MTF-2026-000032` → map marker → notifications →
+  profile); iOS build still macOS-only (B-X.4)
+- Gaps: FR-2.4 report date filter unsupported by backend (status/category/q
+  only), no change-password endpoint (Phase 13), password reset (Phase 13)
+- **Gate: report delivered 2026-10-18 — owner approval pending**
 
 ## Phase 13 — Notifications and Media (PARTIAL)
 
@@ -391,6 +422,6 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 9 | Complete (approved 2026-10-17) |
 | 10 | Complete (approved 2026-10-17) |
 | 11 | Complete (approved 2026-10-17) |
-| 12 | Not started |
+| 12 | Complete (pending approval 2026-10-18) |
 | 13 | Partial (in-app only) |
 | 14–23 | Not started |

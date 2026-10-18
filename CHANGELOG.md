@@ -5,7 +5,82 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
-## [0.12.0] — 2026-10-17
+## [0.13.0] — 2026-10-18
+### Phase 12 - Flutter citizen features
+Implemented the Phase 12 citizen experience (Pages 27–36) per master spec
+Phase 12 — onboarding, home dashboard, report creation with photos and
+location, report list/detail with lifecycle actions, community map,
+notifications and profile — verified end-to-end against the live backend on
+an Android emulator. **Complete; pending owner approval.**
+
+**Mobile — shared layer**
+- `paged.dart` (generic paged-response helper), `formatters.dart`
+  (date/date-time formatting), `status_theme.dart` (status meta, labels,
+  colour map, `StatusChip`), `report.dart` domain (statuses, lifecycle
+  helpers, location, timeline, comments), `notification_item.dart`
+- `ReportsApi` (dashboard stats, CRUD, filters/pagination, lifecycle
+  actions, comments, multipart media upload, public bbox feed, category
+  list, `resolveMediaUrl`) and `NotificationsApi` (list, mark-read,
+  mark-all-read)
+
+**Mobile — screens (Pages 27–36)**
+- Onboarding (3 slides, persisted `onboarding.seen` flag) → login/home
+  routing; splash now honours the onboarding flag before session restore
+  redirect; login/register land on the home shell after authentication
+- Home shell (`MainShellScreen`): IndexedStack + NavigationBar (Home,
+  My Reports, Map, Alerts, Profile); **tabs refresh their data whenever
+  they are re-selected** (first-mount-only data was showing stale empty
+  states after submitting a report — found in emulator verification)
+- Home: welcome hero, dashboard stats (flat `/dashboard/me` counters mapped
+  to status tiles), recent reports, recent notifications, primary report CTA
+- Report list: status/category/search filters, pagination + load-more, FAB
+- Report creation/edit: category dropdown (public API), title/description
+  validation, geolocator "Current location" with permission-denial handling,
+  map-picker location, up to 5 photos via `image_picker` (camera/gallery,
+  MIME + 20 MB/5-photo checks), live review card, backend error surfacing
+- Report detail: summary, static map snapshot, evidence, status timeline,
+  comments, and status-gated actions (cancel/edit for SUBMITTED,
+  confirm/dispute for RESOLVED, resubmit for NEEDS_INFORMATION)
+- Community map: flutter_map + OSM tiles, status/category filters, viewport
+  bbox fetch (debounced camera moves), my-location, marker bottom-sheet,
+  reports-on-screen count
+- Notifications: real feed with unread styling, mark-read/mark-all-read,
+  deep link into report details
+- Profile: session details, edit-profile dialog (`PUT /auth/me`), privacy
+  card, informational notification-preferences row, about, sign-out
+
+**Defects found and fixed during verification**
+- `uses-material-design: true` was missing from `pubspec.yaml` — every
+  Material icon rendered as tofu on device (tests don't catch glyph
+  rendering); added, APK rebuilt, icons verified on emulator
+- `GET /categories/public` returns a bare JSON array — `ApiClient` now
+  wraps top-level arrays (`_tryDecodeList`), fixing the category dropdown
+  (and any future bare-array endpoint) in production, not just tests
+- First map fetch ran before the camera existed, silently dropping the
+  viewport `bbox`; deferred to the first post-frame callback
+- `ReportsApi.dashboardStats` expected a nested `stats` map that
+  `/dashboard/me` does not send; now maps the flat citizen counters
+  (`submittedReports`, `verifiedReports`, …) to status tiles
+- Shell tabs kept first-mount data forever (IndexedStack): Home/Reports/Map/
+  Alerts now reload via a `MainShellTab` activation notifier
+
+**Verification**
+- `flutter analyze` — 0 issues; `flutter test` — **111/111**
+  (15 widget/unit test files: router guards, shell, paged helper, APIs,
+  onboarding, home, list, form, detail, map, notifications, profile)
+- `flutter build apk --debug` — built (with
+  `--dart-define=MTAAFIX_API_BASE=http://10.0.2.2:8085/api/v1` for the
+  live-backend run; host port 8080 was occupied by an unrelated service)
+- Emulator run (Medium_Phone_API_36.1, live PostgreSQL backend): register →
+  sign-in → home → create report (category + title + description + picked
+  pin −1.25697, 36.81722) → detail `MTF-2026-000032` (SUBMITTED) → list
+  card, community map marker after refresh, notifications "Report
+  submitted", profile; screenshots captured for the Phase 12 report
+- Known gaps flagged: FR-2.4 report date filter has no backend parameter
+  (status/category/q only); no change-password endpoint (Phase 13);
+  iOS build requires macOS (B-X.4)
+
+
 ### Phase 11 - Flutter application foundation
 Established the reliable mobile architecture per master spec Phase 11 — project
 completeness, navigation, mobile theme, shared components, API integration,
