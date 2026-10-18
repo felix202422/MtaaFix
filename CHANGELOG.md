@@ -11,7 +11,7 @@ Implemented the Phase 12 citizen experience (Pages 27–36) per master spec
 Phase 12 — onboarding, home dashboard, report creation with photos and
 location, report list/detail with lifecycle actions, community map,
 notifications and profile — verified end-to-end against the live backend on
-an Android emulator. **Complete; pending owner approval.**
+an Android emulator. **Approved by owner 2026-10-18.**
 
 **Mobile — shared layer**
 - `paged.dart` (generic paged-response helper), `formatters.dart`

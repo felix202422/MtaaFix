@@ -417,7 +417,7 @@ UI (API-level only); browser-based map verification → Phase 15.
 
 ---
 
-## Phase 12 - Flutter citizen features (COMPLETE - pending approval 2026-10-18)
+## Phase 12 - Flutter citizen features (COMPLETE - approved 2026-10-18)
 
 ### B-12.1 Onboarding + shell navigation - DONE
 - **AC:** First launch shows persisted onboarding; a signed-in user reaches

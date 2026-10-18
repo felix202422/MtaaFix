@@ -5,9 +5,9 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-18.
 
-## Current phase: Phase 12 COMPLETE (2026-10-18) — awaiting owner approval; next: Phase 13 (after approval)
+## Current phase: Phase 12 APPROVED (2026-10-18) — next: Phase 13 (not started)
 
-## Phase 12 — Flutter citizen features (COMPLETE — report delivered 2026-10-18)
+## Phase 12 — Flutter citizen features (COMPLETE — APPROVED 2026-10-18)
 
 | Task | Status | Notes |
 | ---- | ------ | ----- |
@@ -23,7 +23,7 @@ Last updated: 2026-10-18.
 | Gates | DONE | `flutter analyze` 0 issues; `flutter test` **111/111**; debug APK built (`MTAAFIX_API_BASE=…:8085`) |
 | Emulator verification | DONE | Medium_Phone_API_36.1 + live backend: register → login → create `MTF-2026-000032` → detail → map marker → notifications → profile; screenshots `%TEMP%\phase12\` |
 | Docs sync | DONE | CHANGELOG 0.13.0, ROADMAP/BACKLOG/BOARD Phase 12 sections, SRS page-table 27–36 |
-| Phase 12 report + approval gate | DONE | Part 17 report delivered 2026-10-18; awaiting approval; execution stopped per master prompt |
+| Phase 12 report + approval gate | DONE | Approved by owner 2026-10-18; docs flipped to APPROVED |
 
 **Known gaps:** FR-2.4 date filter unsupported by backend; no change-password endpoint (Phase 13); iOS build macOS-only (B-X.4); password reset (B-X.1).
 
@@ -238,6 +238,7 @@ Last updated: 2026-10-18.
 | Phase 9 - Administration and moderation | Complete (approved 2026-10-17) | Membership V4, user/org/category admin, filtered audit, admin dashboard + analytics + read-only settings, 11 admin pages; live smoke caught 3 real bugs (PG audit filter 500, unknown-path 500, malformed-body 500) — all fixed |
 | Phase 10 - Field-worker web application | Complete (approved 2026-10-17) | Worker dashboard + task details pages, progress/evidence, admin return action, worker-scoping tests, PublicApiTest flake fix; live smoke 50/50 found 1 deferred gap (non-JSON content type → 500) |
 | Phase 11 - Flutter application foundation | Complete (approved 2026-10-17) | Route guards, secure token storage, auth wiring, themed screens, Android config fixed (AAPT `configChanges` + NDK 28.2), iOS scaffolded (needs macOS); 29/29 Flutter tests + debug APK |
+| Phase 12 - Flutter citizen features | Complete (approved 2026-10-18) | Onboarding → shell → create → detail → map → notifications → profile; live-backend emulator run; 111/111 tests; 5 verification defects fixed (tofu icons, bare-array decode, map bbox, dashboard stats shape, tab staleness) |
 
 ## Environment notes
 

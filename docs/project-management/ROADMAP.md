@@ -11,8 +11,8 @@
 - **[0.13.0]** — Phase 12: Flutter citizen features (onboarding, home
   dashboard, report creation with photos/location/map-picker, list/detail
   with lifecycle actions, community map, notifications, profile; live-backend
-  emulator verification, 111/111 Flutter tests) — **COMPLETE, pending
-  approval** 2026-10-18
+  emulator verification, 111/111 Flutter tests) — **APPROVED**
+  2026-10-18
 - **[0.12.0]** — Phase 11: Flutter application foundation (navigation + route
   guards, secure token storage, auth-state wiring, platform configuration,
   themed screens, 29/29 Flutter tests, debug APK) — **APPROVED**
@@ -319,7 +319,7 @@ Delivered 2026-10-17 (see CHANGELOG 0.12.0; BACKLOG B-11.1–B-11.5):
 - **Exit: ✅ the application builds and provides a reliable foundation for mobile features**
 - **Gate: APPROVED by owner 2026-10-17 — Phase 12 may start**
 
-## Phase 12 — Flutter Citizen Features (COMPLETE - pending approval 2026-10-18)
+## Phase 12 — Flutter Citizen Features (COMPLETE - APPROVED 2026-10-18)
 
 Pages 27–36 (onboarding, home, creation with camera/GPS, map, notifications,
 profile). Permission-denial handling; Android/iOS verification.
@@ -348,7 +348,7 @@ profile). Permission-denial handling; Android/iOS verification.
   profile); iOS build still macOS-only (B-X.4)
 - Gaps: FR-2.4 report date filter unsupported by backend (status/category/q
   only), no change-password endpoint (Phase 13), password reset (Phase 13)
-- **Gate: report delivered 2026-10-18 — owner approval pending**
+- **Gate: APPROVED by owner 2026-10-18 — Phase 13 may start**
 
 ## Phase 13 — Notifications and Media (PARTIAL)
 
@@ -422,6 +422,6 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 9 | Complete (approved 2026-10-17) |
 | 10 | Complete (approved 2026-10-17) |
 | 11 | Complete (approved 2026-10-17) |
-| 12 | Complete (pending approval 2026-10-18) |
+| 12 | Complete (approved 2026-10-18) |
 | 13 | Partial (in-app only) |
 | 14–23 | Not started |
