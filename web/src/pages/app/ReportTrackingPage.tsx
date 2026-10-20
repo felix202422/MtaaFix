@@ -29,6 +29,10 @@ function canResubmit(s: ReportStatus): boolean {
   return s === 'NEEDS_INFORMATION';
 }
 
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_PHOTO_BYTES = 20 * 1024 * 1024;
+const MAX_MEDIA_PER_REPORT = 10;
+
 export function ReportTrackingPage() {
   const { id } = useParams<{ id: string }>();
   const { push } = useToast();
@@ -227,12 +231,21 @@ export function ReportTrackingPage() {
             onChange={(e) => {
               const f = e.target.files?.[0] ?? null;
               setPhotoError(null);
-              if (f && f.size > 20 * 1024 * 1024) {
+              if (!f) {
+                setPhoto(null);
+              } else if (!ACCEPTED_IMAGE_TYPES.includes(f.type)) {
+                setPhotoError('Only JPEG, PNG, or WEBP photos are allowed.');
+                setPhoto(null);
+              } else if (f.size > MAX_PHOTO_BYTES) {
                 setPhotoError('Photo must be 20 MB or smaller.');
+                setPhoto(null);
+              } else if (report.media.length >= MAX_MEDIA_PER_REPORT) {
+                setPhotoError('This report already has 10 photos.');
                 setPhoto(null);
               } else {
                 setPhoto(f);
               }
+              e.target.value = '';
             }}
             className="block text-sm text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-canvas file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-black"
           />

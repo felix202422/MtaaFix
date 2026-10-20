@@ -37,6 +37,8 @@ export function AdminReportDetailsPage() {
   const [selectedOrg, setSelectedOrg] = useState('');
   const [members, setMembers] = useState<OrganisationMember[]>([]);
   const [selectedWorker, setSelectedWorker] = useState('');
+  const [mediaBusy, setMediaBusy] = useState<string | null>(null);
+  const [mediaError, setMediaError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     api
@@ -74,6 +76,34 @@ export function AdminReportDetailsPage() {
       push(isApiError(err) ? err.message : 'The action failed.', 'error');
     } finally {
       setBusy(false);
+    }
+  }
+
+  // Evidence requires an Authorization header, so open it in a tab via a
+  // short-lived blob URL instead of a bare link.
+  async function openMedia(mediaId: string) {
+    setMediaBusy(mediaId);
+    setMediaError(null);
+    const win = window.open('', '_blank');
+    if (!win) {
+      setMediaBusy(null);
+      setMediaError('Allow pop-ups to open evidence in a new tab.');
+      return;
+    }
+    try {
+      const blob = await api.fetchMediaBlob(mediaId);
+      const url = URL.createObjectURL(blob);
+      win.location.href = url;
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      win.close();
+      setMediaError(
+        isApiError(err)
+          ? err.message
+          : 'Could not load this file. You may not have permission to view it.',
+      );
+    } finally {
+      setMediaBusy(null);
     }
   }
 
@@ -123,6 +153,14 @@ export function AdminReportDetailsPage() {
 
             <Card aria-label="Evidence">
               <h2 className="mb-3 text-base font-semibold text-brand-black">Evidence</h2>
+              {mediaError && (
+                <p
+                  role="alert"
+                  className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-error"
+                >
+                  {mediaError}
+                </p>
+              )}
               {report.media.length === 0 ? (
                 <p className="text-sm text-muted">No media attached.</p>
               ) : (
@@ -133,14 +171,14 @@ export function AdminReportDetailsPage() {
                         {media.originalName}{' '}
                         <span className="text-muted">({media.contentType})</span>
                       </span>
-                      <a
-                        href={api.getMediaUrl(media.id)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-medium text-brand-blue hover:underline"
+                      <button
+                        type="button"
+                        onClick={() => void openMedia(media.id)}
+                        disabled={mediaBusy !== null}
+                        className="font-medium text-brand-blue hover:underline disabled:opacity-50"
                       >
-                        View
-                      </a>
+                        {mediaBusy === media.id ? 'Opening…' : 'View'}
+                      </button>
                     </li>
                   ))}
                 </ul>

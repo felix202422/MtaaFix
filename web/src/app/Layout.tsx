@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { NotificationBell } from './NotificationBell';
 import { UserMenu } from './UserMenu';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -31,6 +32,7 @@ export function Layout() {
             <NavLink to="/explore" className={navLinkClass}>
               Explore reports
             </NavLink>
+            <NotificationBell />
             <UserMenu />
           </nav>
         </div>

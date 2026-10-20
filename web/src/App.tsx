@@ -13,6 +13,7 @@ import { PublicReportDetailPage } from './pages/PublicReportDetailPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ReportInfoPage } from './pages/ReportInfoPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { AppDashboardPage } from './pages/app/AppDashboardPage';
 import { MyReportsPage } from './pages/app/MyReportsPage';
 import { NotificationsPage } from './pages/app/NotificationsPage';
@@ -45,6 +46,7 @@ export const routes: RouteObject[] = [
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
       { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
       {
         path: '/app',
         element: <RequireAuth />,

@@ -232,6 +232,21 @@ export interface Notification {
   reportId: string | null;
 }
 
+export interface NotificationPreference {
+  emailEnabled: boolean;
+  pushEnabled: boolean;
+  pushAvailable: boolean;
+}
+
+export interface UnreadNotificationCount {
+  count: number;
+}
+
+export interface SimpleMessage {
+  success: boolean;
+  message: string | null;
+}
+
 // --- Phase 9: administration and moderation (P14-P24) ---
 
 export interface AdminRecentReport {

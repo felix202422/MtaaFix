@@ -7,6 +7,7 @@ import type { Notification, PagedResponse } from '../../lib/types';
 
 export function NotificationsPage() {
   const [page, setPage] = useState<PagedResponse<Notification> | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -14,6 +15,7 @@ export function NotificationsPage() {
   const load = useCallback(async (p: number) => {
     setLoading(true);
     setError(null);
+    setCurrentPage(p);
     try {
       setPage(await api.getNotifications({ page: p }));
     } catch (err) {
@@ -76,7 +78,7 @@ export function NotificationsPage() {
       </div>
 
       {loading && <LoadingState label="Loading notifications…" />}
-      {error && <ErrorState message={error} onRetry={() => void load(0)} />}
+      {error && <ErrorState message={error} onRetry={() => void load(currentPage)} />}
 
       {!loading && !error && page && page.content.length === 0 && (
         <div className="mt-6">
@@ -130,6 +132,35 @@ export function NotificationsPage() {
             </li>
           ))}
         </ul>
+      )}
+
+      {!loading && !error && page && page.totalPages > 1 && (
+        <nav
+          aria-label="Notifications pages"
+          className="mt-4 flex items-center justify-between gap-3"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={currentPage === 0}
+            onClick={() => void load(currentPage - 1)}
+          >
+            ← Newer
+          </Button>
+          <span className="text-sm text-muted" aria-live="polite">
+            Page {currentPage + 1} of {Math.max(page.totalPages, 1)}
+            {typeof page.totalElements === 'number' &&
+              ` · ${page.totalElements} total`}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={currentPage >= page.totalPages - 1}
+            onClick={() => void load(currentPage + 1)}
+          >
+            Older →
+          </Button>
+        </nav>
       )}
     </div>
   );

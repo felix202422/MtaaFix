@@ -10,6 +10,7 @@ import type {
   Category,
   Dashboard,
   Notification,
+  NotificationPreference,
   Organisation,
   OrganisationMember,
   PagedResponse,
@@ -19,7 +20,9 @@ import type {
   PublicReportSummary,
   PublicStats,
   Report,
+  SimpleMessage,
   SystemSettings,
+  UnreadNotificationCount,
   UpdateProfileInput,
   User,
   UserRole,
@@ -335,6 +338,38 @@ export const api = {
   logout(options: RequestOptions = {}): Promise<void> {
     return request<void>('/auth/logout', { ...options, method: 'POST' });
   },
+  // FR-1.7: non-disclosing self-service password recovery (always 202).
+  forgotPassword(email: string, options: RequestOptions = {}): Promise<SimpleMessage> {
+    return request<SimpleMessage>('/auth/password/forgot', {
+      ...options,
+      method: 'POST',
+      body: { email },
+      auth: false,
+    });
+  },
+  resetPassword(
+    token: string,
+    password: string,
+    options: RequestOptions = {},
+  ): Promise<SimpleMessage> {
+    return request<SimpleMessage>('/auth/password/reset', {
+      ...options,
+      method: 'POST',
+      body: { token, password },
+      auth: false,
+    });
+  },
+  changePassword(
+    currentPassword: string,
+    newPassword: string,
+    options: RequestOptions = {},
+  ): Promise<SimpleMessage> {
+    return request<SimpleMessage>('/auth/password/change', {
+      ...options,
+      method: 'POST',
+      body: { currentPassword, newPassword },
+    });
+  },
 
   // --- Dashboard ---
   getDashboard(options: RequestOptions = {}): Promise<Dashboard> {
@@ -454,6 +489,22 @@ export const api = {
   },
   markAllNotificationsRead(options: RequestOptions = {}): Promise<void> {
     return request<void>('/notifications/read-all', { ...options, method: 'POST' });
+  },
+  getUnreadNotificationCount(options: RequestOptions = {}): Promise<UnreadNotificationCount> {
+    return request<UnreadNotificationCount>('/notifications/unread-count', options);
+  },
+  getNotificationPreferences(options: RequestOptions = {}): Promise<NotificationPreference> {
+    return request<NotificationPreference>('/notifications/preferences', options);
+  },
+  updateNotificationPreferences(
+    input: { emailEnabled?: boolean; pushEnabled?: boolean },
+    options: RequestOptions = {},
+  ): Promise<NotificationPreference> {
+    return request<NotificationPreference>('/notifications/preferences', {
+      ...options,
+      method: 'PUT',
+      body: input,
+    });
   },
 
   // --- Phase 9: administration and moderation (P14-P24) ---

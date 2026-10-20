@@ -52,6 +52,7 @@ function clearDraft() {
 const STEPS = ['Category', 'Details', 'Location', 'Review'] as const;
 
 const MAX_PHOTO_BYTES = 20 * 1024 * 1024;
+const MAX_PHOTOS = 5;
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export function ReportWizardPage() {
@@ -60,7 +61,7 @@ export function ReportWizardPage() {
   const [draft, setDraft] = useState<Draft>(loadDraft);
   const [categories, setCategories] = useState<Category[]>([]);
   const [catError, setCatError] = useState<string | null>(null);
-  const [photo, setPhoto] = useState<File | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -97,23 +98,35 @@ export function ReportWizardPage() {
     }
   }, [step, draft.categoryId, draft.title, draft.location]);
 
-  function onPickFile(file: File | null) {
+  function onPickFiles(fileList: FileList | null) {
     setPhotoError(null);
-    if (!file) {
-      setPhoto(null);
-      return;
+    if (!fileList || fileList.length === 0) return;
+    const incoming = Array.from(fileList);
+    let error: string | null = null;
+    const accepted: File[] = [];
+    for (const file of incoming) {
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        error = error ?? 'Only JPEG, PNG, or WEBP photos are allowed.';
+        continue;
+      }
+      if (file.size > MAX_PHOTO_BYTES) {
+        error = error ?? 'Photo must be 20 MB or smaller.';
+        continue;
+      }
+      accepted.push(file);
     }
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      setPhotoError('Only JPEG, PNG, or WEBP photos are allowed.');
-      setPhoto(null);
-      return;
+    const room = MAX_PHOTOS - photos.length;
+    if (accepted.length > room) {
+      error = error ?? `You can attach up to ${MAX_PHOTOS} photos.`;
+      accepted.splice(Math.max(room, 0));
     }
-    if (file.size > MAX_PHOTO_BYTES) {
-      setPhotoError('Photo must be 20 MB or smaller.');
-      setPhoto(null);
-      return;
-    }
-    setPhoto(file);
+    if (accepted.length > 0) setPhotos([...photos, ...accepted]);
+    setPhotoError(error);
+  }
+
+  function removePhoto(index: number) {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+    setPhotoError(null);
   }
 
   function useMyLocation() {
@@ -157,12 +170,24 @@ export function ReportWizardPage() {
         },
       });
       let finalReport = report;
-      if (photo) {
-        finalReport = await api.uploadPhoto(report.id, photo);
+      let failedUploads = 0;
+      for (const p of photos) {
+        try {
+          finalReport = await api.uploadPhoto(report.id, p);
+        } catch {
+          failedUploads += 1;
+        }
       }
       clearDraft();
       setCreated(finalReport);
-      push('Report submitted.', 'success');
+      if (failedUploads > 0) {
+        push(
+          `Report submitted, but ${failedUploads} photo${failedUploads === 1 ? '' : 's'} failed to upload. You can add them from the report page.`,
+          'error',
+        );
+      } else {
+        push('Report submitted.', 'success');
+      }
     } catch (err) {
       setSubmitError(isApiError(err) ? err.message : 'Could not submit the report.');
     } finally {
@@ -330,19 +355,41 @@ export function ReportWizardPage() {
               />
             </div>
             <div>
-              <span className="mb-1 block text-sm font-medium">Photo (optional)</span>
+              <span className="mb-1 block text-sm font-medium">
+                Photos (optional, up to {MAX_PHOTOS})
+              </span>
               <input
                 ref={fileRef}
                 type="file"
+                multiple
                 accept={ACCEPTED_IMAGE_TYPES.join(',')}
-                aria-label="Attach a photo"
-                onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+                aria-label="Attach a photo (up to 5)"
+                onChange={(e) => {
+                  onPickFiles(e.target.files);
+                  e.target.value = '';
+                }}
                 className="block w-full text-sm text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-canvas file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-black"
               />
-              {photo && (
-                <p className="mt-1 text-sm text-muted">
-                  Attached: {photo.name} ({(photo.size / 1024).toFixed(0)} KB)
-                </p>
+              {photos.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {photos.map((p, i) => (
+                    <li
+                      key={`${p.name}-${i}`}
+                      className="flex items-center justify-between gap-3 text-sm text-muted"
+                    >
+                      <span className="truncate">
+                        {p.name} ({(p.size / 1024).toFixed(0)} KB)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(i)}
+                        className="shrink-0 text-xs font-medium text-error hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               )}
               {photoError && (
                 <p role="alert" className="mt-1 text-sm font-medium text-error">
@@ -380,8 +427,10 @@ export function ReportWizardPage() {
               </dd>
             </div>
             <div>
-              <dt className="text-muted">Photo</dt>
-              <dd className="font-medium">{photo ? photo.name : 'None'}</dd>
+              <dt className="text-muted">Photos</dt>
+              <dd className="font-medium">
+                {photos.length > 0 ? photos.map((p) => p.name).join(', ') : 'None'}
+              </dd>
             </div>
           </dl>
         )}
