@@ -8,6 +8,12 @@
 
 ## Version History
 
+- **[0.14.0]** — Phase 13: Notifications and media (unread badge + prefs
+  API, delivery separation with email kill-switch, password forgot/reset/
+  change, media caps/MIME/magic hardening, web bell + reset pages + blob
+  viewer, mobile badge/prefs/recovery/evidence lifecycle; live battery,
+  124+7 PG / 68 web / 134 mobile tests) — **APPROVED**
+  2026-10-18
 - **[0.13.0]** — Phase 12: Flutter citizen features (onboarding, home
   dashboard, report creation with photos/location/map-picker, list/detail
   with lifecycle actions, community map, notifications, profile; live-backend
@@ -350,7 +356,7 @@ profile). Permission-denial handling; Android/iOS verification.
   only), no change-password endpoint (Phase 13), password reset (Phase 13)
 - **Gate: APPROVED by owner 2026-10-18 — Phase 13 may start**
 
-## Phase 13 — Notifications and Media (COMPLETE — PENDING APPROVAL 2026-10-18)
+## Phase 13 — Notifications and Media (COMPLETE — APPROVED 2026-10-18)
 
 Per master spec Phase 13 (notifications, preferences, delivery separation,
 media hardening, B-X.1 password reset, B-X.2 delivery separation):
@@ -412,7 +418,7 @@ decision); backend attach/delete has no report-status guard (active-status
 gate enforced in mobile UI only); FR-2.4 date filter still backend-unsupported;
 iOS build macOS-only (B-X.4).
 
-**Gate: report delivered 2026-10-18 — owner approval pending**
+**Gate: APPROVED by owner 2026-10-18 — Phase 14 may start**
 
 ## Phase 14 — Offline Capabilities (NOT STARTED)
 
@@ -481,5 +487,5 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 10 | Complete (approved 2026-10-17) |
 | 11 | Complete (approved 2026-10-17) |
 | 12 | Complete (approved 2026-10-18) |
-| 13 | Partial (in-app only) |
+| 13 | Complete (approved 2026-10-18) |
 | 14–23 | Not started |

@@ -502,7 +502,7 @@ UI (API-level only); browser-based map verification → Phase 15.
 
 ---
 
-## Phase 13 — Notifications and media (COMPLETE — pending approval 2026-10-18)
+## Phase 13 — Notifications and media (COMPLETE — approved 2026-10-18)
 
 ### B-13.1 Notification preferences + unread count - DONE
 - **AC:** `GET/PUT /notifications/preferences` and

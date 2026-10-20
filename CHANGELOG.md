@@ -11,7 +11,7 @@ Implemented master spec Phase 13: notification preferences and unread counts,
 delivery-state separation (B-X.2), media validation/attachment lifecycle
 hardening, and the B-X.1 password-reset flow — across backend, web, and
 mobile. All flows exercised against the live backend on port 8085 before
-this entry was written. **Report delivered; owner approval pending.**
+this entry was written. **Approved by owner 2026-10-18.**
 
 **Backend**
 - Flyway **V5**: `notification_preferences` (per-user email/push opt-in),
