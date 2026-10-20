@@ -548,8 +548,9 @@ UI (API-level only); browser-based map verification → Phase 15.
   10-attachments-per-report caps enforced server-side; attachments deletable
   by authorized users; clients validate before upload.
 - **Phase:** 13 — **Depends:** Phase 7 upload endpoint
-- **Delivered:** backend MIME/magic/size/cap checks (config-driven
-  `media.*`), authorized `GET /media/{id}/content`; web wizard 5-photo with
+- **Delivered:** backend MIME/magic/size checks (magic-byte pre-existing)
+  plus the new per-report cap; size/cap limits now config-driven
+  (`media.*`), authorized `GET /media/{id}/content`; web wizard 5-photo with
   per-file validation + partial-failure toast, tracking/worker input
   checks, admin/worker media opened as authenticated blobs; mobile
   report-detail evidence (add via picker with MIME/20 MB/10 checks, remove

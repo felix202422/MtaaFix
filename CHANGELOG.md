@@ -33,15 +33,21 @@ this entry was written. **Report delivered; owner approval pending.**
   `common/email` (Spring Mail) behind the **`notifications.email.enabled`
   kill-switch, default false** (no SMTP provider configured) — owner action
   to enable
-- Media hardening (FR-9.2): MIME allowlist (JPEG/PNG/WEBP) **and magic-byte
-  content check**, `media.max-file-size-bytes` (20 MiB) and
-  `media.max-per-report` (10) config-driven caps, authorized
-  `GET /media/{id}/content`; multipart limits produce 413 on oversize;
-  **public unauthenticated media deliberately NOT implemented** (owner
-  decision — do not open unilaterally)
-- `ReportService` wires lifecycle events (submit, cancel, assign, status
-  changes, dispute, needs-info) through `dispatch()`; settings surfaced via
-  `SettingsService`; `.env.example`/`application.yml` document the new keys
+- Media hardening (FR-9.2): MIME allowlist + magic-byte content checks
+  (pre-existing) now joined by config-driven `media.max-file-size-bytes`
+  (default 20 MiB) and a new `media.max-per-report` (10) cap enforced on
+  both the metadata and multipart paths, plus metadata URL format
+  validation; authorized `GET /media/{id}/content`; multipart oversize →
+  413; **public unauthenticated media deliberately NOT implemented**
+  (owner decision — do not open unilaterally)
+- Delivery wiring at the single `NotificationService.notifyUser` funnel:
+  every lifecycle event (submit, cancel, assign, status, dispute,
+  needs-info) records deliveries via `dispatch()` with no per-call-site
+  rewiring, and dispatch failure never fails the triggering workflow; two
+  event fixes — dispute now also notifies the report owner, cancel emits
+  `REPORT_CANCELLED`; `markAllAsRead` reduced to a single UPDATE; settings
+  surfaced via `SettingsService`; `.env.example`/`application.yml`
+  document the new keys
 - Tests: `NotificationPhase13Test` (7), `PasswordResetTest` (7),
   `MediaLimitsTest` (4), lifecycle media-url updates — H2 **124/124**,
   PostgreSQL IT **7/7** with V5 applied; OpenAPI regenerated

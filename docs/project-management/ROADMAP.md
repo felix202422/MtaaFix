@@ -369,12 +369,16 @@ media hardening, B-X.1 password reset, B-X.2 delivery separation):
   `notifications.email.enabled` default **false** (no SMTP provider)
 - `common/email` Mail sender behind the kill-switch; push **not configured**
   (`pushAvailable=false`, no FCM/APNs) — owner decision flagged
-- Media hardening: MIME allowlist + magic-byte content check, 20 MiB cap
-  (`media.max-file-size-bytes`), 10 attachments/report (`media.max-per-report`),
+- Media hardening: MIME allowlist + magic-byte content check (pre-existing)
+  now paired with config-driven caps — 20 MiB
+  (`media.max-file-size-bytes`), new 10 attachments/report
+  (`media.max-per-report`) — enforced on metadata and multipart paths;
   authorized `GET /media/{id}/content`; **public unauthenticated media NOT
   implemented** (owner decision — do not open unilaterally)
-- `ReportService`: REPORT_CANCELLED/assignment/status notifications wired
-  through `dispatch()`; multipart limits for 413
+- Delivery wired at the single `NotificationService.notifyUser` funnel →
+  `dispatch()` for all lifecycle events (failure never fails the workflow);
+  dispute now also notifies the report owner; cancel emits
+  `REPORT_CANCELLED`; multipart limits for 413
 
 **Web** — NotificationBell unread badge in the header; forgot/reset
 password pages (non-disclosing confirmation, token from `?token=`); profile
