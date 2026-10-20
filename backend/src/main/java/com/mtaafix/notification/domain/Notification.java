@@ -34,7 +34,8 @@ public class Notification extends BaseEntity {
         REPORT_REOPENED,
         REPORT_DISPUTED,
         REPORT_IN_PROGRESS,
-        REPORT_COMMENTED
+        REPORT_COMMENTED,
+        REPORT_CANCELLED
     }
 
     @Column(name = "title", nullable = false, length = 255)

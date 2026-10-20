@@ -22,6 +22,10 @@ public class SettingsService {
         String fuzzSecret = environment.getProperty("geo.fuzz-secret", String.class, "");
         boolean secretPresent = fuzzSecret != null && !fuzzSecret.isBlank();
         boolean secretIsDefault = DEFAULT_FUZZ_SECRET.equals(fuzzSecret);
+        boolean emailEnabled = environment.getProperty("notifications.email.enabled",
+                Boolean.class, false);
+        boolean smtpConfigured = emailEnabled
+                && !environment.getProperty("spring.mail.host", String.class, "").isBlank();
 
         return new SettingsDto(
                 new SettingsDto.General(
@@ -32,8 +36,11 @@ public class SettingsService {
                         environment.getProperty("spring.servlet.multipart.max-file-size",
                                 String.class, "21MB"),
                         List.of("image/jpeg", "image/png", "image/webp"),
-                        new SettingsDto.Reporting.Notifications(true, false,
-                                "Email delivery is post-MVP (Phase 13, FR-6.3)")),
+                        new SettingsDto.Reporting.Notifications(true, emailEnabled,
+                                smtpConfigured
+                                        ? "SMTP configured via spring.mail.* (Phase 13)"
+                                        : "Email channel disabled - set NOTIFICATIONS_EMAIL_ENABLED "
+                                                + "+ SPRING_MAIL_HOST (Phase 13, FR-6.3)")),
                 new SettingsDto.Security(
                         millisToSeconds(environment.getProperty("jwt.access-token-expiration",
                                 Long.class, 900000L)),
@@ -51,8 +58,9 @@ public class SettingsService {
                         secretIsDefault),
                 new SettingsDto.Integrations(
                         "OpenStreetMap raster tiles",
-                        "Not connected (post-MVP, Phase 13)",
-                        "Not connected (post-MVP, Phase 13)"));
+                        smtpConfigured ? "SMTP configured" : "Not connected (no SMTP provider)",
+                        environment.getProperty("notifications.push.enabled", Boolean.class, false)
+                                ? "Push provider enabled" : "Not connected (no FCM/APNs provider)"));
     }
 
     private static long millisToSeconds(Long millis) {

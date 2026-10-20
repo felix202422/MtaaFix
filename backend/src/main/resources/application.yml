@@ -39,6 +39,11 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
+  mail:
+    host: ${SPRING_MAIL_HOST:}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
 
 jwt:
   secret: ${JWT_SECRET:min-32-char-secret}
@@ -50,7 +55,23 @@ cors:
 
 media:
   max-file-size-bytes: ${MEDIA_MAX_FILE_SIZE_BYTES:20971520}
+  max-per-report: ${MEDIA_MAX_PER_REPORT:10}
   storage-dir: ${MEDIA_STORAGE_DIR:./uploads}
+
+# Phase 13: notification channels (FR-6.3/6.4). Email is OFF by default -
+# deliveries are recorded as SKIPPED until an SMTP provider is configured.
+notifications:
+  email:
+    enabled: ${NOTIFICATIONS_EMAIL_ENABLED:false}
+    from: ${NOTIFICATIONS_EMAIL_FROM:no-reply@mtaafix.local}
+    starttls: ${NOTIFICATIONS_EMAIL_STARTTLS:true}
+    max-attempts: ${NOTIFICATIONS_EMAIL_MAX_ATTEMPTS:3}
+    retry-interval-ms: ${NOTIFICATIONS_EMAIL_RETRY_INTERVAL_MS:300000}
+    retry-initial-delay-ms: ${NOTIFICATIONS_EMAIL_RETRY_INITIAL_DELAY_MS:60000}
+  push:
+    enabled: ${NOTIFICATIONS_PUSH_ENABLED:false}
+  web-base-url: ${NOTIFICATIONS_WEB_BASE_URL:http://localhost:5173}
+
 
 # Public location generalization (FR-11.4): deterministic HMAC offset per report.
 # Production MUST set GEO_FUZZ_SECRET to a stable secret value.

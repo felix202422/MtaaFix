@@ -48,7 +48,6 @@ public class ReportService {
 
     private static final Set<String> ALLOWED_MEDIA_CONTENT_TYPES =
             Set.of("image/jpeg", "image/png", "image/webp");
-    private static final long MAX_MEDIA_BYTES = 20L * 1024 * 1024;
 
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
@@ -59,12 +58,18 @@ public class ReportService {
     private final AuditService auditService;
     private final MediaStorageService mediaStorageService;
     private final com.mtaafix.user.service.OrganisationMembershipService membershipService;
+    private final long maxMediaBytes;
+    private final int maxMediaPerReport;
 
     public ReportService(ReportRepository reportRepository, UserRepository userRepository,
             NotificationService notificationService, AssignmentRepository assignmentRepository,
             ReportLifecycle lifecycle, ReportCodeGenerator codeGenerator,
             AuditService auditService, MediaStorageService mediaStorageService,
-            com.mtaafix.user.service.OrganisationMembershipService membershipService) {
+            com.mtaafix.user.service.OrganisationMembershipService membershipService,
+            @org.springframework.beans.factory.annotation.Value("${media.max-file-size-bytes:20971520}")
+            long maxMediaBytes,
+            @org.springframework.beans.factory.annotation.Value("${media.max-per-report:10}")
+            int maxMediaPerReport) {
         this.reportRepository = reportRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
@@ -74,6 +79,8 @@ public class ReportService {
         this.auditService = auditService;
         this.mediaStorageService = mediaStorageService;
         this.membershipService = membershipService;
+        this.maxMediaBytes = maxMediaBytes;
+        this.maxMediaPerReport = maxMediaPerReport;
     }
 
     @Transactional
@@ -386,6 +393,9 @@ public class ReportService {
             notifyUser(report.getAssignment().getAssignee(), Type.REPORT_DISPUTED, report,
                     "Resolution disputed", request.disputeReason());
         }
+        notifyUser(report.getUser(), Type.REPORT_DISPUTED, report,
+                "Resolution disputed", "A resolution on " + report.getCode()
+                        + " was disputed and will be reviewed again.");
         return ReportMapper.toDto(report);
     }
 
@@ -408,7 +418,7 @@ public class ReportService {
                 "Cancelled by the report creator before review.", "CANCELLED_BY_CITIZEN");
         report = reportRepository.save(report);
         auditReport("REPORT_CANCELLED", user, report);
-        notifyUser(report.getUser(), Type.REPORT_REJECTED, report,
+        notifyUser(report.getUser(), Type.REPORT_CANCELLED, report,
                 "Report cancelled", "You cancelled report " + report.getCode() + ".");
         return ReportMapper.toDto(report);
     }
@@ -466,9 +476,15 @@ public class ReportService {
             throw new IllegalArgumentException(
                     "Unsupported media MIME type; allowed: image/jpeg, image/png, image/webp (FR-9.2).");
         }
-        if (sizeBytes == null || sizeBytes <= 0 || sizeBytes > MAX_MEDIA_BYTES) {
+        if (sizeBytes == null || sizeBytes <= 0 || sizeBytes > maxMediaBytes) {
             throw new IllegalArgumentException(
-                    "Media size must be between 1 byte and 20 MiB (FR-9.2).");
+                    "Media size must be between 1 byte and " + maxMediaBytes
+                            + " bytes (FR-9.2, configurable via MEDIA_MAX_FILE_SIZE_BYTES).");
+        }
+        if (url == null || !url.matches("/api/v1/media/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+                + "[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/content")) {
+            throw new IllegalArgumentException(
+                    "url must reference an uploaded media content path (/api/v1/media/{id}/content).");
         }
         ReportMedia.MediaType mt;
         try {
@@ -480,6 +496,7 @@ public class ReportService {
             throw new IllegalArgumentException(
                     "Only PHOTO media is accepted; allowed MIME types are image/jpeg, image/png, image/webp.");
         }
+        assertMediaCapacity(report);
         report.getMedia().add(
                 new ReportMedia(fileName, originalName, contentType, sizeBytes, url, mt, report, user));
         report = reportRepository.save(report);
@@ -524,9 +541,11 @@ public class ReportService {
             throw new IllegalArgumentException(
                     "Unsupported media MIME type; allowed: image/jpeg, image/png, image/webp (FR-9.2).");
         }
-        if (file.getSize() > MAX_MEDIA_BYTES) {
-            throw new IllegalArgumentException("Media size must not exceed 20 MiB (FR-9.2).");
+        if (file.getSize() > maxMediaBytes) {
+            throw new IllegalArgumentException("Media size must not exceed " + maxMediaBytes
+                    + " bytes (FR-9.2, configurable via MEDIA_MAX_FILE_SIZE_BYTES).");
         }
+        assertMediaCapacity(report);
         byte[] head;
         try {
             head = file.getBytes();
@@ -573,6 +592,14 @@ public class ReportService {
     }
 
     public record MediaContent(java.nio.file.Path path, String contentType) {
+    }
+
+    /** Upload limit: per-report attachment cap (configurable, FR-9.1). */
+    private void assertMediaCapacity(Report report) {
+        if (report.getMedia().size() >= maxMediaPerReport) {
+            throw new IllegalArgumentException("Report already has the maximum of "
+                    + maxMediaPerReport + " attachments (FR-9.1).");
+        }
     }
 
     private static boolean matchesMagicBytes(byte[] head, String contentType) {

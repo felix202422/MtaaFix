@@ -155,7 +155,9 @@ class ReportLifecycleTest {
                 .andExpect(status().isBadRequest());
         act(wToken, id, "media",
                 "{\"fileName\":\"p.jpg\",\"originalName\":\"p.jpg\",\"contentType\":\"image/jpeg\","
-                        + "\"sizeBytes\":2048,\"url\":\"/media/p.jpg\",\"mediaType\":\"PHOTO\"}");
+                        + "\"sizeBytes\":2048,"
+                        + "\"url\":\"/api/v1/media/11111111-2222-3333-4444-555555555555/content\","
+                        + "\"mediaType\":\"PHOTO\"}");
         act(wToken, id, "complete", "{\"completionNote\":\"Fixed\"}");
         act(mToken, id, "return", "{\"comment\":\"Pothole still open\"}");
         act(wToken, id, "complete", "{\"completionNote\":\"Fixed again\"}");
@@ -562,7 +564,9 @@ class ReportLifecycleTest {
         act(wToken, id, "start", null);
         act(wToken, id, "media",
                 "{\"fileName\":\"e.jpg\",\"originalName\":\"e.jpg\",\"contentType\":\"image/jpeg\","
-                        + "\"sizeBytes\":1024,\"url\":\"/m/e.jpg\",\"mediaType\":\"PHOTO\"}");
+                        + "\"sizeBytes\":1024,"
+                        + "\"url\":\"/api/v1/media/66666666-7777-8888-9999-000000000000/content\","
+                        + "\"mediaType\":\"PHOTO\"}");
         act(wToken, id, "complete", "{}");
         act(mToken, id, "resolve", null);
 
@@ -598,7 +602,8 @@ class ReportLifecycleTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"fileName\":\"proof.jpg\",\"originalName\":\"proof.jpg\","
                                 + "\"contentType\":\"image/png\",\"sizeBytes\":4096,"
-                                + "\"url\":\"/media/proof.jpg\",\"mediaType\":\"PHOTO\"}"))
+                                + "\"url\":\"/api/v1/media/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/content\","
+                                + "\"mediaType\":\"PHOTO\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.media", hasSize(1)));
 

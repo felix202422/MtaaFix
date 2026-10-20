@@ -1,11 +1,15 @@
 package com.mtaafix.auth.controller;
 
+import com.mtaafix.auth.service.PasswordResetService;
 import com.mtaafix.common.response.SimpleResponse;
 import com.mtaafix.user.domain.User;
 import com.mtaafix.user.dto.AuthResponse;
+import com.mtaafix.user.dto.ChangePasswordRequest;
+import com.mtaafix.user.dto.ForgotPasswordRequest;
 import com.mtaafix.user.dto.LoginRequest;
 import com.mtaafix.user.dto.RegisterRequest;
 import com.mtaafix.user.dto.RefreshRequest;
+import com.mtaafix.user.dto.ResetPasswordRequest;
 import com.mtaafix.user.dto.UpdateProfileRequest;
 import com.mtaafix.user.dto.UserDto;
 import com.mtaafix.user.service.UserService;
@@ -31,10 +35,13 @@ public class AuthController {
 
     private final UserService userService;
     private final JwtTokenProvider tokenProvider;
+    private final PasswordResetService passwordResetService;
 
-    public AuthController(UserService userService, JwtTokenProvider tokenProvider) {
+    public AuthController(UserService userService, JwtTokenProvider tokenProvider,
+            PasswordResetService passwordResetService) {
         this.userService = userService;
         this.tokenProvider = tokenProvider;
+        this.passwordResetService = passwordResetService;
     }
 
     @Operation(summary = "Register a new user")
@@ -79,5 +86,32 @@ public class AuthController {
     public ResponseEntity<UserDto> updateMe(@AuthenticationPrincipal User user,
             @Valid @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(userService.updateProfile(user, request));
+    }
+
+    @Operation(summary = "Request a password reset link (always 202, non-disclosing - FR-1.7)")
+    @PostMapping("/password/forgot")
+    public ResponseEntity<SimpleResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestReset(request.email());
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(SimpleResponse.ok("If that email address is registered, a password reset "
+                        + "link has been sent."));
+    }
+
+    @Operation(summary = "Complete a password reset with a single-use token (FR-1.7)")
+    @PostMapping("/password/reset")
+    public ResponseEntity<SimpleResponse> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.reset(request.token(), request.password());
+        return ResponseEntity.ok(SimpleResponse.ok("Password has been reset"));
+    }
+
+    @Operation(summary = "Change own password while authenticated")
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/password/change")
+    public ResponseEntity<SimpleResponse> changePassword(@AuthenticationPrincipal User user,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        passwordResetService.change(user, request.currentPassword(), request.newPassword());
+        return ResponseEntity.ok(SimpleResponse.ok("Password changed"));
     }
 }
