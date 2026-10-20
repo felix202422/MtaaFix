@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:mtaafix_mobile/app/router.dart';
@@ -34,6 +37,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
 
   final _comment = TextEditingController();
   bool _postingComment = false;
+
+  final _picker = ImagePicker();
+  static const _maxDetailPhotos = 10;
+  static const _maxPhotoBytes = 20 * 1024 * 1024;
+  static const _allowedMime = ['image/jpeg', 'image/png', 'image/webp'];
 
   @override
   void didChangeDependencies() {
@@ -266,6 +274,112 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
         .then((_) => _load());
   }
 
+  /// Lets the owner attach another photo while the report is active (FR-9.1):
+  /// pick a source, validate like the create form, then upload.
+  Future<void> _promptAddPhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+    await _addPhoto(source);
+  }
+
+  Future<void> _addPhoto(ImageSource source) async {
+    if (_acting) return;
+    try {
+      final picked = await _picker.pickImage(
+        source: source,
+        maxWidth: 1920,
+        imageQuality: 85,
+      );
+      if (picked == null || !mounted) return;
+      final mime = _mimeType(picked.path, picked.name);
+      if (!_allowedMime.contains(mime)) {
+        _snack('Only JPEG, PNG, or WEBP photos are allowed.', error: true);
+        return;
+      }
+      final size = await File(picked.path).length();
+      if (size > _maxPhotoBytes) {
+        _snack('Photo must be 20 MB or smaller.', error: true);
+        return;
+      }
+      final report = _report;
+      if (report != null && report.media.length >= _maxDetailPhotos) {
+        _snack(
+          'This report already has $_maxDetailPhotos photos.',
+          error: true,
+        );
+        return;
+      }
+      final id = _id;
+      if (id == null) return;
+      await _runAction(
+        () => _api.uploadPhoto(id, picked.path),
+        success: 'Photo attached.',
+      );
+    } catch (e) {
+      _snack('Could not attach that photo.', error: true);
+    }
+  }
+
+  String _mimeType(String path, String name) {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  }
+
+  Future<void> _deletePhoto(ReportMediaItem media) async {
+    if (_acting) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove this photo?'),
+        content: const Text(
+          'The photo is deleted permanently. The report itself is not '
+          'affected.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final id = _id;
+    if (id == null) return;
+    await _runAction(
+      () async {
+        await _api.deleteMedia(media.id);
+        return _api.get(id);
+      },
+      success: 'Photo removed.',
+    );
+  }
+
   void _openPhoto(ReportMediaItem media) {
     final url = _api.resolveMediaUrl(media.url);
     showDialog<void>(
@@ -332,6 +446,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     final canResubmit = report.status == ReportStatus.needsInformation;
     final canEdit = report.status == ReportStatus.submitted ||
         report.status == ReportStatus.needsInformation;
+    // Attachments stay editable while the report is active (FR-9.1).
+    final canEditMedia = report.status != ReportStatus.resolved &&
+        report.status != ReportStatus.rejected &&
+        report.status != ReportStatus.duplicate &&
+        report.status != ReportStatus.closed;
 
     return Scaffold(
       appBar: AppBar(
@@ -389,42 +508,85 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
             ],
             const SizedBox(height: 16),
             if (report.location != null) _LocationCard(location: report.location!),
-            if (report.media.isNotEmpty) ...[
+            if (report.media.isNotEmpty || canEditMedia) ...[
               const SizedBox(height: 16),
               Text('Evidence (${report.media.length})',
                   style: text.titleMedium),
               const SizedBox(height: 8),
-              SizedBox(
-                height: 96,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: report.media.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final media = report.media[index];
-                    return InkWell(
-                      onTap: () => _openPhoto(media),
-                      borderRadius: BorderRadius.circular(10),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          _api.resolveMediaUrl(media.url),
-                          width: 96,
-                          height: 96,
-                          fit: BoxFit.cover,
-                          headers: _imageHeaders,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 96,
-                            height: 96,
-                            color: MtaaFixColors.canvas,
-                            child: const Icon(Icons.broken_image_outlined),
+              if (report.media.isNotEmpty)
+                SizedBox(
+                  height: 96,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: report.media.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final media = report.media[index];
+                      return Stack(
+                        children: [
+                          InkWell(
+                            onTap: () => _openPhoto(media),
+                            borderRadius: BorderRadius.circular(10),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(
+                                _api.resolveMediaUrl(media.url),
+                                width: 96,
+                                height: 96,
+                                fit: BoxFit.cover,
+                                headers: _imageHeaders,
+                                errorBuilder: (_, __, ___) => Container(
+                                  width: 96,
+                                  height: 96,
+                                  color: MtaaFixColors.canvas,
+                                  child:
+                                      const Icon(Icons.broken_image_outlined),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    );
-                  },
+                          if (canEditMedia)
+                            Positioned(
+                              top: 2,
+                              right: 2,
+                              child: Material(
+                                color: Colors.black54,
+                                shape: const CircleBorder(),
+                                child: IconButton(
+                                  tooltip: 'Remove photo',
+                                  iconSize: 16,
+                                  padding: const EdgeInsets.all(4),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 28,
+                                    minHeight: 28,
+                                  ),
+                                  color: Colors.white,
+                                  icon: const Icon(Icons.close_rounded),
+                                  onPressed: _acting
+                                      ? null
+                                      : () => _deletePhoto(media),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
-              ),
+              if (canEditMedia) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _acting ? null : _promptAddPhoto,
+                  icon: _acting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add_a_photo_outlined, size: 18),
+                  label: const Text('Add photo'),
+                ),
+              ],
             ],
             if (report.statusHistory.isNotEmpty) ...[
               const SizedBox(height: 20),

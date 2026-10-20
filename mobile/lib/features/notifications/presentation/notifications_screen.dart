@@ -8,6 +8,7 @@ import 'package:mtaafix_mobile/core/widgets/feedback_view.dart';
 import 'package:mtaafix_mobile/core/widgets/loading_view.dart';
 import 'package:mtaafix_mobile/features/auth/application/auth_scope.dart';
 import 'package:mtaafix_mobile/features/notifications/application/notifications_api.dart';
+import 'package:mtaafix_mobile/features/notifications/application/unread_count_scope.dart';
 import 'package:mtaafix_mobile/features/notifications/domain/notification_item.dart';
 
 /// Notifications (Page 35): real feed from `GET /notifications` with unread
@@ -75,6 +76,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _totalPages = result.totalPages < 1 ? 1 : result.totalPages;
         _loading = false;
       });
+      // Keep the tab badge in sync with the server-side unread count.
+      UnreadCountScope.read(context)?.refresh();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -127,6 +130,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ));
         _markingAll = false;
       });
+      UnreadCountScope.read(context)?.refresh();
     } catch (e) {
       if (!mounted) return;
       setState(() => _markingAll = false);
@@ -170,6 +174,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       } catch (_) {
         // Still navigate — the report is what the user wants.
       }
+      if (mounted) UnreadCountScope.read(context)?.refresh();
     }
     final reportId = item.reportId;
     if (reportId != null && reportId.isNotEmpty && mounted) {

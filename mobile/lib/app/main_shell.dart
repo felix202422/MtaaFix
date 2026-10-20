@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:mtaafix_mobile/features/notifications/application/unread_count_scope.dart';
 import 'package:mtaafix_mobile/features/notifications/presentation/notifications_screen.dart';
 import 'package:mtaafix_mobile/features/profile/presentation/profile_screen.dart';
 import 'package:mtaafix_mobile/features/reports/presentation/report_list_screen.dart';
@@ -20,6 +21,18 @@ class MainShellScreen extends StatefulWidget {
 class _MainShellScreenState extends State<MainShellScreen> {
   late int _index = widget.initialIndex;
   late final ValueNotifier<int> _activeTab = ValueNotifier<int>(widget.initialIndex);
+  bool _unreadRefreshed = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Fetch the badge count once per shell mount (scope may be absent in
+    // minimal test harnesses — [UnreadCountScope.read] is nullable).
+    if (!_unreadRefreshed) {
+      _unreadRefreshed = true;
+      UnreadCountScope.read(context)?.refresh();
+    }
+  }
 
   @override
   void dispose() {
@@ -29,6 +42,8 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final unread = UnreadCountScope.maybeOf(context)?.count ?? 0;
+    final unreadLabel = unread > 99 ? '99+' : '$unread';
     return Scaffold(
       body: MainShellTab(
         notifier: _activeTab,
@@ -49,28 +64,36 @@ class _MainShellScreenState extends State<MainShellScreen> {
           _activeTab.value = index;
           setState(() => _index = index);
         },
-        destinations: const [
-          NavigationDestination(
+        destinations: [
+          const NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home_rounded),
             label: 'Home',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.list_alt_outlined),
             selectedIcon: Icon(Icons.list_alt_rounded),
             label: 'Reports',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.map_outlined),
             selectedIcon: Icon(Icons.map_rounded),
             label: 'Map',
           ),
           NavigationDestination(
-            icon: Icon(Icons.notifications_outlined),
-            selectedIcon: Icon(Icons.notifications_rounded),
+            icon: Badge(
+              isLabelVisible: unread > 0,
+              label: Text(unreadLabel),
+              child: const Icon(Icons.notifications_outlined),
+            ),
+            selectedIcon: Badge(
+              isLabelVisible: unread > 0,
+              label: Text(unreadLabel),
+              child: const Icon(Icons.notifications_rounded),
+            ),
             label: 'Alerts',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.person_outline_rounded),
             selectedIcon: Icon(Icons.person_rounded),
             label: 'Profile',

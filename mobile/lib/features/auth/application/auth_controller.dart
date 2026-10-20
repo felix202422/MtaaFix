@@ -116,6 +116,62 @@ class AuthController extends ChangeNotifier {
     _emit(const AuthState(status: AuthStatus.unauthenticated));
   }
 
+  /// Requests a password-reset token by email (FR-1.7). The backend always
+  /// answers 202 — non-disclosing — so a `false` result means the request
+  /// itself failed (network/server), never "unknown email".
+  Future<bool> forgotPassword(String email) async {
+    try {
+      await _api.post('/auth/password/forgot', {'email': email.trim()});
+      return true;
+    } on ApiException catch (e) {
+      _emit(AuthState(status: AuthStatus.error, message: e.userMessage));
+      return false;
+    }
+  }
+
+  /// Completes a password reset with the single-use token from the email
+  /// link (FR-1.7). Existing sessions are not revoked (documented Phase 13
+  /// decision — JWTs stay valid until expiry).
+  Future<bool> resetPassword({
+    required String token,
+    required String password,
+  }) async {
+    try {
+      await _api.post('/auth/password/reset', {
+        'token': token.trim(),
+        'password': password,
+      });
+      return true;
+    } on ApiException catch (e) {
+      _emit(AuthState(status: AuthStatus.error, message: e.userMessage));
+      return false;
+    }
+  }
+
+  /// Changes the signed-in user's own password. On failure the authenticated
+  /// state is preserved (mirrors [updateProfile]) so guards never bounce.
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _api.post('/auth/password/change', {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      });
+      return true;
+    } on ApiException catch (e) {
+      _emit(
+        AuthState(
+          status: AuthStatus.authenticated,
+          user: _state.user,
+          message: e.userMessage,
+        ),
+      );
+      return false;
+    }
+  }
+
   /// Updates the signed-in user's profile (full name / mobile only, FR-1.x)
   /// and refreshes the in-memory session user.
   Future<bool> updateProfile({String? fullName, String? mobile}) async {

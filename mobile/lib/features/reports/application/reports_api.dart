@@ -91,6 +91,9 @@ class ReportsApi {
           .uploadMultipart('/reports/${Uri.encodeComponent(id)}/media/upload',
               filePath: filePath));
 
+  Future<void> deleteMedia(String mediaId) =>
+      _api.delete('/media/${Uri.encodeComponent(mediaId)}');
+
   Future<Paged<PublicReport>> publicList({
     String? status,
     String? categoryId,

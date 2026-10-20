@@ -179,13 +179,23 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
           ),
-          const ListTile(
-            leading: Icon(Icons.notifications_active_outlined),
-            title: Text('Notification preferences'),
-            subtitle: Text(
-              'Delivery channels and quiet hours arrive with push '
-              'notifications in the next phase.',
+          ListTile(
+            leading: const Icon(Icons.notifications_active_outlined),
+            title: const Text('Notification preferences'),
+            subtitle: const Text(
+              'Choose which channels you use: in-app, email, or push '
+              'when available.',
             ),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () =>
+                Navigator.pushNamed(context, Routes.notificationPreferences),
+          ),
+          ListTile(
+            leading: const Icon(Icons.lock_outline_rounded),
+            title: const Text('Change password'),
+            subtitle: const Text('Update your password while signed in.'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => Navigator.pushNamed(context, Routes.changePassword),
           ),
           const ListTile(
             leading: Icon(Icons.info_outline_rounded),

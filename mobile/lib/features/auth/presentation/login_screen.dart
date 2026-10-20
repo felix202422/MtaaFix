@@ -129,11 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 TextButton(
                   onPressed: () {
-                    showAppSnack(
-                      context,
-                      'Password reset is not available yet.',
-                      error: true,
-                    );
+                    Navigator.pushNamed(context, Routes.forgotPassword);
                   },
                   child: const Text('Forgot password?'),
                 ),
