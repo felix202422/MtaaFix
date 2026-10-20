@@ -125,4 +125,77 @@ void main() {
     expect(item.reportId, isNull);
     expect(item.type, isNull);
   });
+
+  test('unreadCount requests GET /notifications/unread-count', () async {
+    late Uri seen;
+    final api = apiWith(MockClient((request) async {
+      seen = request.url;
+      expect(request.method, 'GET');
+      return http.Response(jsonEncode({'count': 7}), 200,
+          headers: jsonHeaders());
+    }));
+
+    expect(await api.unreadCount(), 7);
+    expect(seen.path, '/api/v1/notifications/unread-count');
+  });
+
+  test('unreadCount falls back to 0 without a count field', () async {
+    final api = apiWith(MockClient((request) async {
+      return http.Response(jsonEncode(<String, dynamic>{}), 200,
+          headers: jsonHeaders());
+    }));
+
+    expect(await api.unreadCount(), 0);
+  });
+
+  test('getPreferences reads the channel flags', () async {
+    late Uri seen;
+    final api = apiWith(MockClient((request) async {
+      seen = request.url;
+      expect(request.method, 'GET');
+      return http.Response(
+        jsonEncode({
+          'emailEnabled': false,
+          'pushEnabled': true,
+          'pushAvailable': true,
+        }),
+        200,
+        headers: jsonHeaders(),
+      );
+    }));
+
+    final prefs = await api.getPreferences();
+
+    expect(seen.path, '/api/v1/notifications/preferences');
+    expect(prefs.emailEnabled, isFalse);
+    expect(prefs.pushEnabled, isTrue);
+    expect(prefs.pushAvailable, isTrue);
+  });
+
+  test('updatePreferences sends a JSON PUT with only the changed flag',
+      () async {
+    late http.Request seen;
+    final api = apiWith(MockClient((request) async {
+      seen = request;
+      return http.Response(
+        jsonEncode({
+          'emailEnabled': false,
+          'pushEnabled': false,
+          'pushAvailable': false,
+        }),
+        200,
+        headers: jsonHeaders(),
+      );
+    }));
+
+    final prefs = await api.updatePreferences(emailEnabled: false);
+
+    expect(seen.method, 'PUT');
+    expect(seen.url.path, '/api/v1/notifications/preferences');
+    final body = jsonDecode(seen.body) as Map<String, dynamic>;
+    expect(body['emailEnabled'], isFalse);
+    expect(body.containsKey('pushEnabled'), isFalse);
+    expect(prefs.emailEnabled, isFalse);
+    expect(prefs.pushAvailable, isFalse);
+  });
 }

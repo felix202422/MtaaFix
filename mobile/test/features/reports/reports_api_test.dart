@@ -316,6 +316,18 @@ void main() {
     expect(detail.timeline.last.status, ReportStatus.resolved);
   });
 
+  test('deleteMedia issues DELETE /media/{id}', () async {
+    final hits = <String>[];
+    final api = apiWith(MockClient((request) async {
+      hits.add('${request.method} ${request.url.path}');
+      return http.Response('{}', 200, headers: jsonHeaders());
+    }));
+
+    await api.deleteMedia('m1');
+
+    expect(hits, ['DELETE /api/v1/media/m1']);
+  });
+
   test('resolveMediaUrl strips the /api/v1 prefix from relative paths',
       () async {
     final api = apiWith(MockClient((_) async => fail('No HTTP expected')));

@@ -14,6 +14,8 @@ import 'package:mtaafix_mobile/features/auth/application/auth_controller.dart';
 import 'package:mtaafix_mobile/features/auth/application/auth_scope.dart';
 import 'package:mtaafix_mobile/features/home/presentation/home_screen.dart';
 import 'package:mtaafix_mobile/features/map/presentation/map_screen.dart';
+import 'package:mtaafix_mobile/features/notifications/application/unread_count_controller.dart';
+import 'package:mtaafix_mobile/features/notifications/application/unread_count_scope.dart';
 import 'package:mtaafix_mobile/features/notifications/presentation/notifications_screen.dart';
 import 'package:mtaafix_mobile/features/profile/presentation/profile_screen.dart';
 import 'package:mtaafix_mobile/features/reports/presentation/report_list_screen.dart';
@@ -66,6 +68,10 @@ void main() {
           }
           if (path == '/api/v1/categories/public') {
             return http.Response(jsonEncode({'content': <dynamic>[]}), 200,
+                headers: jsonHeaders());
+          }
+          if (path == '/api/v1/notifications/unread-count') {
+            return http.Response(jsonEncode({'count': 3}), 200,
                 headers: jsonHeaders());
           }
           if (path == '/api/v1/dashboard/me') {
@@ -147,5 +153,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.byType(ReportListScreen), findsNothing);
+  });
+
+  testWidgets('shows the unread badge on the Alerts tab from the server count',
+      (tester) async {
+    final auth = await signedInAuth();
+    final controller = UnreadCountController(auth.api);
+    await tester.pumpWidget(
+      AuthScope(
+        controller: auth,
+        child: UnreadCountScope(
+          controller: controller,
+          child: MaterialApp(
+            home: const MainShellScreen(),
+            onGenerateRoute: (settings) => generateRoute(settings, auth: auth),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('3'), findsWidgets);
+    expect(controller.count, 3);
   });
 }

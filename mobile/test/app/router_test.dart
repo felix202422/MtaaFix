@@ -14,7 +14,11 @@ import 'package:mtaafix_mobile/features/auth/application/auth_controller.dart';
 import 'package:mtaafix_mobile/features/auth/application/auth_scope.dart';
 import 'package:mtaafix_mobile/features/auth/presentation/login_screen.dart';
 import 'package:mtaafix_mobile/features/auth/presentation/register_screen.dart';
+import 'package:mtaafix_mobile/features/auth/presentation/forgot_password_screen.dart';
+import 'package:mtaafix_mobile/features/auth/presentation/reset_password_screen.dart';
+import 'package:mtaafix_mobile/features/auth/presentation/change_password_screen.dart';
 import 'package:mtaafix_mobile/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:mtaafix_mobile/features/profile/presentation/notification_preferences_screen.dart';
 import 'package:mtaafix_mobile/features/reports/presentation/report_detail_screen.dart';
 import 'package:mtaafix_mobile/features/reports/presentation/report_list_screen.dart';
 import 'package:mtaafix_mobile/features/splash/presentation/splash_screen.dart';
@@ -125,12 +129,16 @@ void main() {
     expect(Routes.home, '/home');
     expect(Routes.login, '/login');
     expect(Routes.register, '/register');
+    expect(Routes.forgotPassword, '/forgot-password');
+    expect(Routes.resetPassword, '/reset-password');
+    expect(Routes.changePassword, '/change-password');
     expect(Routes.reports, '/reports');
     expect(Routes.reportNew, '/reports/new');
     expect(Routes.reportDetail, '/report-details');
     expect(Routes.map, '/map');
     expect(Routes.notifications, '/notifications');
     expect(Routes.profile, '/profile');
+    expect(Routes.notificationPreferences, '/notification-preferences');
     expect(
       Routes.protected,
       containsAll(<String>{
@@ -141,10 +149,14 @@ void main() {
         Routes.map,
         Routes.notifications,
         Routes.profile,
+        Routes.changePassword,
+        Routes.notificationPreferences,
       }),
     );
     expect(Routes.protected.contains(Routes.onboarding), isFalse);
     expect(Routes.protected.contains(Routes.login), isFalse);
+    expect(Routes.protected.contains(Routes.forgotPassword), isFalse);
+    expect(Routes.protected.contains(Routes.resetPassword), isFalse);
   });
 
   testWidgets('protected routes resolve to sign-in when signed out',
@@ -279,6 +291,49 @@ void main() {
       (tester) async {
     await pumpRoute(tester, Routes.register, auth: signedOut());
     expect(find.byType(RegisterScreen), findsOneWidget);
+  });
+
+  testWidgets('the forgot and reset password routes resolve to their screens',
+      (tester) async {
+    await pumpRoute(tester, Routes.forgotPassword, auth: signedOut());
+    expect(find.byType(ForgotPasswordScreen), findsOneWidget);
+
+    await pumpRoute(tester, Routes.resetPassword, auth: signedOut());
+    expect(find.byType(ResetPasswordScreen), findsOneWidget);
+  });
+
+  testWidgets('the notification preferences route resolves to its screen',
+      (tester) async {
+    final auth = signedIn();
+    await auth.login('citizen@example.com', 'Password1!');
+    // GET /notifications/preferences is not mocked above → 404 → the screen
+    // shows its error state, which still proves the route resolves to it.
+    await pumpRoute(tester, Routes.notificationPreferences, auth: auth);
+    expect(find.byType(NotificationPreferencesScreen), findsOneWidget);
+    expect(find.text('Preferences unavailable'), findsOneWidget);
+  });
+
+  testWidgets('change password is guarded when signed out and open when '
+      'signed in', (tester) async {
+    await pumpRoute(tester, Routes.changePassword, auth: signedOut());
+    expect(find.byType(LoginScreen), findsOneWidget);
+
+    final auth = signedIn();
+    await auth.login('citizen@example.com', 'Password1!');
+    await pumpRoute(tester, Routes.changePassword, auth: auth);
+    expect(find.byType(ChangePasswordScreen), findsOneWidget);
+
+    await pumpRoute(tester, Routes.notificationPreferences, auth: signedOut());
+    expect(find.byType(LoginScreen), findsOneWidget);
+  });
+
+  testWidgets('a signed-in user is redirected away from /forgot-password',
+      (tester) async {
+    final auth = signedIn();
+    await auth.login('citizen@example.com', 'Password1!');
+    await pumpRoute(tester, Routes.forgotPassword, auth: auth);
+    expect(find.byType(MainShellScreen), findsOneWidget);
+    expect(find.byType(ForgotPasswordScreen), findsNothing);
   });
 }
 

@@ -65,6 +65,29 @@ void main() {
               headers: jsonHeaders(),
             );
           }
+          if (path == '/api/v1/notifications/preferences') {
+            if (request.method == 'PUT') {
+              final body = jsonDecode(request.body) as Map<String, dynamic>;
+              return http.Response(jsonEncode(body), 200,
+                  headers: jsonHeaders());
+            }
+            return http.Response(
+              jsonEncode({
+                'emailEnabled': true,
+                'pushEnabled': false,
+                'pushAvailable': false,
+              }),
+              200,
+              headers: jsonHeaders(),
+            );
+          }
+          if (path == '/api/v1/auth/password/change') {
+            return http.Response(
+              jsonEncode({'success': true, 'message': 'Password changed.'}),
+              200,
+              headers: jsonHeaders(),
+            );
+          }
           if (path == '/api/v1/auth/logout') {
             return http.Response('{}', 200, headers: jsonHeaders());
           }
@@ -118,7 +141,12 @@ void main() {
     );
     expect(find.text('Notification preferences'), findsOneWidget);
     expect(
-      find.textContaining('arrive with push'),
+      find.textContaining('Choose which channels you use'),
+      findsOneWidget,
+    );
+    expect(find.text('Change password'), findsOneWidget);
+    expect(
+      find.textContaining('Update your password while signed in.'),
       findsOneWidget,
     );
     expect(find.text('About MtaaFix'), findsOneWidget);
@@ -218,5 +246,93 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(LoginScreen), findsOneWidget);
+  });
+
+  testWidgets('the notification preferences row opens the preferences screen',
+      (tester) async {
+    final requests = <http.BaseRequest>[];
+    final auth = await signedInAuth(requests: requests);
+    await pumpProfile(tester, auth);
+
+    final row = find.text('Notification preferences');
+    await tester.ensureVisible(row);
+    await tester.pumpAndSettle();
+    await tester.tap(row);
+    await tester.pumpAndSettle();
+
+    expect(find.text('In-app notifications'), findsOneWidget);
+    expect(find.text('Email notifications'), findsOneWidget);
+    expect(
+      find.textContaining('No push provider is configured'),
+      findsOneWidget,
+    );
+
+    final gets = requests
+        .where((r) =>
+            r.method == 'GET' &&
+            r.url.path == '/api/v1/notifications/preferences')
+        .toList();
+    expect(gets, hasLength(1));
+
+    final toggle = find.text('Email notifications');
+    await tester.ensureVisible(toggle);
+    await tester.pumpAndSettle();
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Notification preferences saved.'), findsOneWidget);
+    final puts = requests
+        .where((r) =>
+            r.method == 'PUT' &&
+            r.url.path == '/api/v1/notifications/preferences')
+        .toList();
+    expect(puts, hasLength(1));
+    final body = jsonDecode((puts.single as http.Request).body)
+        as Map<String, dynamic>;
+    expect(body['emailEnabled'], isFalse);
+  });
+
+  testWidgets('the change password row submits POST /auth/password/change',
+      (tester) async {
+    final requests = <http.BaseRequest>[];
+    final auth = await signedInAuth(requests: requests);
+    await pumpProfile(tester, auth);
+
+    final row = find.text('Change password');
+    await tester.ensureVisible(row);
+    await tester.pumpAndSettle();
+    await tester.tap(row);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Update your password'), findsOneWidget);
+
+    final fields = find.descendant(
+      of: find.byType(Form),
+      matching: find.byType(TextFormField),
+    );
+    expect(fields, findsNWidgets(3));
+    await tester.enterText(fields.at(0), 'Password1!');
+    await tester.enterText(fields.at(1), 'NewPassword1');
+    await tester.enterText(fields.at(2), 'NewPassword1');
+
+    final submit = find.widgetWithText(ElevatedButton, 'Change password');
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Password changed.'), findsOneWidget);
+    expect(find.text('Update your password'), findsNothing);
+    expect(auth.isAuthenticated, isTrue);
+
+    final posts = requests
+        .where((r) =>
+            r.method == 'POST' &&
+            r.url.path == '/api/v1/auth/password/change')
+        .toList();
+    expect(posts, hasLength(1));
+    final body = jsonDecode((posts.single as http.Request).body)
+        as Map<String, dynamic>;
+    expect(body['currentPassword'], 'Password1!');
+    expect(body['newPassword'], 'NewPassword1');
   });
 }

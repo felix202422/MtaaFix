@@ -358,6 +358,103 @@ void main() {
     expect(find.text('Report unavailable'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
   });
+
+  testWidgets('active reports show the evidence section with an add button',
+      (tester) async {
+    final auth = await signedIn(api(() => reportJson()));
+
+    await pumpDetail(tester, auth);
+
+    expect(find.text('Evidence (0)'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Add photo'), findsOneWidget);
+  });
+
+  testWidgets('closed reports hide the evidence section entirely',
+      (tester) async {
+    final auth = await signedIn(api(() => reportJson(status: 'RESOLVED')));
+
+    await pumpDetail(tester, auth);
+
+    expect(find.text('Evidence (0)'), findsNothing);
+    expect(find.widgetWithText(OutlinedButton, 'Add photo'), findsNothing);
+  });
+
+  testWidgets('removing a photo confirms, calls DELETE and reloads',
+      (tester) async {
+    var withMedia = true;
+    Map<String, dynamic> payload() => reportJson(
+          media: withMedia
+              ? <Map<String, dynamic>>[
+                  {
+                    'id': 'm1',
+                    'fileName': 'pothole.jpg',
+                    'contentType': 'image/jpeg',
+                    'url': '/api/v1/media/m1/content',
+                  },
+                ]
+              : <Map<String, dynamic>>[],
+        );
+    final hits = <String>[];
+
+    final auth = await signedIn(MockClient((request) async {
+      final path = request.url.path;
+      if (path == '/api/v1/auth/login') {
+        return http.Response(
+          jsonEncode({
+            'accessToken': 'access-1',
+            'refreshToken': 'refresh-1',
+            'accessTokenExpiresIn': 3600,
+            'user': {
+              'id': 'u1',
+              'email': 'citizen@example.com',
+              'fullName': 'Asha Mrema',
+              'mobile': null,
+              'role': 'CITIZEN',
+              'organisationId': null,
+              'active': true,
+            },
+          }),
+          200,
+          headers: jsonHeaders(),
+        );
+      }
+      if (request.method == 'GET' && path == '/api/v1/reports/r1') {
+        return http.Response(jsonEncode(payload()), 200,
+            headers: jsonHeaders());
+      }
+      if (request.method == 'DELETE' && path == '/api/v1/media/m1') {
+        hits.add('DELETE $path');
+        withMedia = false;
+        return http.Response('{}', 200, headers: jsonHeaders());
+      }
+      return http.Response(jsonEncode({'message': 'not mocked: $path'}),
+          404,
+          headers: jsonHeaders());
+    }));
+
+    await pumpDetail(tester, auth);
+
+    expect(find.text('Evidence (1)'), findsOneWidget);
+    final remove = find.byTooltip('Remove photo');
+    expect(remove, findsOneWidget);
+
+    await tester.ensureVisible(remove);
+    await tester.pumpAndSettle();
+    await tester.tap(remove);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Remove this photo?'), findsOneWidget);
+    expect(find.text('The photo is deleted permanently. The report itself is not affected.'),
+        findsOneWidget);
+
+    await tester.tap(find.widgetWithText(TextButton, 'Remove'));
+    await tester.pumpAndSettle();
+
+    expect(hits, ['DELETE /api/v1/media/m1']);
+    expect(find.text('Photo removed.'), findsOneWidget);
+    expect(find.text('Evidence (0)'), findsOneWidget);
+    expect(find.text('Evidence (1)'), findsNothing);
+  });
 }
 
 /// Pushes the report detail route with a fixed id after the first frame.
