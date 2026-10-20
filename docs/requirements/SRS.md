@@ -130,7 +130,7 @@ Traceability column maps to master spec inventory parts.
 | FR-1.4 | A user can log out (refresh token invalidated server-side) | Yes | P5 |
 | FR-1.5 | A user can retrieve their own profile (`GET /auth/me`) | Yes | P13 |
 | FR-1.6 | Passwords are stored with a strong adaptive hash (BCrypt); never logged or returned | Yes | Part 12.1 |
-| FR-1.7 | Password reset flow (forgot/reset with expiring token, non-disclosing responses) | No (needs email provider) | P7 — post-MVP, Phase 13 |
+| FR-1.7 | Password reset flow (forgot/reset with expiring token, non-disclosing responses) | Yes (single-use SHA-256 token, 30 min; identical 202s; email send behind `notifications.email.enabled` kill-switch) | P7; Phase 13 |
 | FR-1.8 | Duplicate registration with an existing email is rejected with a clear error | Yes | P6 |
 
 ### 3.2 Report submission (citizen)
@@ -183,8 +183,8 @@ Traceability column maps to master spec inventory parts.
 | -- | ----------- | --- | ----- |
 | FR-6.1 | The backend creates in-app notifications for defined events (submitted, under review, verified, rejected, needs info, assigned, resolved, closed) | Yes | Part 6.5, P12 |
 | FR-6.2 | A user can list their notifications, mark one read, mark all read (paginated) | Yes | P12 |
-| FR-6.3 | Notification delivery state is separate from creation; email/push channels are post-MVP (Phase 13) | Creation only in MVP | Part 6.5 |
-| FR-6.4 | Notification preferences are post-MVP | No | P13, Phase 13 |
+| FR-6.3 | Notification delivery state is separate from creation; email attempts retried under an attempt cap; push awaits a provider | Yes (IN_APP DELIVERED; EMAIL PENDING→SENT/FAILED/SKIPPED; no push rows) | Part 6.5; Phase 13 |
+| FR-6.4 | Per-channel notification preferences (in-app always on, email opt-in, push read-only until a provider exists) | Yes | P13; Phase 13 |
 
 ### 3.7 Dashboards and analytics
 | ID | Requirement | MVP | Trace |
@@ -284,7 +284,7 @@ reports serve public record); media retained with report; audit logs retained �
 | ----- | ------- | ---- | ------------ |
 | 1–4 Landing, How It Works, Explore, Public Details | Public website | Yes | Phase 6 |
 | 5–6 Login, Registration | Auth | Yes | Phase 4 |
-| 7 Forgot/Reset password | Auth | No (email dep.) | Phase 13 |
+| 7 Forgot/Reset password | Auth | Yes | Phase 13 |
 | 8–13 Citizen Dashboard, Report Wizard, My Reports, Tracking, Notifications, Profile | Citizen web | Yes | Phase 7 |
 | 14–24 Admin/moderation/assignment/user/category/org/audit/analytics/settings | Admin web | No | Phase 9 |
 | 25–26 Field-Worker Dashboard, Task Details | Field web | No | Phase 10 |
@@ -316,7 +316,7 @@ reports serve public record); media retained with report; audit logs retained �
 
 ## 8. Requirements vs current code (gap summary)
 
-Verified against the merged backend (2026-10-13):
+Verified against the merged backend (2026-10-13; notifications/media/password-reset rows updated after Phase 13, 2026-10-18):
 
 | Area | Code state | Gap → phase |
 | ---- | ---------- | ----------- |
@@ -325,12 +325,12 @@ Verified against the merged backend (2026-10-13):
 | Report.Subject enum | Present, hardcoded | Deprecated (D4); category-driven → Phase 5 migration |
 | Categories CRUD | List + create only | Activate/deactivate/ordering → Phase 9 |
 | Assignments | List endpoints; entity present | Progress/evidence/completion endpoints → Phase 5/10 |
-| Notifications | List/read/read-all; send on events | Delivery-state separation, prefs → Phase 13 |
+| Notifications | Events + list/read/read-all, unread count, preferences, delivery-state rows | Push delivery awaits an FCM/APNs provider (owner decision) → later phase |
 | Dashboard/audit | Endpoints present | UI → Phase 9; enforcement tests → Phase 4/15 |
-| Media | DTOs/entity + addMedia path | Standalone upload endpoint, access-control tests → Phase 5/13 |
+| Media | Upload/delete + MIME allowlist, magic bytes, 20 MiB + 10/report caps, authorized content serving | Public unauthenticated media deliberately not implemented (owner decision — do not open unilaterally) |
 | Authorization | `anyRequest().authenticated()` only | Full role matrix enforcement → Phase 4 |
 | Public API | None | Public read endpoints + privacy filtering → Phase 6 |
-| Password reset | Absent | Phase 13 (email dependency) |
+| Password reset | Present: forgot/reset/change with single-use 30-min token | Email send behind `notifications.email.enabled` kill-switch (no SMTP provider configured yet) |
 | Tests | 1 context-load test | Meaningful coverage → Phases 3–5, 15 |
 
 ---

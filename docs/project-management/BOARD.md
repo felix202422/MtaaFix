@@ -5,7 +5,28 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-18.
 
-## Current phase: Phase 12 APPROVED (2026-10-18) — next: Phase 13 (not started)
+## Current phase: Phase 13 COMPLETE — awaiting owner approval (2026-10-18)
+
+## Phase 13 — Notifications and Media (COMPLETE — PENDING APPROVAL 2026-10-18)
+
+| Task | Status | Notes |
+| ---- | ------ | ----- |
+| V5 migration + domain | DONE | `notification_preferences`, `notification_deliveries`, `password_reset_tokens` (SHA-256 hash, single-use, 30 min), repositories + DTOs |
+| Preferences + unread API | DONE | `GET /notifications/unread-count`, `GET/PUT /notifications/preferences` (`emailEnabled`, `pushEnabled`, `pushAvailable=false`) |
+| Password self-service (B-X.1) | DONE | `POST /auth/password/{forgot,reset,change}`; identical non-disclosing 202s; change preserves the authenticated session; JWTs not revoked after reset (flagged decision) |
+| Delivery separation (B-X.2) | DONE | `NotificationDeliveryService` + `EmailRetryScheduler`: IN_APP DELIVERED; EMAIL PENDING→SENT/FAILED/SKIPPED retried ≤3; kill-switch `notifications.email.enabled=false` (no SMTP); no push rows (no provider) |
+| Event wiring | DONE | `ReportService` lifecycle events (submit/cancel/assign/status/dispute) → `dispatch()`; multipart limits for 413 |
+| Media hardening | DONE | MIME allowlist + magic-byte check, `media.max-file-size-bytes` 20 MiB, `media.max-per-report` 10, authorized `GET /media/{id}/content`; **public unauthenticated media NOT implemented** (owner decision) |
+| Web | DONE | `NotificationBell` header badge; forgot/reset pages (non-disclosing confirmation, `?token=` prefilled); profile prefs card (auto-save, push explained) + change-password card; notifications pagination; authenticated blob media viewer (admin/worker); wizard 5-photo with per-file validation + partial-failure toast; tracking/worker input cap/type/size checks |
+| Mobile | DONE | `UnreadCountScope`/`UnreadCountController` + Alerts badge; `NotificationPreferencesScreen`; forgot/reset/change-password screens + guarded routes; profile rows; report-detail evidence (picker upload with MIME/20 MB/10 checks, remove-with-confirm → `DELETE /media/{id}`, `canEditMedia` gate) |
+| Backend tests | DONE | H2 **124/124**, PG IT **7/7** with V5 applied (`NotificationPhase13Test`, `PasswordResetTest`, `MediaLimitsTest`, lifecycle media-url) |
+| Web tests | DONE | **68/68** (+11 `Phase13.test.tsx`); lint, `tsc --noEmit`, `vite build` all green |
+| Mobile tests | DONE | `flutter analyze` 0 issues; `flutter test` **134/134** (+23) — tests caught a real defect: `ModalRoute.of` in `ResetPasswordScreen.initState` → moved to `didChangeDependencies` |
+| Live verification | DONE | :8085 battery — forgot known/unknown identical 202 + token row; reset E2E (bogus 400 → planted 200 → reuse 400 → old pw 401 → new pw 200); change-password 200; unread-count/prefs GET+PUT persisted; media PNG 200 / .txt 400 / fake-JPEG magic 400 / 21 MB 400 / 11th attachment 400 / DELETE 204; submit+cancel notifications with unread increment; delivery rows IN_APP DELIVERED + EMAIL SKIPPED |
+| Docs sync | DONE | CHANGELOG 0.14.0, ROADMAP/BACKLOG/BOARD Phase 13 sections, SRS FR-1.7/6.3/6.4 + page 7 + gap rows, OpenAPI regenerated |
+| Phase 13 report + approval gate | DONE | Report delivered 2026-10-18 — **owner approval pending** |
+
+**Known gaps:** push provider (FCM/APNs) not configured — `pushAvailable=false`; email kill-switch off (no SMTP provider); public media endpoint intentionally absent (owner decision); backend attach/delete has no report-status guard (active-status gate is mobile-UI-side only); JWTs survive password reset; FR-2.4 date filter unsupported by backend; iOS build macOS-only (B-X.4).
 
 ## Phase 12 — Flutter citizen features (COMPLETE — APPROVED 2026-10-18)
 
@@ -239,6 +260,7 @@ Last updated: 2026-10-18.
 | Phase 10 - Field-worker web application | Complete (approved 2026-10-17) | Worker dashboard + task details pages, progress/evidence, admin return action, worker-scoping tests, PublicApiTest flake fix; live smoke 50/50 found 1 deferred gap (non-JSON content type → 500) |
 | Phase 11 - Flutter application foundation | Complete (approved 2026-10-17) | Route guards, secure token storage, auth wiring, themed screens, Android config fixed (AAPT `configChanges` + NDK 28.2), iOS scaffolded (needs macOS); 29/29 Flutter tests + debug APK |
 | Phase 12 - Flutter citizen features | Complete (approved 2026-10-18) | Onboarding → shell → create → detail → map → notifications → profile; live-backend emulator run; 111/111 tests; 5 verification defects fixed (tofu icons, bare-array decode, map bbox, dashboard stats shape, tab staleness) |
+| Phase 13 - Notifications and media | Complete (pending approval 2026-10-18) | V5 prefs/deliveries/reset-tokens, unread-count + preferences API, forgot/reset/change password, delivery separation with kill-switch, media caps/MIME/magic hardening, web bell + reset pages + blob media, mobile badge/prefs/recovery/evidence; gates 124+7 PG / 68 web / 134 mobile + live battery |
 
 ## Environment notes
 

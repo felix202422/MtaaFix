@@ -42,6 +42,9 @@
 | POST `/auth/logout` | Refresh token body | — | Invalidates refresh token |
 | GET `/auth/me` | Bearer | Any | Current user profile |
 | PUT `/auth/me` | Bearer | Any (own account) | Update `fullName`/`mobile` only (Phase 7); blank name → 400; email/password not editable here |
+| POST `/auth/password/forgot` | Public | — | Reset request (FR-1.7, Phase 13); **always 202** with an identical body for known/unknown email (non-disclosing); stores SHA-256 token, 30 min, single-use |
+| POST `/auth/password/reset` | Public | — | Consumes the token (Phase 13); invalid/expired/already-used → generic 400 `Invalid or expired reset token.`; token min size 10 (validation) |
+| POST `/auth/password/change` | Bearer | Any (own account) | `currentPassword`+`newPassword` (Phase 13); success and failure both preserve the authenticated session |
 
 ### Reports — `ReportController`
 | Method & path | Auth | Role | Notes |
@@ -122,6 +125,9 @@
 | GET `/notifications` | Bearer | Any | Own, paginated |
 | POST `/notifications/{id}/read` | Bearer | Owner | |
 | POST `/notifications/read-all` | Bearer | Any | |
+| GET `/notifications/unread-count` | Bearer | Any | `{"count": n}` for the unread badge (FR-6.1, Phase 13) |
+| GET `/notifications/preferences` | Bearer | Any | `{emailEnabled, pushEnabled, pushAvailable}` (FR-6.4, Phase 13); defaults created lazily; `pushAvailable=false` until a provider exists |
+| PUT `/notifications/preferences` | Bearer | Any | Partial update of `emailEnabled`/`pushEnabled` (FR-6.4, Phase 13); returns the stored preference |
 
 ### Audit — `AuditController`
 | GET `/audit/organizations/{id}` | Bearer | Org/admin | Org events (own-scope enforced), filters below |
@@ -152,7 +158,10 @@ CORS: `cors.allowed-origins` (env `CORS_ALLOWED_ORIGINS`, default `http://localh
 
 | Method & path | Purpose | SRS | Phase |
 | ------------- | ------- | --- | ----- |
-| POST `/auth/forgot-password`, `/auth/reset-password` | Password reset (FR-1.7) | FR-1.7 | 13 |
+| GET `/media/{id}/content` (unauthenticated) | Public media read | FR-8.5 | Owner decision — **deliberately not implemented** (Phase 13 flagged); content serving is authenticated only |
+| Push registration/delivery endpoints (FCM/APNs) | Push channel | FR-6.3 | No provider configured — `pushAvailable=false`; no push delivery rows |
+
+(Prior row `POST /auth/password/forgot\|reset` shipped in Phase 13 — see §2 Auth.)
 
 ## 4. Corrections to legacy `docs/api/API.md`
 

@@ -5,6 +5,110 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.14.0] — 2026-10-18
+### Phase 13 - Notifications and media
+Implemented master spec Phase 13: notification preferences and unread counts,
+delivery-state separation (B-X.2), media validation/attachment lifecycle
+hardening, and the B-X.1 password-reset flow — across backend, web, and
+mobile. All flows exercised against the live backend on port 8085 before
+this entry was written. **Report delivered; owner approval pending.**
+
+**Backend**
+- Flyway **V5**: `notification_preferences` (per-user email/push opt-in),
+  `notification_deliveries` (channel/status/attempt/detail), and
+  `password_reset_tokens` (SHA-256 hash, single-use, 30-minute expiry)
+- `GET /notifications/unread-count` and `GET/PUT /notifications/preferences`
+  (`emailEnabled`, `pushEnabled`, `pushAvailable`); preference rows created
+  lazily with defaults
+- `POST /auth/password/forgot|reset|change`: forgot/reset always answer the
+  same **202** (non-disclosing); change requires an authenticated session
+  and preserves it (also on failure); reset marks the token used atomically
+  and rejects reuse with a generic 400
+- `NotificationDeliveryService` + `EmailRetryScheduler` (B-X.2): every
+  notification records IN_APP **DELIVERED**; EMAIL is created PENDING,
+  attempted immediately, and retried on a schedule while under
+  `notifications.email.max-attempts` (3), terminating SENT/FAILED/SKIPPED;
+  **push has no provider** — `pushAvailable=false`, no push rows
+- Email content mirrors the in-app title/body plus report link, sent through
+  `common/email` (Spring Mail) behind the **`notifications.email.enabled`
+  kill-switch, default false** (no SMTP provider configured) — owner action
+  to enable
+- Media hardening (FR-9.2): MIME allowlist (JPEG/PNG/WEBP) **and magic-byte
+  content check**, `media.max-file-size-bytes` (20 MiB) and
+  `media.max-per-report` (10) config-driven caps, authorized
+  `GET /media/{id}/content`; multipart limits produce 413 on oversize;
+  **public unauthenticated media deliberately NOT implemented** (owner
+  decision — do not open unilaterally)
+- `ReportService` wires lifecycle events (submit, cancel, assign, status
+  changes, dispute, needs-info) through `dispatch()`; settings surfaced via
+  `SettingsService`; `.env.example`/`application.yml` document the new keys
+- Tests: `NotificationPhase13Test` (7), `PasswordResetTest` (7),
+  `MediaLimitsTest` (4), lifecycle media-url updates — H2 **124/124**,
+  PostgreSQL IT **7/7** with V5 applied; OpenAPI regenerated
+
+**Web**
+- `NotificationBell` in the header: unread badge fed by
+  `GET /notifications/unread-count`, refreshed on sign-in/route changes
+  (counts >99 clamped; hidden for anonymous visitors)
+- Forgot/reset password: rewritten `ForgotPasswordPage` (always-same
+  "Check your inbox" confirmation with non-disclosing copy) and new
+  `ResetPasswordPage` (`/reset-password`, token prefilled from `?token=`,
+  ≥8-char + match validation, success state)
+- Profile: notification-preferences card (auto-save email toggle, in-app
+  checked and locked, push disabled with "No push provider is configured…")
+  and change-password card that preserves auth state; `Change password`
+  API methods (`forgotPassword`, `resetPassword`, `changePassword`)
+- Notifications pagination controls when `totalPages > 1`; admin/worker
+  report media now opened via authenticated blob fetch (no long-lived
+  signed URLs); report wizard supports **5 photos** with per-file
+  validation and a partial-failure toast; tracking/worker photo inputs
+  enforce type/size/10-photo limits client-side
+- Tests: new `Phase13.test.tsx` (11) — suite **68/68**; `npm run lint`,
+  `tsc --noEmit`, `npm run build` all green
+
+**Mobile**
+- Unread badge: `UnreadCountController`/`UnreadCountScope` above
+  `MaterialApp`; `MainShellScreen` refreshes once on mount, the feed
+  refreshes after load/mark-open/mark-all (nullable lookups keep minimal
+  test harnesses working)
+- `NotificationPreferencesScreen` (route `/notification-preferences`,
+  guarded): in-app always-on, email switch with PUT + confirmation snackbar,
+  push read-only until a provider exists; profile rows navigate to it and
+  to change-password
+- Password recovery: `ForgotPasswordScreen`, `ResetPasswordScreen` (reads
+  `token` route args), `ChangePasswordScreen`; login "Forgot password?"
+  wired; auth controller methods emit error states without dropping the
+  session (change) / navigate to sign-in on success (reset)
+- Report detail evidence: add photo via `image_picker` (MIME, 20 MB,
+  10-photo checks), remove with confirmation dialog →
+  `DELETE /media/{id}` then reload; `canEditMedia` hides editing for
+  resolved/rejected/duplicate/closed reports (mobile-side gate — backend
+  attach/delete has no status guard)
+- Defect found & fixed by the new tests: `ModalRoute.of` was called in
+  `ResetPasswordScreen.initState` (framework assertion whenever the route
+  pushed) — moved token argument reading into `didChangeDependencies`
+- Tests: `flutter analyze` 0 issues; `flutter test` **134/134** (+23:
+  password recovery 5, preferences screen 3, profile rows 2, router 4,
+  shell badge, notifications API 4, media delete, evidence 3)
+
+**Live verification (port 8085, PostgreSQL)**
+- Forgot: identical 202 for known/unknown email; token row with 30-minute
+  expiry; reset E2E — bogus token 400 (validation / "Invalid or expired
+  reset token"), planted token 200, reuse 400, old password 401 after
+  reset, new password 200, change-password 200 and restored login
+- Preferences GET/PUT persisted; unread count reflects new notifications
+  (submit + cancel events observed in the feed)
+- Media: real PNG 200; `.txt` 400 (MIME); fake JPEG 400 (magic bytes);
+  21 MB 400; 11th attachment 400 (cap); `DELETE /media/{id}` 204 (count
+  10→9); delivery rows IN_APP DELIVERED and EMAIL SKIPPED
+  ("Email channel disabled") while the kill-switch is off
+
+**Decisions & gaps flagged for the report:** email mirrors in-app content
+behind the kill-switch (default off); push not configured; JWTs not revoked
+after password reset; public media endpoint absent (owner decision); backend
+media attach/delete lacks a status guard (active-status gate is UI-side);
+FR-2.4 date filter still backend-unsupported; iOS build macOS-only (B-X.4).
+
 ## [0.13.0] — 2026-10-18
 ### Phase 12 - Flutter citizen features
 Implemented the Phase 12 citizen experience (Pages 27–36) per master spec

@@ -502,12 +502,94 @@ UI (API-level only); browser-based map verification → Phase 15.
 
 ---
 
+## Phase 13 — Notifications and media (COMPLETE — pending approval 2026-10-18)
+
+### B-13.1 Notification preferences + unread count - DONE
+- **AC:** `GET/PUT /notifications/preferences` and
+  `GET /notifications/unread-count` exist; web profile shows an
+  auto-saving preferences card (push read-only with explanation) and a
+  header unread badge; mobile has a preferences screen and an Alerts-tab
+  badge fed by the server count.
+- **Phase:** 13 — **Depends:** B-12.6, Phase 12 notifications feed
+- **Delivered:** preference rows (`emailEnabled`, `pushEnabled`,
+  `pushAvailable=false`); web `NotificationBell` + `ProfilePage` prefs card;
+  mobile `UnreadCountScope`/`UnreadCountController` + badge refresh on shell
+  mount and feed changes; `NotificationPreferencesScreen` with in-app
+  always-on, email toggle (PUT + snackbar), push disabled until a provider
+  exists; covered by web `Phase13.test.tsx`, mobile prefs/router/profile
+  tests.
+
+### B-13.2 Password reset + change (B-X.1) - DONE
+- **AC:** forgot/reset with expiring single-use token and non-disclosing
+  responses; change-password for the signed-in user; both web and mobile
+  flows.
+- **Phase:** 13 — **Depends:** B-12.7 profile surface
+- **Delivered:** V5 `password_reset_tokens` (SHA-256, 30 min, single-use);
+  `POST /auth/password/{forgot,reset,change}` with identical 202s and
+  session-preserving change; web forgot/reset pages (confirmation copy,
+  `?token=` prefilled); mobile forgot/reset/change screens + guarded routes;
+  login "Forgot password?" wired; live E2E: bogus→400, planted→200,
+  reuse→400, old password→401, change→200.
+
+### B-13.3 Notification delivery separation (B-X.2) - DONE
+- **AC:** delivery state recorded separately from notification creation;
+  email failures handled with bounded retries; push explicitly absent until
+  a provider is configured.
+- **Phase:** 13 — **Depends:** B-13.1
+- **Delivered:** `notification_deliveries` rows — IN_APP always DELIVERED;
+  EMAIL created PENDING, attempted once, retried by `EmailRetryScheduler`
+  ≤ `notifications.email.max-attempts` (3), terminal SENT/FAILED/SKIPPED;
+  kill-switch `notifications.email.enabled` default false (no SMTP
+  provider); no push rows (`pushAvailable=false`); live rows observed
+  IN_APP DELIVERED + EMAIL SKIPPED ("Email channel disabled").
+
+### B-13.4 Media hardening + attachment lifecycle - DONE
+- **AC:** MIME allowlist + content (magic-byte) check, 20 MiB and
+  10-attachments-per-report caps enforced server-side; attachments deletable
+  by authorized users; clients validate before upload.
+- **Phase:** 13 — **Depends:** Phase 7 upload endpoint
+- **Delivered:** backend MIME/magic/size/cap checks (config-driven
+  `media.*`), authorized `GET /media/{id}/content`; web wizard 5-photo with
+  per-file validation + partial-failure toast, tracking/worker input
+  checks, admin/worker media opened as authenticated blobs; mobile
+  report-detail evidence (add via picker with MIME/20 MB/10 checks, remove
+  with confirm → `DELETE /media/{id}`, `canEditMedia` gate);
+  live battery: PNG 200 / .txt 400 / fake-JPEG magic 400 / 21 MB 400 /
+  11th attachment 400 / DELETE 204.
+
+### B-13.5 Verification: gates + live battery - DONE
+- **AC:** every suite green and each new flow exercised against the live
+  backend before the report.
+- **Phase:** 13 — **Depends:** B-13.1–B-13.4
+- **Delivered:** backend H2 **124/124** + PG IT **7/7** (V5 applied); web
+  **68/68** + lint/tsc/build; mobile analyze 0 issues + **134/134** (tests
+  caught `ModalRoute.of` in `ResetPasswordScreen.initState` — moved to
+  `didChangeDependencies`); live :8085 battery (forgot non-disclosure,
+  reset E2E, change-password, prefs GET/PUT, unread count, media caps,
+  notifications on submit/cancel, delivery rows).
+
+### Phase 13 known gaps
+- Push provider (FCM/APNs) not configured — `pushAvailable=false`, no push
+  delivery rows (owner decision flagged for a later phase).
+- Email delivery behind `notifications.email.enabled` kill-switch (default
+  false; no SMTP provider configured) — enabling it is an owner action.
+- Public unauthenticated media endpoint **not** implemented (owner decision
+  — do not open unilaterally).
+- Backend attach/delete has no report-status guard; the active-status
+  (`canEditMedia`) gate is enforced in the mobile UI only.
+- JWTs are not revoked after a password reset (documented decision — tokens
+  stay valid until expiry).
+- FR-2.4 report date filter still unsupported by the backend; iOS build
+  macOS-only (B-X.4).
+
+---
+
 ## Cross-cutting (scheduled, not MVP-blocking)
 
 | ID | Item | Phase | AC summary |
 | -- | ---- | ----- | ---------- |
-| B-X.1 | Password reset flow | 13 | Token expiring, non-disclosing responses, email provider integration |
-| B-X.2 | Notification delivery separation | 13 | deliveredAt ≠ createdAt; failure handling |
+| B-X.1 | Password reset flow | 13 | Token expiring, non-disclosing responses, email provider integration — **DONE Phase 13** (token flow complete; email send behind `notifications.email.enabled` kill-switch, no SMTP provider yet) |
+| B-X.2 | Notification delivery separation | 13 | deliveredAt ≠ createdAt; failure handling — **DONE Phase 13** (IN_APP DELIVERED; EMAIL PENDING→SENT/FAILED/SKIPPED ≤3 attempts; no push rows) |
 | B-X.3 | `organization_members` + org scoping UI | 9 | Membership CRUD; matrix O-scopes enforced |
 | B-X.4 | iOS project scaffold | 11 | `flutter build ios` succeeds on macOS CI-or-local; until then documented limitation — `ios/Runner` scaffolded Phase 11, build unexecutable on Windows |
 | B-X.5 | Mobile token persistence + wiring | 11–12 | Login→session→report flow against real backend — session restore/login/logout done Phase 11; report submission against the API lands with Phase 12 |

@@ -350,11 +350,65 @@ profile). Permission-denial handling; Android/iOS verification.
   only), no change-password endpoint (Phase 13), password reset (Phase 13)
 - **Gate: APPROVED by owner 2026-10-18 — Phase 13 may start**
 
-## Phase 13 — Notifications and Media (PARTIAL)
+## Phase 13 — Notifications and Media (COMPLETE — PENDING APPROVAL 2026-10-18)
 
-Present: in-app notifications on events; list/read/read-all.
-Remaining: delivery-state separation, email channel, push (FCM/APNs), preferences,
-media validation hardening, upload limits, password-reset flow (FR-1.7).
+Per master spec Phase 13 (notifications, preferences, delivery separation,
+media hardening, B-X.1 password reset, B-X.2 delivery separation):
+
+**Backend**
+- V5 migration: `notification_preferences`, `notification_deliveries`,
+  `password_reset_tokens` (SHA-256 hash, single-use, 30 min)
+- `NotificationController`: `GET /notifications/unread-count`,
+  `GET/PUT /notifications/preferences` (`emailEnabled`, `pushEnabled`,
+  `pushAvailable`)
+- `AuthController`: `POST /auth/password/{forgot,reset,change}` — identical
+  non-disclosing 202s; password change preserves the session
+- `NotificationDeliveryService` + `EmailRetryScheduler`: IN_APP always
+  DELIVERED; EMAIL PENDING→SENT/FAILED/SKIPPED, retried ≤
+  `notifications.email.max-attempts` (3); kill-switch
+  `notifications.email.enabled` default **false** (no SMTP provider)
+- `common/email` Mail sender behind the kill-switch; push **not configured**
+  (`pushAvailable=false`, no FCM/APNs) — owner decision flagged
+- Media hardening: MIME allowlist + magic-byte content check, 20 MiB cap
+  (`media.max-file-size-bytes`), 10 attachments/report (`media.max-per-report`),
+  authorized `GET /media/{id}/content`; **public unauthenticated media NOT
+  implemented** (owner decision — do not open unilaterally)
+- `ReportService`: REPORT_CANCELLED/assignment/status notifications wired
+  through `dispatch()`; multipart limits for 413
+
+**Web** — NotificationBell unread badge in the header; forgot/reset
+password pages (non-disclosing confirmation, token from `?token=`); profile
+notification-preferences card (auto-save, push disabled with explanation) +
+change-password card; notifications pagination nav; admin/worker media opened
+as authenticated blobs (no long-lived URLs); wizard multi-photo (5) with
+per-file validation + partial-failure toast; client-side cap/type/size checks
+on tracking/worker upload inputs.
+
+**Mobile** — `UnreadCountScope` + Alerts-tab badge (refresh on shell mount,
+feed mark/open); `NotificationPreferencesScreen`; forgot/reset/change-password
+screens (routes guarded; reset reads `token` route args); profile rows wired;
+report-detail evidence section (add photo via picker with MIME/20 MB/10-photo
+checks, remove with confirm → `DELETE /media/{id}`, `canEditMedia` gate:
+not resolved/rejected/duplicate/closed).
+
+**Gates** — backend H2 124/124 + PG IT 7/7 (V5 applied); web **68/68**
+(+11 Phase13), lint/tsc/build green; mobile `flutter analyze` 0 issues,
+`flutter test` **134/134** (+23); live backend on :8085 exercised:
+forgot (known/unknown identical 202, token row), reset E2E (bogus→400,
+planted token→200, reuse→400 "Invalid or expired", old password→401),
+change-password→200, unread-count/prefs GET+PUT, media PNG 200 / .txt 400 /
+magic-byte 400 / 21 MB 400 / 11th attachment 400 / DELETE 204, notifications
+on submit+cancel with unread increment, delivery rows IN_APP DELIVERED +
+EMAIL SKIPPED ("Email channel disabled").
+
+**Gaps / decisions to flag:** email mirrors in-app content behind kill-switch
+(enabled=false by default); push unavailable (no provider); JWTs not revoked
+after reset (documented decision); public media endpoint absent (owner
+decision); backend attach/delete has no report-status guard (active-status
+gate enforced in mobile UI only); FR-2.4 date filter still backend-unsupported;
+iOS build macOS-only (B-X.4).
+
+**Gate: report delivered 2026-10-18 — owner approval pending**
 
 ## Phase 14 — Offline Capabilities (NOT STARTED)
 
