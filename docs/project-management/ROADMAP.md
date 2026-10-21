@@ -8,6 +8,12 @@
 
 ## Version History
 
+- **[0.15.0]** — Phase 14: Offline capabilities (Option B idempotency on
+  `POST /reports` — stored-response replay, 409 conflict/in-progress, 400
+  invalid key, 24 h TTL; mobile draft autosave + pending queue with
+  foreground retry + categories cache + sign-out clear; honesty invariant,
+  live battery, 133 H2 + 8 PG / 167 mobile tests) — **SUBMITTED 2026-10-21,
+  owner approval pending**
 - **[0.14.0]** — Phase 13: Notifications and media (unread badge + prefs
   API, delivery separation with email kill-switch, password forgot/reset/
   change, media caps/MIME/magic hardening, web bell + reset pages + blob
@@ -420,9 +426,44 @@ iOS build macOS-only (B-X.4).
 
 **Gate: APPROVED by owner 2026-10-18 — Phase 14 may start**
 
-## Phase 14 — Offline Capabilities (NOT STARTED)
+## Phase 14 — Offline Capabilities (COMPLETE — PENDING APPROVAL)
 
-Drafts, retry, sync, conflict handling; never misrepresent unsent data as submitted.
+Master spec Phase 14 (lines 2047–2066) under the owner-approved scope:
+Option B backend idempotency; report-form draft storage; pending queue with
+foreground retry; categories cache; sign-out local-state cleanup. Offline
+browsing/map and background sync deferred (approved); mobile-only beyond the
+web's pre-existing `mtaafix.reportDraft.v1` key.
+
+- **Assessment**: approved scope recorded — exit criterion = unsent data is
+  never presented as submitted
+- **Backend**: Flyway **V6** `report_idem_keys` (24 h TTL, hourly purge);
+  `Idempotency-Key` on `POST /api/v1/reports` → 400 invalid format, 201
+  first use, 201 **stored replay** (same id, no duplicate), 409
+  `IDEMPOTENCY_CONFLICT`, 409 `IDEMPOTENCY_IN_PROGRESS` (stale intent 2 min);
+  REQUIRES_NEW transactions; private `ObjectMapper` + `hashOf`
+- **Mobile**: `features/offline/` — `OfflineController` (single-flight
+  flush), `Zone.root`-wrapped atomic `OfflineStorage` (schema 1, graceful
+  degradation), `DraftStore`/`OutboxStore`/`CategoryCache`,
+  `ConnectivityService`, `OfflineScope`, `PendingSubmissionsScreen`; form
+  debounced autosave + restore offer, offline enqueue + failed-entry
+  prefill re-queue, photo copy-in at pick, one idempotency key per form
+  session; shell offline strip, pending banner with just-submitted reload,
+  `clearAll()` on sign-out, guarded `/pending-submissions` route
+- **Connectivity transitions tested**: offline→online auto-flush, offline
+  no-op flush, offline hint disables retry, banner appear/disappear
+- **Tests/evidence**: backend H2 **133/133** (`IdempotencyTest` 8), PG
+  **8/8**, jar + OpenAPI; mobile **167/167** (+33), `flutter analyze` 0;
+  live battery :8085 → replay same id / 409 conflict / 400 invalid key;
+  two product fixes surfaced by tests (post-dispose notify guard,
+  empty-`categoryId` draft rejection)
+- **Docs**: `docs/design/OFFLINE_CAPABILITIES.md`; CHANGELOG 0.15.0;
+  API_DESIGN `POST /reports` idempotency row; SRS FR-2.11; BACKLOG deferrals
+- Deferrals (approved): offline report browsing, offline map tiles,
+  background sync (foreground-only), iOS build unexecutable on Windows
+  (B-X.4)
+
+**Gate: Phase 14 report delivered 2026-10-21 — awaiting owner approval
+(Phase 15 not started)**
 
 ## Phase 15 — Quality Assurance (NOT STARTED)
 
@@ -470,7 +511,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 
 ---
 
-## Delivery Targets (updated 2026-10-17)
+## Delivery Targets (updated 2026-10-21)
 
 | Phase | Status |
 | ----- | ------ |
@@ -488,4 +529,5 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 11 | Complete (approved 2026-10-17) |
 | 12 | Complete (approved 2026-10-18) |
 | 13 | Complete (approved 2026-10-18) |
-| 14–23 | Not started |
+| 14 | Complete (submitted 2026-10-21, approval pending) |
+| 15–23 | Not started |

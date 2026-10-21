@@ -5,6 +5,65 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.15.0] — 2026-10-21
+### Phase 14 - Offline capabilities
+Implemented master spec Phase 14 under the owner-approved scope: Option B
+backend idempotency, report-form draft storage, a pending-submission queue
+with foreground retry, a categories cache for offline form loads, and
+local-state cleanup on sign-out. Offline browsing/map tiles and background
+sync are deferred (approved). Exit criterion enforced end to end: **unsent
+data is never presented as submitted.** Live battery run against the backend
+on port 8085 before this entry was written.
+
+**Backend**
+- Flyway **V6**: `report_idem_keys` (key → `report_id` + `payload_hash`,
+  24 h TTL, hourly purge)
+- `Idempotency-Key` on `POST /api/v1/reports`: format
+  `^[A-Za-z0-9_-]{16,64}$`, anything else → **400 BAD_REQUEST**; first use
+  creates the report in a **REQUIRES_NEW** transaction; same key +
+  byte-identical payload replays the stored **201 (same report id, no
+  duplicate)**; same key + different payload → **409
+  `IDEMPOTENCY_CONFLICT`**; concurrent first use → **409
+  `IDEMPOTENCY_IN_PROGRESS`** (stale intent after `STALE_INTENT_MINUTES=2`)
+- `IdempotencyService` with a private `ObjectMapper` + `JavaTimeModule`
+  (`hashOf` = SHA-256 over the canonical payload), conflict exception +
+  handler; header optional — legacy clients unaffected
+- Tests: `IdempotencyTest` (8) → H2 **133/133**; `PostgresIntegrationTest`
+  **8/8** on PostgreSQL with V6; jar packaged; `docs/api/openapi.json`
+  regenerated
+- Live battery (:8085, PG): new key → `201` `MTF-2026-000035`; same key +
+  same body → `201` **same id**; same key + different body → `409
+  IDEMPOTENCY_CONFLICT`; key `short` → `400`
+
+**Mobile** (Flutter)
+- `features/offline/`: `OfflineController` (single-flight `flush()`,
+  honesty-first queue states), atomic **`Zone.root`-wrapped**
+  `OfflineStorage` (`schema: 1` everywhere, tmp+rename, graceful
+  degradation), `DraftStore` / `OutboxStore` / `CategoryCache`,
+  `ConnectivityService`, `OfflineScope`, `PendingSubmissionsScreen`
+- Report form: debounced (400 ms) draft autosave + Restore/Discard offer
+  (drafts with an empty `categoryId` are restorable), offline submit →
+  queue, failed-entry Edit → prefill + re-queue (old entry replaced, photo
+  files kept via `keepPaths`), photos copied into offline storage at pick,
+  **one idempotency key per form session** reused for retries, category
+  cache fallback with stale hint
+- Shell/list/profile: offline strip with just-submitted reload banner,
+  `clearAll()` on sign-out, guarded `/pending-submissions` route
+- `ApiClient.post(path, body, idempotencyKey)` → `Idempotency-Key` header
+  carried across 401→refresh retries; new deps `path_provider`,
+  `connectivity_plus`
+- Tests: **167/167 green** (+33: offline controller/storage, pending
+  screen, form offline flows, offline banner), `flutter analyze` → 0
+  issues; tests drove two product fixes: post-`dispose()` notify guard in
+  `OfflineController` and empty-`categoryId` draft rejection
+
+**Docs**
+- `docs/design/OFFLINE_CAPABILITIES.md` (new): honesty invariant,
+  architecture, data model, queue lifecycle, idempotency semantics,
+  evidence, deferrals
+- API_DESIGN `POST /reports` idempotency row; SRS FR-2.11; ROADMAP /
+  BACKLOG / BOARD Phase 14 sections
+
 ## [0.14.0] — 2026-10-18
 ### Phase 13 - Notifications and media
 Implemented master spec Phase 13: notification preferences and unread counts,

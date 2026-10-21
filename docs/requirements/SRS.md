@@ -146,6 +146,7 @@ Traceability column maps to master spec inventory parts.
 | FR-2.8 | A citizen can add comment/update to their own report while it is active | Yes | P11 |
 | FR-2.9 | A citizen can confirm resolution or dispute it when a report reaches RESOLVED | Yes | Part 4.7 |
 | FR-2.10 | Citizens cannot see or modify other citizens' private reports | Yes | Part 3.2 |
+| FR-2.11 | A citizen can save a report locally while offline and submit it later without duplication; unsent work is presented as *not yet submitted* until the server accepts it (drafts distinct from submitted reports; retried creates idempotent server-side) | Yes (mobile draft store + pending queue with foreground retry; optional `Idempotency-Key` on `POST /reports`) | Phase 14 |
 
 ### 3.3 Review and moderation
 | ID | Requirement | MVP | Trace |
@@ -316,7 +317,7 @@ reports serve public record); media retained with report; audit logs retained â‰
 
 ## 8. Requirements vs current code (gap summary)
 
-Verified against the merged backend (2026-10-13; notifications/media/password-reset rows updated after Phase 13, 2026-10-18):
+Verified against the merged backend (2026-10-13; notifications/media/password-reset rows updated after Phase 13, 2026-10-18; FR-2.11 offline/idempotency row added after Phase 14, 2026-10-21):
 
 | Area | Code state | Gap â†’ phase |
 | ---- | ---------- | ----------- |

@@ -583,6 +583,47 @@ UI (API-level only); browser-based map verification → Phase 15.
 - FR-2.4 report date filter still unsupported by the backend; iOS build
   macOS-only (B-X.4).
 
+## Phase 14 - Offline capabilities (COMPLETE - submitted 2026-10-21, approval pending)
+
+### B-14.1 Backend idempotency (Option B) - DONE
+- Flyway V6 `report_idem_keys` (key → `report_id` + `payload_hash`, 24 h
+  TTL, hourly purge); optional `Idempotency-Key` `[A-Za-z0-9_-]{16,64}` on
+  `POST /api/v1/reports`: 400 invalid format, 201 first use, 201 stored
+  response replay (same id, no duplicate row), 409 `IDEMPOTENCY_CONFLICT`,
+  409 `IDEMPOTENCY_IN_PROGRESS` (stale intent after 2 min); REQUIRES_NEW
+  transactions; private `ObjectMapper` + `hashOf` (SHA-256).
+
+### B-14.2 Mobile draft storage - DONE
+- `DraftStore` (schema 1, atomic writes) + debounced 400 ms autosave +
+  Restore/Discard offer; drafts never appear in My Reports and carry no
+  MTF code; empty `categoryId` drafts restorable (product fix found by
+  tests).
+
+### B-14.3 Pending queue + foreground retry - DONE
+- `OfflineController` outbox with `pending`/`attachingPhotos`/`failed`
+  states; single-flight flush triggered by connectivity-online, shell
+  mount, app resume, and manual Retry; create replayed with the same
+  per-form-session idempotency key, then photos attach stepwise; honest
+  photo-failure reporting; `PendingSubmissionsScreen` (Edit/Retry/Discard),
+  offline strip, pending banner with just-submitted reload;
+  `clearAll()` on sign-out.
+
+### B-14.4 Categories cache - DONE
+- Cache refreshed on every successful load; offline load falls back with a
+  "may be outdated" hint.
+
+### B-14.5 Verification: connectivity transitions + battery - DONE
+- offline→online auto-flush, offline no-op flush, offline hint disables
+  retry, banner appear/disappear (unit + widget); live battery on :8085 —
+  replay same id, 409 conflict, 400 invalid key; backend 133 H2 + 8 PG,
+  mobile 167/167, analyze 0.
+
+### Phase 14 known gaps / deferrals (owner-approved scope)
+- Offline browsing of existing reports and offline map tiles deferred.
+- Background sync deferred — retry is foreground-only by design (no
+  background isolates/platform work).
+- iOS build remains macOS-only (B-X.4).
+
 ---
 
 ## Cross-cutting (scheduled, not MVP-blocking)

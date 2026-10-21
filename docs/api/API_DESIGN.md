@@ -49,7 +49,7 @@
 ### Reports — `ReportController`
 | Method & path | Auth | Role | Notes |
 | ------------- | ---- | ---- | ----- |
-| POST `/reports` | Bearer | Any authenticated (citizen flow) | Creates SUBMITTED; returns code (FR-2.2); `categoryId` required (Phase 5); `location` validated ±90/±180 and implausible (0,0) → 400 (FR-11.2) |
+| POST `/reports` | Bearer | Any authenticated (citizen flow) | Creates SUBMITTED; returns code (FR-2.2); `categoryId` required (Phase 5); `location` validated ±90/±180 and implausible (0,0) → 400 (FR-11.2); optional `Idempotency-Key` `[A-Za-z0-9_-]{16,64}` (Phase 14): first use → 201 + stored response; same key + identical payload → replayed 201 (same report id, no duplicate); same key + different payload → 409 `IDEMPOTENCY_CONFLICT`; concurrent first use → 409 `IDEMPOTENCY_IN_PROGRESS` (stale intent 2 min); invalid key → 400; keys purged after 24 h |
 | GET `/reports` | Bearer | Scoped by role (citizen=own, worker=assigned, org admin=org, mod/admin=all) | Filters: `status`, `categoryId`, `orgId`; staff (mod/admin/org/worker) also `q` (code/title/description text search) + `assignment`=`assigned|unassigned` (P15, Phase 9); `page`/`size` (0-based, size ≤ 100) (Phase 5) |
 | GET `/reports/{id}` | Bearer | Scoped (matrix area 1) | Includes statusHistory, comments, media; response carries **exact** `location` + `geoJson` (authorized surfaces only, FR-11.5) |
 | PUT `/reports/{id}` | Bearer | Owner, state-limited (FR-2.6) | Only SUBMITTED/NEEDS_INFORMATION (Phase 5); note: PUT not PATCH — deviation from legacy API.md, accepted |

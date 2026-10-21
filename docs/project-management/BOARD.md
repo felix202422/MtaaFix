@@ -3,9 +3,27 @@
 Local tracking board (GitHub `gh` CLI unavailable; revisit if auth is fixed).
 Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
-Last updated: 2026-10-18.
+Last updated: 2026-10-21.
 
-## Current phase: Phase 13 APPROVED (2026-10-18) — next: Phase 14 (not started)
+## Current phase: Phase 14 COMPLETE — SUBMITTED, awaiting owner approval (2026-10-21) — next: Phase 15 (not started)
+
+## Phase 14 — Offline Capabilities (COMPLETE — AWAITING APPROVAL)
+
+| Task | Status | Notes |
+| ---- | ------ | ----- |
+| Scope assessment | DONE | Owner-approved scope: Option B backend idempotency; draft storage; pending queue + foreground retry; categories cache; sign-out clear. Offline browsing/map + background sync deferred; mobile-only beyond web's pre-existing draft key |
+| Backend idempotency | DONE | Flyway **V6** `report_idem_keys` (key → report_id + payload_hash, 24 h TTL, hourly purge); `Idempotency-Key` `[A-Za-z0-9_-]{16,64}` on `POST /api/v1/reports` → 400 invalid / 201 first use / 201 stored replay (same id, no duplicate) / 409 `IDEMPOTENCY_CONFLICT` / 409 `IDEMPOTENCY_IN_PROGRESS` (stale intent 2 min); REQUIRES_NEW tx; private ObjectMapper + `hashOf`; conflict exception + handler; header optional |
+| Mobile offline core | DONE | `features/offline/`: `OfflineController` (single-flight `flush()`, `_disposed` notify guard), `Zone.root`-wrapped atomic `OfflineStorage` (schema 1, tmp+rename, graceful degradation), `DraftStore`/`OutboxStore`/`CategoryCache`, `ConnectivityService`, `OfflineScope`, `PendingSubmissionsScreen` (Edit/Retry/Discard w/ confirm, offline hint) |
+| Form integration | DONE | Debounced 400 ms draft autosave + Restore/Discard offer (empty `categoryId` drafts restorable — product fix), offline submit → queue, failed-entry Edit → prefill + re-queue replacing old entry (`keepPaths` keeps photo files), photos copied into offline storage at pick, one idempotency key per form session, category-cache fallback + stale hint |
+| Shell/list/profile | DONE | Offline strip (flush on mount + app resume), pending banner + `consumeJustSubmitted()` reload, `clearAll()` on sign-out (action-wired, not auth-listener), guarded `/pending-submissions` route |
+| API plumbing | DONE | `ApiClient.post(path, body, idempotencyKey)` → `Idempotency-Key` header incl. 401→refresh retries; `ReportsApi.create(..., idempotencyKey)`; deps `path_provider ^2.1.6`, `connectivity_plus ^7.3.2` |
+| Backend tests | DONE | H2 **133/133** (incl. `IdempotencyTest` ×8), PG IT **8/8** with V6, jar packaged, `openapi.json` regenerated |
+| Mobile tests | DONE | `flutter test` **167/167** (+33: offline controller ×12, storage ×6, pending screen ×5, form offline ×7, banner ×3, misc), `flutter analyze` 0 issues; test-driven fixes: post-dispose notify guard, empty-category draft rejection, SnackBar host Scaffold in tests |
+| Live battery | DONE | :8085 (PG): new key → 201 `MTF-2026-000035`; same key + same body → 201 **same id**; same key + different body → 409 `IDEMPOTENCY_CONFLICT`; key `short` → 400 `BAD_REQUEST` |
+| Design/docs | DONE | `docs/design/OFFLINE_CAPABILITIES.md` (new); CHANGELOG 0.15.0; ROADMAP Phase 14 + version history + delivery targets; API_DESIGN `POST /reports` row; SRS FR-2.11; BACKLOG deferrals |
+| Phase 14 report + approval gate | TODO | Report delivered 2026-10-21 — **waiting on owner approval** before Phase 15 |
+
+**Known gaps/deferrals:** offline browsing of existing reports and offline map tiles (approved deferral); background sync — foreground-only retry by design; iOS build macOS-only (B-X.4); carried gaps unchanged (no push provider, email kill-switch off, no public media endpoint, no backend attach/delete status guard, JWTs survive password reset, FR-2.4 date filter).
 
 ## Phase 13 — Notifications and Media (COMPLETE — APPROVED 2026-10-18)
 
