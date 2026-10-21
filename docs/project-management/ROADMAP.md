@@ -12,8 +12,8 @@
   8 PG / 68 web / 170 mobile; new citizen critical-journey, 320×640
   no-overflow and semantics tests; five responsive overflow fixes; lazy map
   mount + test-only tile-provider; live battery 63/63 with role-boundary
-  and lifecycle chains; defects mitigation plan) — **SUBMITTED 2026-10-21,
-  owner approval pending**
+  and lifecycle chains; defects mitigation plan) — **APPROVED
+  2026-10-21**
 - **[0.15.0]** — Phase 14: Offline capabilities (Option B idempotency on
   `POST /reports` — stored-response replay, 409 conflict/in-progress, 400
   invalid key, 24 h TTL; mobile draft autosave + pending queue with
@@ -470,7 +470,7 @@ web's pre-existing `mtaafix.reportDraft.v1` key.
 
 **Gate: APPROVED by owner 2026-10-21 — Phase 15 may start**
 
-## Phase 15 — Quality Assurance (COMPLETE — PENDING APPROVAL)
+## Phase 15 — Quality Assurance (COMPLETE — APPROVED 2026-10-21)
 
 Master spec Phase 15 (lines 2069–2089): validate the integrated system.
 
@@ -508,8 +508,7 @@ Master spec Phase 15 (lines 2069–2089): validate the integrated system.
   carried defects + Phase 14 deferrals documented with mitigation plan in
   BACKLOG ("Phase 15 known defects + mitigation plan")
 
-**Gate: Phase 15 report delivered 2026-10-21 — awaiting owner approval
-(Phase 16 not started)**
+**Gate: APPROVED by owner 2026-10-21 — Phase 16 may start**
 
 ## Phase 16 — Security Hardening (NOT STARTED)
 
@@ -571,5 +570,5 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 12 | Complete (approved 2026-10-18) |
 | 13 | Complete (approved 2026-10-18) |
 | 14 | Complete (approved 2026-10-21) |
-| 15 | Complete (submitted 2026-10-21, approval pending) |
+| 15 | Complete (approved 2026-10-21) |
 | 16–23 | Not started |

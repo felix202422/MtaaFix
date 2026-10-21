@@ -18,7 +18,7 @@ BACKLOG ("Phase 15 known defects + mitigation plan"). The new small-screen
 test found and drove fixes for **five RenderFlex overflow defects**. Mobile
 test-infra defects surfaced by the journey test were fixed (map disk-cache
 worker isolate disabled under `FLUTTER_TEST` via `appTileProvider()`; lazy
-map mount on first tab activation).
+map mount on first tab activation). **Approved by owner 2026-10-21.**
 
 **Backend**
 - No source changes; suites re-run for the phase record: `mvn test` -

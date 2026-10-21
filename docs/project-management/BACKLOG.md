@@ -626,7 +626,7 @@ UI (API-level only); browser-based map verification → Phase 15.
 
 ---
 
-## Phase 15 - Quality assurance (COMPLETE - submitted 2026-10-21, approval pending)
+## Phase 15 - Quality assurance (COMPLETE - approved 2026-10-21)
 
 ### B-15.1 Full suite verification - DONE
 - Backend `mvn test` **133/133** H2 (PostgresIntegrationTest auto-skips

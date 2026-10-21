@@ -5,9 +5,9 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-21.
 
-## Current phase: Phase 15 COMPLETE — SUBMITTED, awaiting owner approval (2026-10-21) — next: Phase 16 (not started)
+## Current phase: Phase 15 APPROVED (2026-10-21) — next: Phase 16 (not started)
 
-## Phase 15 — Quality Assurance (COMPLETE — AWAITING APPROVAL)
+## Phase 15 — Quality Assurance (COMPLETE — APPROVED 2026-10-21)
 
 | Task | Status | Notes |
 | ---- | ------ | ----- |
@@ -19,7 +19,7 @@ Last updated: 2026-10-21.
 | A11y + responsive verification | DONE | mobile semantics: login field labels, NavigationBar destinations (tabLabel merge), form field labels, refresh tooltip (`byTooltip`); 320×640 sweep; web jsx-a11y clean + documented audit (single structural breakpoint `UserMenu`, wrapping header nav, no hamburger; jsdom cannot assert CSS-driven visibility — limitation recorded) |
 | Defect review + mitigation plan | DONE | 5 responsive defects **resolved this phase**; carried defects + Phase 14 deferrals documented with severities/evidence/dispositions in BACKLOG "Phase 15 known defects + mitigation plan" (D1–D14) — exit criterion met |
 | Docs sync | DONE | CHANGELOG 0.16.0; ROADMAP Phase 15 + version history + delivery table; BACKLOG B-15.1..6 + plan; BOARD Phase 15 table; `docs/api/openapi.json` tag-description sync |
-| Phase 15 report + approval gate | DONE | Report delivered 2026-10-21; **awaiting owner approval** — Phase 16 not started |
+| Phase 15 report + approval gate | DONE | Report delivered 2026-10-21; **approved by owner 2026-10-21** — Phase 16 may start |
 
 ## Phase 14 — Offline Capabilities (COMPLETE — APPROVED 2026-10-21)
 
