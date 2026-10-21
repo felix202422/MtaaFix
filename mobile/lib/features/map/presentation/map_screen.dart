@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:mtaafix_mobile/core/map/app_tile_provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -39,6 +40,12 @@ class _MapScreenState extends State<MapScreen> {
   Timer? _debounce;
   ValueNotifier<int>? _tab;
 
+  /// The map (and its tile loads) is only built the first time the tab is
+  /// actually shown — inside the shell's IndexedStack every tab builds on
+  /// mount, and mounting the tile layer eagerly costs startup work nobody
+  /// sees. Standalone routes (no tab notifier) mount immediately.
+  bool _mapBooted = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -47,6 +54,9 @@ class _MapScreenState extends State<MapScreen> {
       _tab?.removeListener(_onTabActivated);
       _tab = tab;
       _tab?.addListener(_onTabActivated);
+    }
+    if (tab == null || tab.value == MainShellTab.map) {
+      _mapBooted = true;
     }
     if (!_initiated) {
       _initiated = true;
@@ -62,6 +72,7 @@ class _MapScreenState extends State<MapScreen> {
 
   void _onTabActivated() {
     if (!mounted || _tab?.value != MainShellTab.map) return;
+    if (!_mapBooted) setState(() => _mapBooted = true);
     _fetch();
   }
 
@@ -366,7 +377,21 @@ class _MapScreenState extends State<MapScreen> {
           Expanded(
             child: Stack(
               children: [
-                FlutterMap(
+                if (!_mapBooted)
+                  const SizedBox.expand(
+                    child: ColoredBox(
+                      color: Color(0xFFEDF1EE),
+                      child: Center(
+                        child: Icon(
+                          Icons.map_outlined,
+                          size: 56,
+                          color: MtaaFixColors.mutedText,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  FlutterMap(
                   mapController: _mapController,
                   options: MapOptions(
                     initialCenter: _fallbackCenter,
@@ -378,6 +403,7 @@ class _MapScreenState extends State<MapScreen> {
                       urlTemplate:
                           'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.mtaafix.mobile',
+                      tileProvider: appTileProvider(),
                     ),
                     MarkerLayer(
                       markers: [

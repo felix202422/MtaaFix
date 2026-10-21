@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:mtaafix_mobile/core/map/app_tile_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -717,6 +718,7 @@ class _LocationCard extends StatelessWidget {
                   urlTemplate:
                       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.mtaafix.mobile',
+                  tileProvider: appTileProvider(),
                 ),
                 MarkerLayer(
                   markers: [

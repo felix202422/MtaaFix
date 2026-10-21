@@ -612,6 +612,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                     ),
                   DropdownButtonFormField<Category>(
                     initialValue: _category,
+                    isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'Category *',
                       hintText: 'What kind of issue is this?',
@@ -722,7 +723,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                     Text('Photos (${_photos.length}/$maxPhotos)',
                         style: text.titleMedium),
                     const SizedBox(height: 8),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         OutlinedButton.icon(
                           onPressed:
@@ -730,7 +733,6 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                           icon: const Icon(Icons.photo_camera_rounded),
                           label: const Text('Camera'),
                         ),
-                        const SizedBox(width: 8),
                         OutlinedButton.icon(
                           onPressed: _submitting
                               ? null
