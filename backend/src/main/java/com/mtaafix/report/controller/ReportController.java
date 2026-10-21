@@ -42,17 +42,30 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReportController {
 
     private final ReportService reportService;
+    private final com.mtaafix.report.service.IdempotencyService idempotencyService;
 
-    public ReportController(ReportService reportService) {
+    public ReportController(ReportService reportService,
+            com.mtaafix.report.service.IdempotencyService idempotencyService) {
         this.reportService = reportService;
+        this.idempotencyService = idempotencyService;
     }
 
-    @Operation(summary = "Create a report (category required; unique code generated)")
+    @Operation(summary = "Create a report (category required; unique code generated; "
+            + "optional Idempotency-Key header makes offline retries exactly-once, Phase 14)")
     @PostMapping
     public ResponseEntity<ReportDto> create(@Valid @RequestBody CreateReportRequest request,
+            @Parameter(description = "Optional idempotency key (16-64 chars [A-Za-z0-9_-]); "
+                    + "a replay returns the stored response without creating a second report")
+            @org.springframework.web.bind.annotation.RequestHeader(
+                    value = "Idempotency-Key", required = false)
+            String idempotencyKey,
             @AuthenticationPrincipal User user) {
-        ReportDto report = reportService.create(request, user);
-        return ResponseEntity.status(201).body(report);
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            return ResponseEntity.status(201).body(reportService.create(request, user));
+        }
+        return idempotencyService.execute(user,
+                com.mtaafix.report.service.IdempotencyService.CREATE_REPORT, idempotencyKey,
+                request, () -> reportService.create(request, user), ReportDto.class);
     }
 
     @Operation(summary = "List reports (role-scoped; status/categoryId/orgId/q/assignment "

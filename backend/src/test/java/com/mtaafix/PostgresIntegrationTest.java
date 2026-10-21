@@ -35,6 +35,9 @@ class PostgresIntegrationTest {
     @Autowired
     private com.mtaafix.dashboard.service.AnalyticsService analyticsService;
 
+    @Autowired
+    private com.mtaafix.report.repository.IdempotencyKeyRepository idempotencyKeyRepository;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -47,6 +50,8 @@ class PostgresIntegrationTest {
         assertTrue(rows.stream().anyMatch(r -> "1".equals(String.valueOf(r[0]))));
         assertTrue(rows.stream().anyMatch(r -> "2".equals(String.valueOf(r[0]))),
                 "Phase 5 V2 migration must be applied");
+        assertTrue(rows.stream().anyMatch(r -> "6".equals(String.valueOf(r[0]))),
+                "Phase 14 V6 migration must be applied");
         assertTrue(rows.stream().allMatch(r -> Boolean.TRUE.equals(r[2])));
     }
 
@@ -277,5 +282,44 @@ class PostgresIntegrationTest {
                 "near query must include the Arusha report");
         assertTrue(arushaNear.content().stream().noneMatch(r -> inDar.getCode().equals(r.code())),
                 "near query must exclude the Dar report");
+    }
+
+    @Test
+    void phase14IdempotencyTableRoundTrip() {
+        User user = new User();
+        user.setEmail("idem-it-" + System.nanoTime() + "@example.com");
+        user.setPasswordHash("hash");
+        user.setFullName("Idem IT User");
+        user.setRole(User.Role.CITIZEN);
+        userRepository.save(user);
+
+        com.mtaafix.report.domain.IdempotencyKey row =
+                new com.mtaafix.report.domain.IdempotencyKey(
+                        user, "POST /reports", "it-key-" + System.nanoTime(), "hash-value");
+        idempotencyKeyRepository.save(row);
+        entityManager.flush();
+        entityManager.clear();
+
+        Object nativeCount = entityManager.createNativeQuery(
+                        "SELECT count(*) FROM idempotency_keys WHERE idem_key = ?1")
+                .setParameter(1, row.getIdemKey())
+                .getSingleResult();
+        assertEquals(1, ((Number) nativeCount).intValue(),
+                "row must exist in the table after save+flush");
+
+        com.mtaafix.report.domain.IdempotencyKey found = idempotencyKeyRepository.findActive(
+                user.getId(), "POST /reports", row.getIdemKey(),
+                java.time.Instant.now().minus(
+                        com.mtaafix.report.domain.IdempotencyKey.TTL_HOURS,
+                        java.time.temporal.ChronoUnit.HOURS));
+        assertNotNull(found, "V6 idempotency row must be findable while unexpired");
+        assertEquals("hash-value", found.getRequestHash());
+
+        Object uniqueIndexes = entityManager.createNativeQuery(
+                        "SELECT count(*) FROM pg_indexes WHERE tablename = 'idempotency_keys' "
+                                + "AND indexname = 'uq_idempotency_user_endpoint_key'")
+                .getSingleResult();
+        assertEquals(1, ((Number) uniqueIndexes).intValue(),
+                "V6 must create the unique (user, endpoint, key) index");
     }
 }

@@ -129,6 +129,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
     }
 
+    @ExceptionHandler(IdempotencyConflictException.class)
+    public ResponseEntity<ApiError> handleIdempotencyConflict(IdempotencyConflictException ex,
+            WebRequest request) {
+        log.warn("Idempotency conflict: {} - {}", ex.getMessage(), request.getDescription(false));
+        ApiError apiError = ApiError.of(
+                HttpStatus.CONFLICT,
+                ex.getCode(),
+                ex.getMessage(),
+                request.getDescription(false),
+                Map.of());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex,
             WebRequest request) {
