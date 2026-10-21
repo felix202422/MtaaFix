@@ -8,6 +8,8 @@ import 'package:mtaafix_mobile/core/util/formatters.dart';
 import 'package:mtaafix_mobile/core/widgets/feedback_view.dart';
 import 'package:mtaafix_mobile/core/widgets/loading_view.dart';
 import 'package:mtaafix_mobile/features/auth/application/auth_scope.dart';
+import 'package:mtaafix_mobile/features/offline/application/offline_controller.dart';
+import 'package:mtaafix_mobile/features/offline/application/offline_scope.dart';
 import 'package:mtaafix_mobile/features/reports/application/reports_api.dart';
 import 'package:mtaafix_mobile/features/reports/domain/report.dart';
 
@@ -38,6 +40,7 @@ class _ReportListScreenState extends State<ReportListScreen> {
   final TextEditingController _search = TextEditingController();
   List<Category> _categories = const [];
   ValueNotifier<int>? _tab;
+  OfflineController? _offline;
 
   @override
   void didChangeDependencies() {
@@ -47,6 +50,15 @@ class _ReportListScreenState extends State<ReportListScreen> {
       _tab?.removeListener(_onTabActivated);
       _tab = tab;
       _tab?.addListener(_onTabActivated);
+    }
+    // Listen (non-dependency) so flush completions can refresh the list
+    // without rebuilding on every queue change — the banner below uses
+    // [OfflineScope.maybeOf] for rebuilds.
+    final offline = OfflineScope.read(context);
+    if (!identical(offline, _offline)) {
+      _offline?.removeListener(_onOfflineChanged);
+      _offline = offline;
+      _offline?.addListener(_onOfflineChanged);
     }
     if (!_apiReady) {
       _apiReady = true;
@@ -65,9 +77,16 @@ class _ReportListScreenState extends State<ReportListScreen> {
     _load();
   }
 
+  void _onOfflineChanged() {
+    if (!mounted) return;
+    // A flush filed pending reports — reload so they show up.
+    if (_offline?.consumeJustSubmitted().isNotEmpty ?? false) _load();
+  }
+
   @override
   void dispose() {
     _tab?.removeListener(_onTabActivated);
+    _offline?.removeListener(_onOfflineChanged);
     _search.dispose();
     super.dispose();
   }
@@ -153,6 +172,8 @@ class _ReportListScreenState extends State<ReportListScreen> {
       ),
       body: Column(
         children: [
+          _PendingReportsBanner(onOpen: () => Navigator.pushNamed(
+              context, Routes.pendingSubmissions)),
           _buildFilters(scheme),
           if (_actionError != null)
             MaterialBanner(
@@ -291,6 +312,50 @@ class _ReportListScreenState extends State<ReportListScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Amber banner listing reports that exist only on this device (waiting,
+/// attaching photos, or failed) — unsent data is never mixed into the
+/// server list below without saying so.
+class _PendingReportsBanner extends StatelessWidget {
+  const _PendingReportsBanner({required this.onOpen});
+
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = OfflineScope.maybeOf(context)?.unsentCount ?? 0;
+    if (count == 0) return const SizedBox.shrink();
+    return Material(
+      color: MtaaFixColors.warningAmber.withValues(alpha: 0.14),
+      child: InkWell(
+        onTap: onOpen,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              const Icon(Icons.cloud_off_rounded,
+                  size: 16, color: MtaaFixColors.warningAmber),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  count == 1
+                      ? '1 report not yet submitted — tap to view'
+                      : '$count reports not yet submitted — tap to view',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: MtaaFixColors.warningAmber,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded,
+                  size: 18, color: MtaaFixColors.warningAmber),
+            ],
+          ),
+        ),
       ),
     );
   }

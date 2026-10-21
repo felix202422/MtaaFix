@@ -72,8 +72,9 @@ class ApiClient {
 
   Future<Map<String, dynamic>> get(String path) => _send('GET', path);
 
-  Future<Map<String, dynamic>> post(String path, [Object? body]) =>
-      _send('POST', path, body: body);
+  Future<Map<String, dynamic>> post(String path,
+          [Object? body, String? idempotencyKey]) =>
+      _send('POST', path, body: body, idempotencyKey: idempotencyKey);
 
   Future<Map<String, dynamic>> put(String path, [Object? body]) =>
       _send('PUT', path, body: body);
@@ -142,11 +143,14 @@ class ApiClient {
     String path, {
     Object? body,
     bool allowRefresh = true,
+    String? idempotencyKey,
   }) async {
-    final response = await _execute(method, path, body: body);
+    final response =
+        await _execute(method, path, body: body, idempotencyKey: idempotencyKey);
     if (response.statusCode == 401 && allowRefresh && _refreshToken != null) {
       if (await _tryRefresh()) {
-        return _send(method, path, body: body, allowRefresh: false);
+        return _send(method, path,
+            body: body, allowRefresh: false, idempotencyKey: idempotencyKey);
       }
     }
     return _decode(response);
@@ -156,10 +160,13 @@ class ApiClient {
     String method,
     String path, {
     Object? body,
+    String? idempotencyKey,
   }) async {
     final headers = <String, String>{
       'Accept': 'application/json',
       if (body != null) 'Content-Type': 'application/json',
+      if (idempotencyKey != null && idempotencyKey.isNotEmpty)
+        'Idempotency-Key': idempotencyKey,
       ...await _authHeaders(),
     };
     final request = http.Request(method, Uri.parse('$baseUrl$path'))

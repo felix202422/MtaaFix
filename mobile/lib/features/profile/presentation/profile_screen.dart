@@ -4,6 +4,7 @@ import 'package:mtaafix_mobile/app/router.dart';
 import 'package:mtaafix_mobile/app/theme.dart';
 import 'package:mtaafix_mobile/features/auth/application/auth_scope.dart';
 import 'package:mtaafix_mobile/features/auth/domain/user.dart';
+import 'package:mtaafix_mobile/features/offline/application/offline_scope.dart';
 
 /// Profile (Page 36): account details, editable name/mobile (FR-5.x),
 /// privacy information, about and sign-out.
@@ -44,6 +45,9 @@ class ProfileScreen extends StatelessWidget {
     final auth = AuthScope.read(context);
     await auth.logout();
     if (!context.mounted) return;
+    // Shared-device hygiene: drop the local draft and any pending queue so
+    // the next user cannot see or send the previous user's reports.
+    OfflineScope.read(context)?.clearAll();
     Navigator.of(context).pushNamedAndRemoveUntil(
       Routes.login,
       (route) => false,

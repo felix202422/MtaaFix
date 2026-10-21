@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'package:mtaafix_mobile/app/theme.dart';
 import 'package:mtaafix_mobile/features/notifications/application/unread_count_scope.dart';
 import 'package:mtaafix_mobile/features/notifications/presentation/notifications_screen.dart';
+import 'package:mtaafix_mobile/features/offline/application/offline_controller.dart';
+import 'package:mtaafix_mobile/features/offline/application/offline_scope.dart';
 import 'package:mtaafix_mobile/features/profile/presentation/profile_screen.dart';
 import 'package:mtaafix_mobile/features/reports/presentation/report_list_screen.dart';
 import 'package:mtaafix_mobile/features/map/presentation/map_screen.dart';
@@ -9,6 +12,8 @@ import 'package:mtaafix_mobile/features/home/presentation/home_screen.dart';
 
 /// Bottom-navigation shell (Page 30): Home, My Reports, Map, Notifications,
 /// Profile — kept in an [IndexedStack] so tab state survives switching.
+/// Also hosts the offline strip and flushes the pending queue on mount and
+/// on returning to the foreground (Phase 14).
 class MainShellScreen extends StatefulWidget {
   const MainShellScreen({super.key, this.initialIndex = 0});
 
@@ -18,10 +23,19 @@ class MainShellScreen extends StatefulWidget {
   State<MainShellScreen> createState() => _MainShellScreenState();
 }
 
-class _MainShellScreenState extends State<MainShellScreen> {
+class _MainShellScreenState extends State<MainShellScreen>
+    with WidgetsBindingObserver {
   late int _index = widget.initialIndex;
   late final ValueNotifier<int> _activeTab = ValueNotifier<int>(widget.initialIndex);
   bool _unreadRefreshed = false;
+  OfflineController? _offline;
+  bool _flushStarted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
   void didChangeDependencies() {
@@ -32,31 +46,83 @@ class _MainShellScreenState extends State<MainShellScreen> {
       _unreadRefreshed = true;
       UnreadCountScope.read(context)?.refresh();
     }
+    final offline = OfflineScope.read(context);
+    if (!identical(offline, _offline)) {
+      _offline = offline;
+      if (!_flushStarted && offline != null) {
+        _flushStarted = true;
+        // Drain anything queued from a previous session. Deferred to after
+        // this frame — notifying listeners during build is not allowed.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) offline.flush();
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _activeTab.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Foreground retry (no background isolates — Phase 14 decision).
+      _offline?.flush();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final unread = UnreadCountScope.maybeOf(context)?.count ?? 0;
     final unreadLabel = unread > 99 ? '99+' : '$unread';
+    final offline = OfflineScope.maybeOf(context);
+    final offlineStrip = offline != null && !offline.isOnline;
     return Scaffold(
-      body: MainShellTab(
-        notifier: _activeTab,
-        child: IndexedStack(
-          index: _index,
-          children: const [
-            HomeScreen(),
-            ReportListScreen(),
-            MapScreen(),
-            NotificationsScreen(),
-            ProfileScreen(),
-          ],
-        ),
+      body: Column(
+        children: [
+          if (offlineStrip)
+            const Material(
+              color: MtaaFixColors.warningAmber,
+              child: SizedBox(
+                width: double.infinity,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  child: Row(
+                    children: [
+                      Icon(Icons.cloud_off_rounded, size: 16, color: Colors.white),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Offline — new reports are saved and sent when you '
+                          'reconnect.',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          Expanded(
+            child: MainShellTab(
+              notifier: _activeTab,
+              child: IndexedStack(
+                index: _index,
+                children: const [
+                  HomeScreen(),
+                  ReportListScreen(),
+                  MapScreen(),
+                  NotificationsScreen(),
+                  ProfileScreen(),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,

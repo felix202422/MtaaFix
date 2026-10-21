@@ -35,14 +35,19 @@ class ReportsApi {
     String? description,
     required double latitude,
     required double longitude,
+    String? idempotencyKey,
   }) async {
-    final json = await _api.post('/reports', {
-      'categoryId': categoryId,
-      'title': title,
-      if (description != null && description.trim().isNotEmpty)
-        'description': description.trim(),
-      'location': {'latitude': latitude, 'longitude': longitude},
-    });
+    final json = await _api.post(
+      '/reports',
+      {
+        'categoryId': categoryId,
+        'title': title,
+        if (description != null && description.trim().isNotEmpty)
+          'description': description.trim(),
+        'location': {'latitude': latitude, 'longitude': longitude},
+      },
+      idempotencyKey,
+    );
     return Report.fromJson(json);
   }
 
@@ -117,8 +122,11 @@ class ReportsApi {
       PublicReportDetail.fromJson(
           await _api.get('/reports/public/${Uri.encodeComponent(code)}'));
 
+  /// Raw `GET /categories/public` payload (for the offline category cache).
+  Future<dynamic> categoriesJson() => _api.get('/categories/public');
+
   Future<List<Category>> categories() async {
-    final json = await _api.get('/categories/public');
+    final json = await categoriesJson();
     final list = json['content'] ?? json;
     if (list is! List) return const [];
     return list

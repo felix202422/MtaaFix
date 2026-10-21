@@ -10,6 +10,8 @@ import 'package:mtaafix_mobile/features/auth/presentation/register_screen.dart';
 import 'package:mtaafix_mobile/features/auth/presentation/reset_password_screen.dart';
 import 'package:mtaafix_mobile/features/map/presentation/map_screen.dart';
 import 'package:mtaafix_mobile/features/notifications/presentation/notifications_screen.dart';
+import 'package:mtaafix_mobile/features/offline/domain/pending_submission.dart';
+import 'package:mtaafix_mobile/features/offline/presentation/pending_submissions_screen.dart';
 import 'package:mtaafix_mobile/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:mtaafix_mobile/features/profile/presentation/notification_preferences_screen.dart';
 import 'package:mtaafix_mobile/features/profile/presentation/profile_screen.dart';
@@ -36,6 +38,7 @@ abstract final class Routes {
   static const String notifications = '/notifications';
   static const String profile = '/profile';
   static const String notificationPreferences = '/notification-preferences';
+  static const String pendingSubmissions = '/pending-submissions';
 
   /// Screens that require an authenticated user.
   static const Set<String> protected = <String>{
@@ -48,6 +51,7 @@ abstract final class Routes {
     notifications,
     profile,
     notificationPreferences,
+    pendingSubmissions,
   };
 }
 
@@ -88,13 +92,16 @@ Widget _resolve(String name, AuthController auth, Object? arguments) {
     Routes.resetPassword => const ResetPasswordScreen(),
     Routes.changePassword => const ChangePasswordScreen(),
     Routes.reports => const ReportListScreen(),
-    Routes.reportNew =>
-      ReportFormScreen(editReport: arguments is Report ? arguments : null),
+    Routes.reportNew => ReportFormScreen(
+        editReport: arguments is Report ? arguments : null,
+        pending: arguments is PendingSubmission ? arguments : null,
+      ),
     Routes.reportDetail => const ReportDetailScreen(),
     Routes.map => const MapScreen(),
     Routes.notifications => const NotificationsScreen(),
     Routes.profile => const ProfileScreen(),
     Routes.notificationPreferences => const NotificationPreferencesScreen(),
+    Routes.pendingSubmissions => const PendingSubmissionsScreen(),
     _ => const NotFoundScreen(),
   };
 }
