@@ -626,6 +626,75 @@ UI (API-level only); browser-based map verification → Phase 15.
 
 ---
 
+## Phase 15 - Quality assurance (COMPLETE - submitted 2026-10-21, approval pending)
+
+### B-15.1 Full suite verification - DONE
+- Backend `mvn test` **133/133** H2 (PostgresIntegrationTest auto-skips
+  without env); PG `mvn test -Dtest=PostgresIntegrationTest` **8/8** with
+  `MTAAFIX_PG_IT=true` + local PostgreSQL (V6 applied, PostGIS, spatial
+  queries, idempotency); web `eslint .` 0 / `tsc --noEmit` 0 /
+  `vitest run` **68/68** (10 files) / `vite build` green; Flutter
+  `flutter analyze` 0 / `flutter test` **170/170** (+3).
+
+### B-15.2 Critical-journey + gap-fill mobile tests - DONE
+- New `mobile/test/phase15_quality_test.dart`: citizen critical journey
+  (sign in, file report `MTF-2026-000042`, detail, back, refresh, report
+  in My Reports), critical-screens no-overflow sweep at 320x640,
+  accessible-semantics assertions; local harness (stateful mock HTTP
+  client, geolocator/connectivity/path-provider channel mocks).
+
+### B-15.3 Responsive fixes - DONE
+- Five RenderFlex overflows found at 320x640 and fixed: login auth actions
+  Row -> Wrap; home `_SectionHeader` title -> Expanded + ellipsis;
+  report-form category dropdown `isExpanded: true`; photo attach buttons
+  Row -> Wrap.
+
+### B-15.4 Map + test infrastructure - DONE
+- `MapScreen` lazy `_mapBooted` tile mount (placeholder until first
+  activation); new `core/map/app_tile_provider.dart` - `appTileProvider()`
+  disables flutter_map's disk-cache worker isolate only when
+  `FLUTTER_TEST` is set (the isolate stalled fake-async test completion);
+  production disk cache unchanged; wired into all three `TileLayer` sites.
+
+### B-15.5 Live battery: journeys, role boundaries, lifecycle - DONE
+- :8085 **63/63** - two full lifecycle chains (claim/verify, assign with
+  photo evidence, start, complete, resolve, close, reopen; second pass
+  ending in citizen confirm); 403 matrix (citizen/mod/worker vs
+  admin/moderation), 401 anonymous, FR-5.4 org-role-without-membership ->
+  400, 409 state gate, 403 unassigned-ownership guard; known-defect probes
+  reproduced (non-JSON POST -> 500, GET on POST-only -> 500).
+
+### B-15.6 Accessibility + responsive verification - DONE
+- Mobile: `ensureSemantics` assertions for login fields, NavigationBar
+  destinations, form field labels, refresh tooltip; 320x640 sweep. Web:
+  jsx-a11y clean; audit documents single structural breakpoint + wrapping
+  header nav; jsdom cannot assert CSS-driven visibility (tooling
+  limitation recorded, not a product defect).
+
+### Phase 15 known defects + mitigation plan
+Exit criterion: critical defects resolved or explicitly documented with an
+approved mitigation plan. Fixed this phase: five 320x640 overflow defects
+(B-15.3). Carried items:
+
+| # | Defect / limitation | Evidence | Severity | Mitigation / disposition (target) |
+| - | ------------------- | -------- | -------- | --------------------------------- |
+| D1 | Non-JSON body on `POST /api/v1/reports` -> 500 instead of 4xx | Live probe Phase 15 (reproduced) | Low (error hygiene) | Map `HttpMessageNotReadableException` -> 400 in `GlobalExceptionHandler`; Phase 16 error/security review |
+| D2 | Wrong HTTP method on POST-only endpoints -> 500 instead of 405 | Live probe Phase 15 (reproduced) | Low (error hygiene) | Same handler hardening as D1; Phase 16 |
+| D3 | JWTs survive password reset (no revocation) | Phase 13 flagged decision | Medium (security) | Accepted for MVP: 15 min access TTL + refresh-token invalidation on password change; revisit server-side revocation in Phase 16 |
+| D4 | Media attach/delete has no backend report-status guard (mobile UI gates only) | Phase 13 | Medium (security) | Small backend guard (reject on terminal statuses); Phase 16 |
+| D5 | Offline storage (drafts/outbox) unencrypted at rest | Phase 14 | Medium (device security) | App-sandbox only today; file encryption + keystore-backed token hardening candidate for Phase 16/20 |
+| D6 | No push provider (FCM/APNs); `pushAvailable=false` | Phase 13 | Medium (feature) | Needs external provider credentials; Phase 20/21 |
+| D7 | Email notifications behind kill-switch, no SMTP provider | Phase 13 | Low | EMAIL rows recorded SKIPPED; configure SMTP before Phase 20 beta |
+| D8 | FR-2.4 report date filter unsupported by backend | Since Phase 12 | Low (feature gap) | Deferred; Phase 21 advanced features |
+| D9 | Web narrow-width header nav wraps instead of collapsing (no hamburger) | Phase 15 audit | Low (UX polish) | All destinations remain reachable via wrap; refine with real-device feedback in Phase 20 |
+| D10 | iOS build unexecutable on Windows host | B-X.4 | Medium (platform) | `ios/Runner` scaffolded; macOS CI/device verification required before Phase 20 release |
+| D11 | Suites not wired into CI (backend/web/mobile run manually) | Structural | Medium (process) | Phase 18 CI/CD pipeline |
+| D12 | jsdom cannot assert CSS-driven responsive visibility | Phase 15 audit | Info (tooling) | Covered by lint + semantics tests + documented audit; real-browser check in Phase 20 |
+| D13 | SRS table rows 14-26 (device/section listing) stale vs current feature set | Carried | Low (docs) | SRS sync pass in Phase 20 release prep |
+| D14 | Phase 14 deferrals: offline browsing/map tiles, background sync | Owner-approved deferral | Low | Remains approved scope; reconsider Phase 21 |
+
+---
+
 ## Cross-cutting (scheduled, not MVP-blocking)
 
 | ID | Item | Phase | AC summary |

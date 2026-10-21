@@ -5,7 +5,21 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-21.
 
-## Current phase: Phase 14 APPROVED (2026-10-21) — next: Phase 15 (not started)
+## Current phase: Phase 15 COMPLETE — SUBMITTED, awaiting owner approval (2026-10-21) — next: Phase 16 (not started)
+
+## Phase 15 — Quality Assurance (COMPLETE — AWAITING APPROVAL)
+
+| Task | Status | Notes |
+| ---- | ------ | ----- |
+| Suites (clean runs) | DONE | backend `mvn test` **133/133** H2 (PG class auto-skipped without env); PG `mvn test -Dtest=PostgresIntegrationTest` **8/8** (`MTAAFIX_PG_IT=true` + local PostgreSQL, V6 applied); web `eslint .` 0 / `tsc --noEmit` 0 / `vitest run` **68/68** (10 files) / `vite build` green; mobile `flutter analyze` 0 / `flutter test` **170/170** (+3) |
+| Gap-fill tests | DONE | `mobile/test/phase15_quality_test.dart`: citizen critical journey (sign in → create `MTF-2026-000042` → detail → back → refresh → report in My Reports), critical-screens no-overflow sweep at 320×640, accessible-semantics assertions; harness = stateful mock client + geolocator/connectivity/path-provider channel mocks (open connectivity stream kept alive to avoid resubscribe loop) |
+| Responsive fixes | DONE | 5 RenderFlex overflows found at 320×640 and fixed: login auth actions `Row`→`Wrap`, home `_SectionHeader`→`Expanded`+ellipsis, category dropdown `isExpanded`, photo attach `Row`→`Wrap` |
+| Map/test infra | DONE | `MapScreen` lazy `_mapBooted` tile mount (placeholder until first activation); new `core/map/app_tile_provider.dart` — `appTileProvider()` disables the disk-cache worker isolate **only under `FLUTTER_TEST`** (isolate stalled fake-async test completion); prod disk cache unchanged; wired into map screen + report detail + map picker |
+| Live battery | DONE | :8085 **63/63** — two full lifecycle chains (claim/verify → assign w/ photo → start → complete → resolve → close → reopen; second pass ends citizen **confirm**); 403 matrix (citizen/mod/worker vs admin/moderation), 401 anonymous, FR-5.4 org-role-without-membership → 400, 409 state gate, 403 unassigned-ownership guard; defect probes reproduced: non-JSON POST → 500, GET-on-POST → 500 |
+| A11y + responsive verification | DONE | mobile semantics: login field labels, NavigationBar destinations (tabLabel merge), form field labels, refresh tooltip (`byTooltip`); 320×640 sweep; web jsx-a11y clean + documented audit (single structural breakpoint `UserMenu`, wrapping header nav, no hamburger; jsdom cannot assert CSS-driven visibility — limitation recorded) |
+| Defect review + mitigation plan | DONE | 5 responsive defects **resolved this phase**; carried defects + Phase 14 deferrals documented with severities/evidence/dispositions in BACKLOG "Phase 15 known defects + mitigation plan" (D1–D14) — exit criterion met |
+| Docs sync | DONE | CHANGELOG 0.16.0; ROADMAP Phase 15 + version history + delivery table; BACKLOG B-15.1..6 + plan; BOARD Phase 15 table; `docs/api/openapi.json` tag-description sync |
+| Phase 15 report + approval gate | DONE | Report delivered 2026-10-21; **awaiting owner approval** — Phase 16 not started |
 
 ## Phase 14 — Offline Capabilities (COMPLETE — APPROVED 2026-10-21)
 

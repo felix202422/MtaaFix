@@ -5,6 +5,77 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.16.0] — 2026-10-21
+### Phase 15 - Quality assurance
+Full-suite validation per master spec Phase 15 (lines 2069-2089): backend,
+web, Flutter, and PostgreSQL integration suites run green from clean
+invocations; critical journey, role boundaries, and lifecycle transitions
+exercised live against the backend on port 8085 (63/63 battery checks);
+responsive layouts and accessibility verified for the mobile app (320x640
+traversal + semantics assertions) and audited for web (jsx-a11y clean);
+unresolved defects reviewed and documented with a mitigation plan in
+BACKLOG ("Phase 15 known defects + mitigation plan"). The new small-screen
+test found and drove fixes for **five RenderFlex overflow defects**. Mobile
+test-infra defects surfaced by the journey test were fixed (map disk-cache
+worker isolate disabled under `FLUTTER_TEST` via `appTileProvider()`; lazy
+map mount on first tab activation).
+
+**Backend**
+- No source changes; suites re-run for the phase record: `mvn test` -
+  **133/133** H2 (PG class auto-skipped without env), `mvn test
+  -Dtest=PostgresIntegrationTest` with `MTAAFIX_PG_IT=true` + local
+  PostgreSQL - **8/8** (Flyway V6 verified, PostGIS extension, spatial
+  queries, idempotency)
+- `docs/api/openapi.json` regenerated artifact synced (Analytics tag
+  description ASCII hyphen matches the source `@Tag`)
+
+**Web**
+- No source changes; verification + audit only: `eslint .` 0,
+  `tsc --noEmit` 0, `vitest run` **68/68** (10 files), `vite build` green
+- Responsive/a11y audit: single structural breakpoint (`UserMenu`
+  `hidden sm:inline`), header nav wraps at narrow widths (no hamburger;
+  documented limitation), jsx-a11y rules pass, ARIA labels/roles covered
+  by tests; jsdom cannot assert CSS-driven visibility - verification is
+  lint + semantics tests + documented audit
+
+**Mobile** (Flutter)
+- **Responsive fixes (found by the new 320x640 test, all fixed):**
+  `login_screen` auth actions `Row` -> `Wrap`; `home_screen`
+  `_SectionHeader` title -> `Expanded` + ellipsis;
+  `report_form_screen` category dropdown `isExpanded: true`; photo attach
+  buttons `Row` -> `Wrap`
+- **Map:** `MapScreen` mounts `FlutterMap`/`TileLayer` only after first tab
+  activation (`_mapBooted`, static placeholder before); new
+  `core/map/app_tile_provider.dart` - `appTileProvider()` returns
+  `NetworkTileProvider` with `DisabledMapCachingProvider` when
+  `FLUTTER_TEST` is set (the disk-cache worker isolate stalled the
+  fake-async test runner) and keeps the production disk cache otherwise;
+  wired into `MapScreen`, `ReportDetailScreen`, `MapPickerScreen`
+- **Tests:** new `test/phase15_quality_test.dart` (+3): citizen critical
+  journey (sign in -> create `MTF-2026-000042` -> detail -> back -> refresh
+  -> My Reports), critical-screens no-overflow sweep at 320x640, accessible
+  semantics labels (login fields, NavigationBar destinations, form field
+  labels, refresh tooltip); `flutter analyze` 0 issues, `flutter test`
+  **170/170**
+
+**Live battery** (:8085, PostgreSQL) - **63/63**
+- Fresh accounts registered via API; admin promoted via SQL seed, moderator
+  promoted via the admin `PUT /users/{id}/role` endpoint; org-role grant
+  without membership -> 400 (FR-5.4 rule verified live)
+- Critical journey x2 chains: create (SUBMITTED) -> claim/verify -> assign
+  (photo uploaded) -> start -> complete -> resolve -> close -> reopen, then
+  a second pass ending with citizen **confirm** - every status transition
+  observed in the response
+- Role boundaries: citizen/mod/worker -> 403 on admin+moderation endpoints,
+  anonymous -> 401, worker `GET /assignments/me` -> 200, admin
+  `GET /users` -> 200; state-gate 409 (mod /resolve while SUBMITTED),
+  ownership guard 403 (worker /start unassigned)
+- Known-defect probes reproduced live: non-JSON POST -> 500, GET on
+  POST-only endpoint -> 500 (see mitigation plan)
+
+**Docs**: this entry; ROADMAP Phase 15 + version history; BACKLOG B-15.1..6
++ defects mitigation plan; BOARD Phase 15 table.
+
 ## [0.15.0] — 2026-10-21
 ### Phase 14 - Offline capabilities
 Implemented master spec Phase 14 under the owner-approved scope: Option B

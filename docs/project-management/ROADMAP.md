@@ -8,6 +8,12 @@
 
 ## Version History
 
+- **[0.16.0]** — Phase 15: Quality assurance (full suites green — 133 H2 +
+  8 PG / 68 web / 170 mobile; new citizen critical-journey, 320×640
+  no-overflow and semantics tests; five responsive overflow fixes; lazy map
+  mount + test-only tile-provider; live battery 63/63 with role-boundary
+  and lifecycle chains; defects mitigation plan) — **SUBMITTED 2026-10-21,
+  owner approval pending**
 - **[0.15.0]** — Phase 14: Offline capabilities (Option B idempotency on
   `POST /reports` — stored-response replay, 409 conflict/in-progress, 400
   invalid key, 24 h TTL; mobile draft autosave + pending queue with
@@ -464,10 +470,46 @@ web's pre-existing `mtaafix.reportDraft.v1` key.
 
 **Gate: APPROVED by owner 2026-10-21 — Phase 15 may start**
 
-## Phase 15 — Quality Assurance (NOT STARTED)
+## Phase 15 — Quality Assurance (COMPLETE — PENDING APPROVAL)
 
-Full backend/web/mobile/integration/E2E suite per Part 13; role-boundary and
-lifecycle-transition test passes; accessibility + responsive audits.
+Master spec Phase 15 (lines 2069–2089): validate the integrated system.
+
+- **Suites (clean runs for the record)**: backend `mvn test` **133/133** H2
+  (PG class auto-skips without env); PG integration `mvn test
+  -Dtest=PostgresIntegrationTest` **8/8** with `MTAAFIX_PG_IT=true` +
+  local PostgreSQL (Flyway V6, PostGIS, spatial queries, idempotency);
+  web `eslint .` 0 / `tsc --noEmit` 0 / `vitest run` **68/68** (10 files)
+  / `vite build` green; Flutter `flutter analyze` 0 / `flutter test`
+  **170/170** (+3)
+- **Gap-fill tests** (new `mobile/test/phase15_quality_test.dart`):
+  citizen critical journey (sign in → create → detail → back → refresh →
+  report appears in My Reports), critical-screens no-overflow sweep at
+  320×640, accessible semantics labels (login fields, NavigationBar
+  destinations, form field labels, refresh tooltip)
+- **Responsive fixes found by the new test**: login auth actions Row →
+  Wrap; home `_SectionHeader` title → Expanded + ellipsis; report-form
+  category dropdown `isExpanded: true`; photo attach buttons Row → Wrap
+- **Map/test infrastructure**: `MapScreen` lazy `_mapBooted` tile mount on
+  first activation; `core/map/app_tile_provider.dart` — `appTileProvider()`
+  disables the disk-cache worker isolate under `FLUTTER_TEST` only
+  (the isolate stalled the fake-async runner); production disk cache
+  unchanged; wired into map screen, report detail, map picker
+- **Role boundaries + lifecycle, live**: battery **63/63** on :8085 — 403
+  matrix (citizen/mod/worker vs admin/moderation endpoints), 401
+  anonymous, FR-5.4 org-role-without-membership → 400, 409 state gate
+  (mod /resolve while SUBMITTED), 403 ownership guard (worker /start
+  unassigned), two full lifecycle chains (verify → assign → start →
+  complete → resolve → close → reopen, then citizen confirm)
+- **Accessibility/responsive verification**: mobile semantics assertions +
+  320×640 sweep; web jsx-a11y clean + documented audit (single structural
+  breakpoint, wrapping header nav; jsdom cannot assert CSS-driven
+  visibility — limitation recorded)
+- **Defect review**: five responsive overflow defects fixed this phase;
+  carried defects + Phase 14 deferrals documented with mitigation plan in
+  BACKLOG ("Phase 15 known defects + mitigation plan")
+
+**Gate: Phase 15 report delivered 2026-10-21 — awaiting owner approval
+(Phase 16 not started)**
 
 ## Phase 16 — Security Hardening (NOT STARTED)
 
@@ -529,4 +571,5 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 12 | Complete (approved 2026-10-18) |
 | 13 | Complete (approved 2026-10-18) |
 | 14 | Complete (approved 2026-10-21) |
-| 15–23 | Not started |
+| 15 | Complete (submitted 2026-10-21, approval pending) |
+| 16–23 | Not started |
