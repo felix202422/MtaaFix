@@ -13,7 +13,7 @@ with foreground retry, a categories cache for offline form loads, and
 local-state cleanup on sign-out. Offline browsing/map tiles and background
 sync are deferred (approved). Exit criterion enforced end to end: **unsent
 data is never presented as submitted.** Live battery run against the backend
-on port 8085 before this entry was written.
+on port 8085 before this entry was written. **Approved by owner 2026-10-21.**
 
 **Backend**
 - Flyway **V6**: `report_idem_keys` (key → `report_id` + `payload_hash`,

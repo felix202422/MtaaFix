@@ -12,8 +12,8 @@
   `POST /reports` — stored-response replay, 409 conflict/in-progress, 400
   invalid key, 24 h TTL; mobile draft autosave + pending queue with
   foreground retry + categories cache + sign-out clear; honesty invariant,
-  live battery, 133 H2 + 8 PG / 167 mobile tests) — **SUBMITTED 2026-10-21,
-  owner approval pending**
+  live battery, 133 H2 + 8 PG / 167 mobile tests) — **APPROVED
+  2026-10-21**
 - **[0.14.0]** — Phase 13: Notifications and media (unread badge + prefs
   API, delivery separation with email kill-switch, password forgot/reset/
   change, media caps/MIME/magic hardening, web bell + reset pages + blob
@@ -426,7 +426,7 @@ iOS build macOS-only (B-X.4).
 
 **Gate: APPROVED by owner 2026-10-18 — Phase 14 may start**
 
-## Phase 14 — Offline Capabilities (COMPLETE — PENDING APPROVAL)
+## Phase 14 — Offline Capabilities (COMPLETE — APPROVED 2026-10-21)
 
 Master spec Phase 14 (lines 2047–2066) under the owner-approved scope:
 Option B backend idempotency; report-form draft storage; pending queue with
@@ -462,8 +462,7 @@ web's pre-existing `mtaafix.reportDraft.v1` key.
   background sync (foreground-only), iOS build unexecutable on Windows
   (B-X.4)
 
-**Gate: Phase 14 report delivered 2026-10-21 — awaiting owner approval
-(Phase 15 not started)**
+**Gate: APPROVED by owner 2026-10-21 — Phase 15 may start**
 
 ## Phase 15 — Quality Assurance (NOT STARTED)
 
@@ -529,5 +528,5 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 11 | Complete (approved 2026-10-17) |
 | 12 | Complete (approved 2026-10-18) |
 | 13 | Complete (approved 2026-10-18) |
-| 14 | Complete (submitted 2026-10-21, approval pending) |
+| 14 | Complete (approved 2026-10-21) |
 | 15–23 | Not started |

@@ -5,9 +5,9 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-21.
 
-## Current phase: Phase 14 COMPLETE — SUBMITTED, awaiting owner approval (2026-10-21) — next: Phase 15 (not started)
+## Current phase: Phase 14 APPROVED (2026-10-21) — next: Phase 15 (not started)
 
-## Phase 14 — Offline Capabilities (COMPLETE — AWAITING APPROVAL)
+## Phase 14 — Offline Capabilities (COMPLETE — APPROVED 2026-10-21)
 
 | Task | Status | Notes |
 | ---- | ------ | ----- |
@@ -21,7 +21,7 @@ Last updated: 2026-10-21.
 | Mobile tests | DONE | `flutter test` **167/167** (+33: offline controller ×12, storage ×6, pending screen ×5, form offline ×7, banner ×3, misc), `flutter analyze` 0 issues; test-driven fixes: post-dispose notify guard, empty-category draft rejection, SnackBar host Scaffold in tests |
 | Live battery | DONE | :8085 (PG): new key → 201 `MTF-2026-000035`; same key + same body → 201 **same id**; same key + different body → 409 `IDEMPOTENCY_CONFLICT`; key `short` → 400 `BAD_REQUEST` |
 | Design/docs | DONE | `docs/design/OFFLINE_CAPABILITIES.md` (new); CHANGELOG 0.15.0; ROADMAP Phase 14 + version history + delivery targets; API_DESIGN `POST /reports` row; SRS FR-2.11; BACKLOG deferrals |
-| Phase 14 report + approval gate | TODO | Report delivered 2026-10-21 — **waiting on owner approval** before Phase 15 |
+| Phase 14 report + approval gate | DONE | Report delivered 2026-10-21; **approved by owner 2026-10-21** — Phase 15 may start |
 
 **Known gaps/deferrals:** offline browsing of existing reports and offline map tiles (approved deferral); background sync — foreground-only retry by design; iOS build macOS-only (B-X.4); carried gaps unchanged (no push provider, email kill-switch off, no public media endpoint, no backend attach/delete status guard, JWTs survive password reset, FR-2.4 date filter).
 

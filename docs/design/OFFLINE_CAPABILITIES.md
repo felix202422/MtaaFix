@@ -1,6 +1,6 @@
 # MtaaFix — Offline Capabilities Specification
 
-> **Status:** v1.0 — SUBMITTED (owner approval pending) · Phase 14 · 2026-10-21
+> **Status:** v1.0 — APPROVED (owner, 2026-10-21) · Phase 14 · 2026-10-21
 > Scope as approved by the owner for Phase 14: **Option B** backend
 > idempotency, local report-form draft storage, a pending-submission queue with
 > foreground retry, categories cache for offline form loads, and local-state

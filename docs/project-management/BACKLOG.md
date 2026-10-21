@@ -583,7 +583,7 @@ UI (API-level only); browser-based map verification → Phase 15.
 - FR-2.4 report date filter still unsupported by the backend; iOS build
   macOS-only (B-X.4).
 
-## Phase 14 - Offline capabilities (COMPLETE - submitted 2026-10-21, approval pending)
+## Phase 14 - Offline capabilities (COMPLETE - approved 2026-10-21)
 
 ### B-14.1 Backend idempotency (Option B) - DONE
 - Flyway V6 `report_idem_keys` (key → `report_id` + `payload_hash`, 24 h
