@@ -472,6 +472,7 @@ public class ReportService {
             String contentType, Long sizeBytes, String url, String mediaType) {
         Report report = load(id);
         assertCanRead(report, user);
+        assertMediaEditable(report);
         if (contentType == null || !ALLOWED_MEDIA_CONTENT_TYPES.contains(contentType.toLowerCase())) {
             throw new IllegalArgumentException(
                     "Unsupported media MIME type; allowed: image/jpeg, image/png, image/webp (FR-9.2).");
@@ -508,6 +509,7 @@ public class ReportService {
         ReportMedia media = reportRepository.findMediaById(mediaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Media", mediaId));
         assertCanRead(media.getReport(), user);
+        assertMediaEditable(media.getReport());
         boolean privileged = user.getRole() == Role.MODERATOR || user.getRole() == Role.ADMINISTRATOR;
         boolean uploader = media.getUploadedBy() != null
                 && user.getId().equals(media.getUploadedBy().getId());
@@ -532,6 +534,7 @@ public class ReportService {
             org.springframework.web.multipart.MultipartFile file) {
         Report report = load(id);
         assertCanRead(report, user);
+        assertMediaEditable(report);
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Uploaded file must not be empty.");
         }
@@ -602,6 +605,18 @@ public class ReportService {
         }
     }
 
+    /**
+     * Phase 16 (D4): attachments are editable only while the report is active.
+     * Mirrors the mobile UI gate (FR-9.1) so the rule is enforced server-side.
+     */
+    private void assertMediaEditable(Report report) {
+        Status status = report.getStatus();
+        if (status == Status.RESOLVED || status == Status.REJECTED
+                || status == Status.DUPLICATE || status == Status.CLOSED) {
+            throw new IllegalStateException(
+                    "Attachments can no longer be changed: report is " + status.name().toLowerCase() + ".");
+        }
+    }
     private static boolean matchesMagicBytes(byte[] head, String contentType) {
         return switch (contentType.toLowerCase()) {
             case "image/png" -> (head[0] & 0xFF) == 0x89 && head[1] == 'P' && head[2] == 'N'

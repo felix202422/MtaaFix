@@ -190,6 +190,48 @@ void main() {
     expect(store.accessToken, 'access-1');
   });
 
+  test('change password adopts the rotated token pair (Phase 16 revocation)',
+      () async {
+    final store = InMemoryTokenStore();
+    late Map<String, dynamic> changeBody;
+    final controller = controllerWith(
+      MockClient((request) async {
+        if (request.url.path == '/api/v1/auth/login') {
+          return http.Response(jsonEncode(validTokens), 200,
+              headers: jsonHeaders());
+        }
+        if (request.url.path == '/api/v1/auth/password/change') {
+          changeBody = jsonDecode(request.body) as Map<String, dynamic>;
+          // The backend revokes the pre-change pair and returns a new one.
+          return http.Response(
+              jsonEncode({
+                'accessToken': 'access-2',
+                'refreshToken': 'refresh-2',
+                'accessTokenExpiresIn': 900,
+                'user': validUser,
+              }),
+              200,
+              headers: jsonHeaders());
+        }
+        fail('Unexpected request: ${request.method} ${request.url}');
+      }),
+      store,
+    );
+    await controller.login('citizen@example.com', 'Password1!');
+
+    final ok = await controller.changePassword(
+        currentPassword: 'Password1!', newPassword: 'NewPassword1');
+
+    expect(ok, isTrue);
+    expect(changeBody['currentPassword'], 'Password1!');
+    expect(changeBody['newPassword'], 'NewPassword1');
+    expect(store.accessToken, 'access-2',
+        reason: 'rotated access token must be persisted');
+    expect(store.refreshToken, 'refresh-2',
+        reason: 'rotated refresh token must be persisted');
+    expect(controller.isAuthenticated, isTrue);
+  });
+
   test('logout posts the refresh token and clears the session', () async {
     final store = InMemoryTokenStore();
     String? loggedOutRefreshToken;

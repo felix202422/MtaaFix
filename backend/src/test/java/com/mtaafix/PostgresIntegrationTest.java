@@ -52,6 +52,8 @@ class PostgresIntegrationTest {
                 "Phase 5 V2 migration must be applied");
         assertTrue(rows.stream().anyMatch(r -> "6".equals(String.valueOf(r[0]))),
                 "Phase 14 V6 migration must be applied");
+        assertTrue(rows.stream().anyMatch(r -> "7".equals(String.valueOf(r[0]))),
+                "Phase 16 V7 migration must be applied");
         assertTrue(rows.stream().allMatch(r -> Boolean.TRUE.equals(r[2])));
     }
 

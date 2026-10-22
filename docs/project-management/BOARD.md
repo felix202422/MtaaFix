@@ -3,9 +3,29 @@
 Local tracking board (GitHub `gh` CLI unavailable; revisit if auth is fixed).
 Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
-Last updated: 2026-10-21.
+Last updated: 2026-10-22.
 
-## Current phase: Phase 15 APPROVED (2026-10-21) — next: Phase 16 (not started)
+## Current phase: Phase 16 APPROVED (2026-10-22) — next: Phase 17 (not started)
+
+## Phase 16 — Security Review and Hardening (COMPLETE — APPROVED 2026-10-22)
+
+| Task | Status | Notes |
+| ---- | ------ | ----- |
+| Owner-approved scope | DONE | Fix Critical/High + two cheap Mediums; implement rate limiting; JWT revocation via `token_version` (reset **and** change); defer offline-storage encryption to Phase 20; pragmatic dependency review (`npm audit` + Maven inventory, no NVD scan); review record at `docs/standards/SECURITY_REVIEW.md` |
+| Review record | DONE | `docs/standards/SECURITY_REVIEW.md` — 10 mandated areas, findings F1–F12 (severities, evidence, dispositions), deferral table, backup/restore runbook, live-verification evidence table |
+| D1/D2 error contracts | DONE | 415 (`UNSUPPORTED_MEDIA_TYPE`) + 405 (`METHOD_NOT_ALLOWED`) handlers in `GlobalExceptionHandler` + `WebErrorHandlingTest` ×4; Phase 15 500-evidence was a **stale Oct-20 jar** — rebuilt artifact re-probed live (400/415/405 ApiError) |
+| D3 JWT revocation | DONE | Flyway **V7** `users.token_version`; `tv` claim on access+refresh; filter + refresh reject stale; reset **and** change bump the version; `/auth/password/change` now returns rotated `AuthResponse` — web (`setAuthTokens`) + mobile (`setSession`) persist it; rotation tests both clients |
+| D4 media status gate | DONE | `ReportService.assertMediaEditable` → 409 on RESOLVED/REJECTED/DUPLICATE/CLOSED for add/upload/delete media; `MediaLimitsTest` terminal-status test; live probe upload → citizen-cancel → upload 409 |
+| Rate limiting | DONE | `RateLimitFilter` per-IP fixed windows: `POST /api/v1/auth/**` 30/min, `POST /api/v1/reports` 20/min; 429 + `Retry-After` + ApiError `RATE_LIMITED`; `RATE_LIMIT_*` config; disabled in test profile, re-enabled in `RateLimitTest` ×4; live: forgot-password attempt 31 → 429 + header |
+| Secrets/deployment | DONE | `ProdSecretsGuard` (`prod` profile) refuses shipped defaults/blanks/short secrets; `.env.example` annotated with prod-required overrides + `RATE_LIMIT_*`; `management.health.mail.enabled` mirrors `NOTIFICATIONS_EMAIL_ENABLED` (health UP without SMTP) |
+| Dependency review | DONE | Web prod 0 vulns; dev-only advisories recorded (vitest/vite/tinypool — majors deferred, B-16.2); Maven inventory: Spring Boot 4.1.1, jjwt 0.12.6, postgresql 42.7.7 current — no core updates |
+| Logging/privacy audit | DONE | No credentials/tokens/PII in log statements (grep evidence in review record); audit trail keeps actor id + hashed reset tokens only |
+| Suites | DONE | backend `mvn test` **144/144** H2 (+11 new tests); PG IT **8/8** (`MTAAFIX_PG_IT=true`, V7 applied); web `tsc` 0 / `vitest` **68/68**; Flutter `flutter test` **171/171** |
+| Live battery | DONE | Rebuilt jar on :8085, `backend/target/battery-p16.ps1` **23/23** — regression, admin-only swagger, 401 anonymous, 415/405/400 contracts, D4 gate, D3 revocation E2E (old pair 401 → new pair 200), D6 429-at-31 + Retry-After, health UP |
+| Docs sync | DONE | SECURITY.md checklist; CHANGELOG 0.17.0; ROADMAP Phase 16 + version history + delivery table; BACKLOG D1–D5 dispositions + B-16.1–5; BOARD this table; `.env.example` |
+| Phase 16 report + approval gate | DONE | Report delivered 2026-10-22; **approved by owner 2026-10-22** — Phase 17 may start |
+
+**Known deferrals:** offline drafts/outbox encryption → Phase 20 (B-16.1); web dev-toolchain majors (B-16.2); backup automation/PITR beyond documented runbook (B-16.3); prod-profile activation + forwarded-headers for the rate limiter → Phase 18 (B-16.4); full NVD scan (B-16.5, owner-skipped).
 
 ## Phase 15 — Quality Assurance (COMPLETE — APPROVED 2026-10-21)
 
@@ -293,6 +313,9 @@ Last updated: 2026-10-21.
 | Phase 11 - Flutter application foundation | Complete (approved 2026-10-17) | Route guards, secure token storage, auth wiring, themed screens, Android config fixed (AAPT `configChanges` + NDK 28.2), iOS scaffolded (needs macOS); 29/29 Flutter tests + debug APK |
 | Phase 12 - Flutter citizen features | Complete (approved 2026-10-18) | Onboarding → shell → create → detail → map → notifications → profile; live-backend emulator run; 111/111 tests; 5 verification defects fixed (tofu icons, bare-array decode, map bbox, dashboard stats shape, tab staleness) |
 | Phase 13 - Notifications and media | Complete (approved 2026-10-18) | V5 prefs/deliveries/reset-tokens, unread-count + preferences API, forgot/reset/change password, delivery separation with kill-switch, media caps/MIME/magic hardening, web bell + reset pages + blob media, mobile badge/prefs/recovery/evidence; gates 124+7 PG / 68 web / 134 mobile + live battery |
+| Phase 14 - Offline capabilities | Complete (approved 2026-10-21) | Backend idempotency (V6), mobile draft/outbox/pending-queue with foreground retry, categories cache, sign-out clear; 133+8 PG / 68 web / 167 mobile; live battery 67/67 |
+| Phase 15 - Quality assurance | Complete (approved 2026-10-21) | Gap-fill tests (critical journey, 320×640 no-overflow, semantics), 5 responsive fixes, lazy map mount + test tile provider, role-boundary/lifecycle live battery 63/63 |
+| Phase 16 - Security review and hardening | Complete (approved 2026-10-22) | 10-area review record; 415/405 contracts (D1/D2), JWT revocation via token_version incl. rotating password change (D3), media status gate (D4), per-IP rate limiting, prod secrets guard; 144+8 PG / 68 web / 171 mobile + live battery 23/23 |
 
 ## Environment notes
 

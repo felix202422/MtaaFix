@@ -674,15 +674,16 @@ UI (API-level only); browser-based map verification → Phase 15.
 ### Phase 15 known defects + mitigation plan
 Exit criterion: critical defects resolved or explicitly documented with an
 approved mitigation plan. Fixed this phase: five 320x640 overflow defects
-(B-15.3). Carried items:
+(B-15.3). Carried items (D1-D4 resolved in Phase 16; see the Phase 16
+section below for the verification evidence):
 
 | # | Defect / limitation | Evidence | Severity | Mitigation / disposition (target) |
 | - | ------------------- | -------- | -------- | --------------------------------- |
-| D1 | Non-JSON body on `POST /api/v1/reports` -> 500 instead of 4xx | Live probe Phase 15 (reproduced) | Low (error hygiene) | Map `HttpMessageNotReadableException` -> 400 in `GlobalExceptionHandler`; Phase 16 error/security review |
-| D2 | Wrong HTTP method on POST-only endpoints -> 500 instead of 405 | Live probe Phase 15 (reproduced) | Low (error hygiene) | Same handler hardening as D1; Phase 16 |
-| D3 | JWTs survive password reset (no revocation) | Phase 13 flagged decision | Medium (security) | Accepted for MVP: 15 min access TTL + refresh-token invalidation on password change; revisit server-side revocation in Phase 16 |
-| D4 | Media attach/delete has no backend report-status guard (mobile UI gates only) | Phase 13 | Medium (security) | Small backend guard (reject on terminal statuses); Phase 16 |
-| D5 | Offline storage (drafts/outbox) unencrypted at rest | Phase 14 | Medium (device security) | App-sandbox only today; file encryption + keystore-backed token hardening candidate for Phase 16/20 |
+| D1 | Non-JSON body on `POST /api/v1/reports` -> 500 instead of 4xx | Live probe Phase 15 (reproduced; stale jar) | Low (error hygiene) | **RESOLVED Phase 16** - source already mapped malformed JSON -> 400; rebuilt jar verified live (400 `MALFORMED_REQUEST`) + `WebErrorHandlingTest` |
+| D2 | Wrong HTTP method on POST-only endpoints -> 500 instead of 405 | Live probe Phase 15 (reproduced; stale jar) | Low (error hygiene) | **RESOLVED Phase 16** - explicit 405 handler + live probe + tests |
+| D3 | JWTs survive password reset (no revocation) | Phase 13 flagged decision | Medium (security) | **RESOLVED Phase 16** - `users.token_version` (V7), `tv` claim, filter/refresh checks; reset and change bump; change rotates the pair (web/mobile persist it) |
+| D4 | Media attach/delete has no backend report-status guard (mobile UI gates only) | Phase 13 | Medium (security) | **RESOLVED Phase 16** - `assertMediaEditable` 409 on terminal statuses; tests + live probe |
+| D5 | Offline storage (drafts/outbox) unencrypted at rest | Phase 14 | Medium (device security) | **DEFERRED by owner (Phase 16)** - tokens already Keystore-protected via `flutter_secure_storage`; drafts/outbox encryption = B-16.1 (Phase 20) |
 | D6 | No push provider (FCM/APNs); `pushAvailable=false` | Phase 13 | Medium (feature) | Needs external provider credentials; Phase 20/21 |
 | D7 | Email notifications behind kill-switch, no SMTP provider | Phase 13 | Low | EMAIL rows recorded SKIPPED; configure SMTP before Phase 20 beta |
 | D8 | FR-2.4 report date filter unsupported by backend | Since Phase 12 | Low (feature gap) | Deferred; Phase 21 advanced features |
@@ -692,6 +693,19 @@ approved mitigation plan. Fixed this phase: five 320x640 overflow defects
 | D12 | jsdom cannot assert CSS-driven responsive visibility | Phase 15 audit | Info (tooling) | Covered by lint + semantics tests + documented audit; real-browser check in Phase 20 |
 | D13 | SRS table rows 14-26 (device/section listing) stale vs current feature set | Carried | Low (docs) | SRS sync pass in Phase 20 release prep |
 | D14 | Phase 14 deferrals: offline browsing/map tiles, background sync | Owner-approved deferral | Low | Remains approved scope; reconsider Phase 21 |
+
+### Phase 16 outcomes + deferrals
+Exit criterion met 2026-10-22 (review record:
+`docs/standards/SECURITY_REVIEW.md`; live battery 23/23). Deferrals and
+follow-ups owned by later phases:
+
+| ID | Item | Target | AC summary |
+| -- | ---- | ------ | ---------- |
+| B-16.1 | Encrypt mobile offline drafts/outbox at rest (D5) | Phase 20 | Keystore-backed key; encrypted `DraftStore`/`OutboxStore` files; device testing; tokens already covered by `flutter_secure_storage` |
+| B-16.2 | Web dev-toolchain majors (`npm audit` dev-only advisories: vitest 5, vite 8 / esbuild, tinypool) | Scheduled toolchain task | `npm audit` clean including dev; suites stay green after the breaking upgrades |
+| B-16.3 | Backup automation + PITR (runbook documented in SECURITY_REVIEW) | Ops/deploy phase | Scheduled `pg_dump` + `uploads/` backup; restore drill evidence; retention policy |
+| B-16.4 | Phase 18 handoffs: activate `prod` profile with real secrets (`ProdSecretsGuard`); forwarded-header/proxy config so the rate limiter sees real client IPs | Phase 18 | Boot under `prod` refuses weak defaults; 429 buckets keyed by true client IP behind the proxy |
+| B-16.5 | Full NVD dependency scan (skipped per owner: network/API friction) | Ops phase if scanner provisioned | Recorded scan output attached to a future review refresh |
 
 ---
 

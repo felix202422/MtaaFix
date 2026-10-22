@@ -48,12 +48,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String subject = tokenProvider.getSubject(token);
                 User user = userRepository.findById(subject).orElse(null);
                 if (user != null && user.isActive()) {
-                    List<SimpleGrantedAuthority> authorities =
-                            List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(user, null, authorities);
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    if (tokenProvider.getTokenVersion(token) != user.getTokenVersion()) {
+                        log.debug("Rejected token: token_version mismatch for subject {}", subject);
+                    } else {
+                        List<SimpleGrantedAuthority> authorities =
+                                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(user, null, authorities);
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
                 }
             }
         } catch (JwtException | IllegalArgumentException ex) {

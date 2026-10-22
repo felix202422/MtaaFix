@@ -8,6 +8,13 @@
 
 ## Version History
 
+- **[0.17.0]** — Phase 16: Security review and hardening (10-area review
+  record in `docs/standards/SECURITY_REVIEW.md`; 415/405 error contracts,
+  JWT revocation via `users.token_version` incl. rotating password-change
+  contract, server-side media status gate, per-IP rate limiting on auth +
+  report submission, prod-profile secret fail-fast, health/mail indicator
+  fix; suites 144 H2 + 8 PG / 68 web / 171 mobile; live battery 23/23) —
+  **APPROVED 2026-10-22**
 - **[0.16.0]** — Phase 15: Quality assurance (full suites green — 133 H2 +
   8 PG / 68 web / 170 mobile; new citizen critical-journey, 320×640
   no-overflow and semantics tests; five responsive overflow fixes; lazy map
@@ -510,10 +517,42 @@ Master spec Phase 15 (lines 2069–2089): validate the integrated system.
 
 **Gate: APPROVED by owner 2026-10-21 — Phase 16 may start**
 
-## Phase 16 — Security Hardening (NOT STARTED)
+## Phase 16 — Security Review and Hardening (COMPLETE - APPROVED 2026-10-22)
 
-Structured review per Part 16 (authn/z, validation, uploads, secrets, dependencies,
-logging/privacy, rate limiting, CORS, backups).
+Master spec Phase 16: structured security review across the ten mandated
+areas with remediation of flagged findings. Owner-approved scope
+(2026-10-22): fix Critical/High + two cheap Mediums; implement rate
+limiting; JWT revocation via `token_version` (reset and change); defer
+offline-storage encryption to Phase 20; pragmatic dependency review; review
+record at `docs/standards/SECURITY_REVIEW.md`.
+
+- **Review record**: `docs/standards/SECURITY_REVIEW.md` — findings F1-F12
+  with severities, evidence, and dispositions across all ten areas; deferral
+  table; backup/restore runbook (documentation-level remediation)
+- **D1/D2 error contracts**: explicit 415 (`UNSUPPORTED_MEDIA_TYPE`) and 405
+  (`METHOD_NOT_ALLOWED`) handlers; the Phase 15 500-evidence came from a
+  stale Oct-20 jar — rebuilt artifact re-probed live (415/405/400 ApiError)
+- **D3 JWT revocation**: Flyway **V7** `users.token_version`; `tv` claim on
+  both token types; filter + refresh-flow checks; reset and change bump the
+  version; `/auth/password/change` returns a rotated pair that web and
+  mobile persist (contract updated in both clients + tests)
+- **D4 media gate**: `assertMediaEditable` rejects attach/delete with 409 on
+  RESOLVED/REJECTED/DUPLICATE/CLOSED (server-side mirror of the mobile rule)
+- **Rate limiting** (SECURITY_STANDARDS gap): `RateLimitFilter` per-IP fixed
+  windows on `POST /api/v1/auth/**` (30/min) and `POST /reports` (20/min);
+  429 + Retry-After + ApiError; config via `RATE_LIMIT_*`; proxy-IP caveat
+  documented for Phase 18
+- **Secrets/deployment**: `ProdSecretsGuard` refuses shipped defaults under
+  the `prod` profile; `.env.example` annotated; health no longer false-DOWN
+  without SMTP (`management.health.mail.enabled` mirrors the feature flag)
+- **Suites**: backend `mvn test` **144/144** H2 (+11 tests); PG IT **8/8**
+  (`MTAAFIX_PG_IT=true`, V7 applied); web `tsc` 0 / `vitest` **68/68**;
+  Flutter `flutter test` **171/171**
+- **Live battery**: `backend/target/battery-p16.ps1` **23/23** on :8085
+  (rebuilt jar) — regression + D1/D2 contracts + D3 revocation E2E + D4
+  gate + D6 429-at-31 with Retry-After + health UP
+
+**Gate: APPROVED by owner 2026-10-22 — Phase 17 may start**
 
 ## Phase 17 — Performance and Reliability (NOT STARTED)
 
@@ -551,7 +590,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 
 ---
 
-## Delivery Targets (updated 2026-10-21)
+## Delivery Targets (updated 2026-10-22)
 
 | Phase | Status |
 | ----- | ------ |
@@ -571,4 +610,5 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 13 | Complete (approved 2026-10-18) |
 | 14 | Complete (approved 2026-10-21) |
 | 15 | Complete (approved 2026-10-21) |
-| 16–23 | Not started |
+| 16 | Complete (approved 2026-10-22) |
+| 17–23 | Not started |

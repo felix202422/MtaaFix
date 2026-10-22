@@ -62,8 +62,9 @@ public class AuthController {
     public ResponseEntity<AuthResponse> refresh(
             @Valid @RequestBody RefreshRequest request) {
         User user = userService.refresh(request.refreshToken());
-        String accessToken = tokenProvider.generateAccessToken(user.getId(), user.getRole().name());
-        String newRefreshToken = tokenProvider.generateRefreshToken(user.getId());
+        String accessToken = tokenProvider.generateAccessToken(user.getId(), user.getRole().name(),
+                user.getTokenVersion());
+        String newRefreshToken = tokenProvider.generateRefreshToken(user.getId(), user.getTokenVersion());
         return ResponseEntity.ok(AuthResponse.of(accessToken, newRefreshToken, 900L,
                 userService.toDto(user)));
     }
@@ -106,12 +107,17 @@ public class AuthController {
         return ResponseEntity.ok(SimpleResponse.ok("Password has been reset"));
     }
 
-    @Operation(summary = "Change own password while authenticated")
+    @Operation(summary = "Change own password while authenticated; rotates the token pair "
+            + "(pre-change tokens are revoked, Phase 16 / D3)")
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/password/change")
-    public ResponseEntity<SimpleResponse> changePassword(@AuthenticationPrincipal User user,
+    public ResponseEntity<AuthResponse> changePassword(@AuthenticationPrincipal User user,
             @Valid @RequestBody ChangePasswordRequest request) {
-        passwordResetService.change(user, request.currentPassword(), request.newPassword());
-        return ResponseEntity.ok(SimpleResponse.ok("Password changed"));
+        user = passwordResetService.change(user, request.currentPassword(), request.newPassword());
+        String accessToken = tokenProvider.generateAccessToken(user.getId(), user.getRole().name(),
+                user.getTokenVersion());
+        String refreshToken = tokenProvider.generateRefreshToken(user.getId(), user.getTokenVersion());
+        return ResponseEntity.ok(AuthResponse.of(accessToken, refreshToken, 900L,
+                userService.toDto(user)));
     }
 }

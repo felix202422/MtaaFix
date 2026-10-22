@@ -363,8 +363,10 @@ export const api = {
     currentPassword: string,
     newPassword: string,
     options: RequestOptions = {},
-  ): Promise<SimpleMessage> {
-    return request<SimpleMessage>('/auth/password/change', {
+  ): Promise<AuthResponse> {
+    // Phase 16 (D3): the backend revokes the pre-change token pair and
+    // returns a fresh one; callers must persist it via setAuthTokens.
+    return request<AuthResponse>('/auth/password/change', {
       ...options,
       method: 'POST',
       body: { currentPassword, newPassword },

@@ -93,22 +93,29 @@ public class PasswordResetService {
         }
         User user = token.getUser();
         user.setPasswordHash(hashPassword(newPassword));
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
         token.setUsedAt(Instant.now());
         tokenRepository.save(token);
-        // Note: already-issued JWTs stay valid until their natural expiry
-        // (stateless tokens, no revocation list) - documented limitation.
+        // Phase 16 / D3: every outstanding access/refresh token now carries a
+        // stale "tv" claim and is rejected by the filter and refresh flow.
     }
 
-    /** Authenticated password change (Phase 13 companion to FR-1.7). */
+    /**
+     * Authenticated password change (Phase 13 companion to FR-1.7). Bumps the
+     * token version like {@link #reset} and returns the updated user so the
+     * caller can issue a fresh token pair for the session that performed the
+     * change (all older tokens are revoked).
+     */
     @Transactional
-    public void change(User user, String currentPassword, String newPassword) {
+    public User change(User user, String currentPassword, String newPassword) {
         if (!org.springframework.security.crypto.bcrypt.BCrypt.checkpw(currentPassword,
                 user.getPasswordHash())) {
             throw new IllegalArgumentException("Current password is incorrect.");
         }
         user.setPasswordHash(hashPassword(newPassword));
-        userRepository.save(user);
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        return userRepository.save(user);
     }
 
     private static String hashPassword(String newPassword) {

@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.17.0] — 2026-10-22
+### Phase 16 - Security review and hardening
+Structured security review across the ten master-spec areas (review record:
+`docs/standards/SECURITY_REVIEW.md`) with remediation of the flagged
+Critical/High findings plus two cheap Mediums, per owner-approved scope
+(2026-10-22): 415/405 error contracts (D1/D2), JWT revocation via
+`token_version` (D3), server-side media status gate (D4), per-IP rate
+limiting on auth + report submission (SECURITY_STANDARDS gap), prod-profile
+secret fail-fast, health/mail indicator fix, dependency review, logging/privacy
+audit, and a backup/restore runbook. Live battery **23/23** against the
+rebuilt jar (fresh build - the stale Oct-20 jar had been serving the old
+500s); offline-storage encryption deferred to Phase 20 by owner decision.
+**Approved by owner 2026-10-22.**
+
+**Backend**
+- Flyway **V7** `users.token_version`; `tv` claim on access+refresh JWTs;
+  filter + refresh reject stale versions; password reset **and** change bump
+  the version; `/auth/password/change` returns a rotated `AuthResponse`
+- `RateLimitFilter`: per-IP fixed one-minute windows on `POST /api/v1/auth/**`
+  (30/min) and `POST /api/v1/reports` (20/min); 429 + `Retry-After` +
+  ApiError `RATE_LIMITED`; configurable via `RATE_LIMIT_*`; disabled under
+  the test profile
+- `GlobalExceptionHandler`: explicit 415 (`UNSUPPORTED_MEDIA_TYPE`) and 405
+  (`METHOD_NOT_ALLOWED`) ApiError handlers (D1/D2)
+- `ReportService.assertMediaEditable`: attach/delete rejected with 409 once
+  the report is RESOLVED/REJECTED/DUPLICATE/CLOSED (server-side mirror of
+  the mobile gate)
+- `ProdSecretsGuard` (`prod` profile): startup refuses shipped JWT/DB/geo
+  secret defaults, blanks, and <32-char jwt/geo secrets
+- `management.health.mail.enabled` mirrors `NOTIFICATIONS_EMAIL_ENABLED` so
+  health stays UP while SMTP is intentionally unconfigured
+- Suites: `mvn test` **144/144** H2 (+11 new tests: rate limit 4, error
+  handling 4, token provider 2, media gate 1); PG IT **8/8**
+  (`MTAAFIX_PG_IT=true`, V7 applied)
+
+**Web**
+- `api.changePassword` now returns `AuthResponse`; `ProfilePage` persists the
+  rotated pair via `setAuthTokens` (pre-change tokens are revoked server-side)
+- `tsc --noEmit` 0, `vitest run` **68/68** (rotation assertion added)
+
+**Mobile**
+- `auth_controller.changePassword` adopts rotated tokens from the response
+  (`setSession`); new unit test asserts persistence
+- `flutter test` **171/171**
+
+**Live battery** (`backend/target/battery-p16.ps1`, rebuilt jar on :8085)
+- **23/23**: health UP, auth + report-create regression, swagger admin-only,
+  401 anonymous, 415/405/400 ApiError contracts, D4 gate (upload -> cancel ->
+  upload 409), D3 revocation E2E (old access/refresh 401, new pair accepted),
+  D6 rate limit (429 at the 31st forgot-password attempt + `Retry-After`)
+
+**Docs**
+- `docs/standards/SECURITY_REVIEW.md` (10 areas, findings F1-F12, evidence,
+  deferrals, backup runbook); SECURITY.md checklist updated; ROADMAP/BACKLOG/
+  BOARD synced; `.env.example` annotated with prod-required overrides and
+  `RATE_LIMIT_*` variables
+
 ## [0.16.0] — 2026-10-21
 ### Phase 15 - Quality assurance
 Full-suite validation per master spec Phase 15 (lines 2069-2089): backend,

@@ -212,6 +212,37 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(apiError);
     }
 
+    // Phase 16 (D1): content-type mismatches return 415 with the standard
+    // ApiError body (the stale Phase 15 jar returned 500 for this probe).
+    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiError> handleUnsupportedMediaType(
+            org.springframework.web.HttpMediaTypeNotSupportedException ex,
+            WebRequest request) {
+        log.warn("Unsupported media type on path {}", request.getDescription(false));
+        ApiError apiError = ApiError.of(
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                "UNSUPPORTED_MEDIA_TYPE",
+                "The request content type is not supported by this endpoint.",
+                request.getDescription(false),
+                Map.of());
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(apiError);
+    }
+
+    // Phase 16 (D2): wrong HTTP method must be 405, not an unhandled 500.
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiError> handleMethodNotSupported(
+            org.springframework.web.HttpRequestMethodNotSupportedException ex,
+            WebRequest request) {
+        log.warn("Method not allowed on path {}", request.getDescription(false));
+        ApiError apiError = ApiError.of(
+                HttpStatus.METHOD_NOT_ALLOWED,
+                "METHOD_NOT_ALLOWED",
+                "HTTP method '" + ex.getMethod() + "' is not supported by this endpoint.",
+                request.getDescription(false),
+                Map.of());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(apiError);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleAll(Exception ex, WebRequest request) {
         log.error("Unhandled error", ex);

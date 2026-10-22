@@ -1,6 +1,7 @@
 package com.mtaafix;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -8,7 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mtaafix.report.domain.Report;
 import com.mtaafix.report.repository.ReportCategoryRepository;
+import com.mtaafix.report.repository.ReportRepository;
 import com.mtaafix.user.domain.User;
 import com.mtaafix.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -44,6 +47,8 @@ class MediaLimitsTest {
     private UserRepository userRepository;
     @Autowired
     private ReportCategoryRepository categoryRepository;
+    @Autowired
+    private ReportRepository reportRepository;
 
     private User seedUser(User.Role role) {
         return userRepository.save(new User("ml-" + System.nanoTime() + "@mtaafix.test",
@@ -201,5 +206,51 @@ class MediaLimitsTest {
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/v1/media/" + mediaId + "/content"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    /**
+     * Phase 16 (D4): the attach/delete status gate was mobile-UI-only; the
+     * server now enforces the same rule (FR-9.1: attachments stay editable
+     * while the report is active).
+     */
+    @Test
+    void terminalStatusBlocksAttachmentChanges() throws Exception {
+        String token = bearer(seedUser(User.Role.CITIZEN));
+        String id = createReport(token);
+        uploadOk(token, id);
+
+        MvcResult current = mockMvc.perform(get("/api/v1/reports/" + id)
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andReturn();
+        String mediaId = MAPPER.readTree(current.getResponse().getContentAsString())
+                .get("media").get(0).get("id").asText();
+
+        for (Report.Status terminal : new Report.Status[] {
+                Report.Status.RESOLVED, Report.Status.REJECTED,
+                Report.Status.DUPLICATE, Report.Status.CLOSED}) {
+            Report report = reportRepository.findById(id).orElseThrow();
+            report.setStatus(terminal);
+            reportRepository.save(report);
+
+            mockMvc.perform(multipart("/api/v1/reports/" + id + "/media/upload")
+                            .file(jpegPhoto())
+                            .header("Authorization", token))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.code").value("INVALID_STATUS_TRANSITION"));
+
+            mockMvc.perform(post("/api/v1/reports/" + id + "/media")
+                            .header("Authorization", token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"fileName\":\"a.jpg\",\"originalName\":\"a.jpg\","
+                                    + "\"contentType\":\"image/jpeg\",\"sizeBytes\":100,"
+                                    + "\"url\":\"/api/v1/media/aaaaaaaa-bbbb-cccc-dddd-"
+                                    + "eeeeeeeeeeee/content\",\"mediaType\":\"PHOTO\"}"))
+                    .andExpect(status().isConflict());
+
+            mockMvc.perform(delete("/api/v1/media/" + mediaId)
+                            .header("Authorization", token))
+                    .andExpect(status().isConflict());
+        }
     }
 }

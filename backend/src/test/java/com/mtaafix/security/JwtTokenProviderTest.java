@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.jsonwebtoken.Jwts;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import org.junit.jupiter.api.Test;
 
 class JwtTokenProviderTest {
@@ -17,7 +20,7 @@ class JwtTokenProviderTest {
 
     @Test
     void accessTokenCarriesAccessTypAndRole() {
-        String token = provider.generateAccessToken("user-1", "CITIZEN");
+        String token = provider.generateAccessToken("user-1", "CITIZEN", 0);
 
         assertTrue(provider.validateToken(token));
         assertEquals("user-1", provider.getSubject(token));
@@ -28,7 +31,7 @@ class JwtTokenProviderTest {
 
     @Test
     void refreshTokenCarriesRefreshTypAndNoRole() {
-        String token = provider.generateRefreshToken("user-1");
+        String token = provider.generateRefreshToken("user-1", 0);
 
         assertTrue(provider.validateToken(token));
         assertEquals("user-1", provider.getSubject(token));
@@ -57,7 +60,32 @@ class JwtTokenProviderTest {
     void tokenSignedWithDifferentSecretIsRejected() {
         JwtTokenProvider other = new JwtTokenProvider(
                 "another-secret-that-is-long-enough-2026", 900_000L, 604_800_000L);
-        String foreign = other.generateAccessToken("user-1", "ADMINISTRATOR");
+        String foreign = other.generateAccessToken("user-1", "ADMINISTRATOR", 0);
         assertFalse(provider.validateToken(foreign));
+    }
+
+    @Test
+    void tokenVersionClaimRoundTrips() {
+        String access = provider.generateAccessToken("user-1", "CITIZEN", 4);
+        String refresh = provider.generateRefreshToken("user-1", 4);
+        assertEquals(4, provider.getTokenVersion(access));
+        assertEquals(4, provider.getTokenVersion(refresh));
+        assertEquals(0, provider.getTokenVersion(provider.generateAccessToken("user-1", "CITIZEN", 0)));
+    }
+
+    @Test
+    void legacyTokenWithoutVersionClaimReadsAsZero() {
+        // Tokens issued before V7 have no "tv" claim; they must parse as
+        // version 0 (the column default) so live sessions survive the upgrade.
+        String legacy = Jwts.builder()
+                .subject("user-1")
+                .claim("typ", JwtTokenProvider.TYPE_ACCESS)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 60_000))
+                .signWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor(
+                        SECRET.getBytes(StandardCharsets.UTF_8)))
+                .compact();
+        assertTrue(provider.validateToken(legacy));
+        assertEquals(0, provider.getTokenVersion(legacy));
     }
 }

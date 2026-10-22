@@ -1,5 +1,6 @@
 package com.mtaafix;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -98,6 +99,19 @@ class PasswordResetTest {
         String rawToken = passwordResetService.requestReset(user.getEmail());
         org.junit.jupiter.api.Assertions.assertNotNull(rawToken);
 
+        // Phase 16 (D3): capture a live session issued before the reset.
+        MvcResult preResetLogin = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + user.getEmail()
+                                + "\",\"password\":\"" + PASSWORD + "\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        var preResetTokens = MAPPER.readTree(preResetLogin.getResponse().getContentAsString());
+        String oldAccess = preResetTokens.get("accessToken").asText();
+        String oldRefresh = preResetTokens.get("refreshToken").asText();
+        mockMvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + oldAccess))
+                .andExpect(status().isOk());
+
         List<PasswordResetToken> tokens = tokenRepository.findByUserIdAndUsedAtIsNull(user.getId());
         org.junit.jupiter.api.Assertions.assertEquals(1, tokens.size());
         PasswordResetToken stored = tokens.get(0);
@@ -120,6 +134,14 @@ class PasswordResetTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + user.getEmail()
                                 + "\",\"password\":\"" + PASSWORD + "\"}"))
+                .andExpect(status().isUnauthorized());
+
+        // Phase 16 (D3): the reset revoked every token issued before it.
+        mockMvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + oldAccess))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + oldRefresh + "\"}"))
                 .andExpect(status().isUnauthorized());
 
         // Single-use: the same token must not work twice.
@@ -170,7 +192,15 @@ class PasswordResetTest {
     @Test
     void changePasswordVerifiesCurrentAndRotates() throws Exception {
         User user = seedUser();
-        String token = "Bearer " + login(user, PASSWORD);
+        MvcResult initial = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + user.getEmail()
+                                + "\",\"password\":\"" + PASSWORD + "\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        var preChange = MAPPER.readTree(initial.getResponse().getContentAsString());
+        String token = "Bearer " + preChange.get("accessToken").asText();
+        String oldRefresh = preChange.get("refreshToken").asText();
 
         mockMvc.perform(post("/api/v1/auth/password/change")
                         .header("Authorization", token)
@@ -179,11 +209,33 @@ class PasswordResetTest {
                                 + "\"newPassword\":\"brandnewpass1\"}"))
                 .andExpect(status().isBadRequest());
 
-        mockMvc.perform(post("/api/v1/auth/password/change")
+        // Phase 16 (D3): a successful change revokes the pre-change token pair
+        // and returns a fresh one for the session that performed the change.
+        MvcResult changed = mockMvc.perform(post("/api/v1/auth/password/change")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"currentPassword\":\"" + PASSWORD
                                 + "\",\"newPassword\":\"brandnewpass1\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andReturn();
+        var rotated = MAPPER.readTree(changed.getResponse().getContentAsString());
+        String oldAccess = token.substring("Bearer ".length());
+        String newAccess = rotated.get("accessToken").asText();
+        String newRefresh = rotated.get("refreshToken").asText();
+
+        mockMvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + oldAccess))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + oldRefresh + "\"}"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + newAccess))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + newRefresh + "\"}"))
                 .andExpect(status().isOk());
 
         login(user, "brandnewpass1");

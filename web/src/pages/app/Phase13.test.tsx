@@ -164,11 +164,20 @@ describe('notification preferences (FR-6.4)', () => {
 
   it('changes the password from the profile page', async () => {
     localStorage.setItem('mtaafix.accessToken', 'access-token');
+    localStorage.setItem('mtaafix.refreshToken', 'refresh-token');
     let changeBody: unknown = null;
     seedAuthed((url, init) => {
       if (url.includes('/auth/password/change')) {
         changeBody = JSON.parse(init?.body as string);
-        return Promise.resolve(json({ success: true, message: 'Password changed' }));
+        // Phase 16 (D3): the backend rotates the pair on password change.
+        return Promise.resolve(
+          json({
+            accessToken: 'rotated-access',
+            refreshToken: 'rotated-refresh',
+            accessTokenExpiresIn: 900,
+            user: citizen,
+          }),
+        );
       }
       return undefined;
     });
@@ -193,6 +202,12 @@ describe('notification preferences (FR-6.4)', () => {
         currentPassword: 'OldPass123',
         newPassword: 'NewPass123',
       });
+    });
+
+    // Rotated pair replaces the pre-change tokens (revoked server-side).
+    await waitFor(() => {
+      expect(localStorage.getItem('mtaafix.accessToken')).toBe('rotated-access');
+      expect(localStorage.getItem('mtaafix.refreshToken')).toBe('rotated-refresh');
     });
   });
 });

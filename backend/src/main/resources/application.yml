@@ -53,6 +53,13 @@ jwt:
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
+# Phase 16 (SECURITY_STANDARDS): brute-force protection. Per-IP fixed
+# one-minute windows on POST /auth/* and report creation; 429 + Retry-After.
+rate-limit:
+  enabled: ${RATE_LIMIT_ENABLED:true}
+  auth-per-minute: ${RATE_LIMIT_AUTH_PER_MINUTE:30}
+  report-per-minute: ${RATE_LIMIT_REPORT_PER_MINUTE:20}
+
 media:
   max-file-size-bytes: ${MEDIA_MAX_FILE_SIZE_BYTES:20971520}
   max-per-report: ${MEDIA_MAX_PER_REPORT:10}
@@ -84,3 +91,11 @@ logging:
   level:
     com.mtaafix: ${LOGGING_LEVEL_COM_MTAAFIX:INFO}
     org.springframework.security: WARN
+
+# Phase 16 deployment review: SMTP is intentionally unconfigured while the
+# email channel is off - the mail health indicator would otherwise mark the
+# whole app DOWN. Re-enable automatically together with the channel.
+management:
+  health:
+    mail:
+      enabled: ${NOTIFICATIONS_EMAIL_ENABLED:false}

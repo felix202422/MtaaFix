@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '../../app/AuthProvider';
 import { Button, Card, Field, useToast } from '../../design-system';
-import { api, isApiError } from '../../lib/api';
+import { api, isApiError, setAuthTokens } from '../../lib/api';
 import type { NotificationPreference } from '../../lib/types';
 
 export function ProfilePage() {
@@ -96,7 +96,12 @@ export function ProfilePage() {
     }
     setPwBusy(true);
     try {
-      await api.changePassword(currentPassword, newPassword);
+      const rotated = await api.changePassword(currentPassword, newPassword);
+      // Phase 16 (D3): pre-change tokens are revoked server-side; adopt the
+      // rotated pair so the session that changed the password stays signed in.
+      if (rotated?.accessToken && rotated?.refreshToken) {
+        setAuthTokens(rotated.accessToken, rotated.refreshToken);
+      }
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');

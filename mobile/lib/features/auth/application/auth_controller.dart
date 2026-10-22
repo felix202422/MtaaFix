@@ -150,15 +150,22 @@ class AuthController extends ChangeNotifier {
 
   /// Changes the signed-in user's own password. On failure the authenticated
   /// state is preserved (mirrors [updateProfile]) so guards never bounce.
+  /// On success the backend revokes the pre-change token pair (Phase 16 / D3)
+  /// and returns a rotated one, which is adopted before returning.
   Future<bool> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
     try {
-      await _api.post('/auth/password/change', {
+      final response = await _api.post('/auth/password/change', {
         'currentPassword': currentPassword,
         'newPassword': newPassword,
       });
+      final access = response['accessToken'] as String?;
+      final refresh = response['refreshToken'] as String?;
+      if (access != null && refresh != null) {
+        await _api.setSession(accessToken: access, refreshToken: refresh);
+      }
       return true;
     } on ApiException catch (e) {
       _emit(

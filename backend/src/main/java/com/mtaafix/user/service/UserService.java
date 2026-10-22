@@ -58,8 +58,9 @@ public class UserService {
         if (!user.isActive()) {
             throw new AccountInactiveException();
         }
-        String accessToken = tokenProvider.generateAccessToken(user.getId(), user.getRole().name());
-        String refreshToken = tokenProvider.generateRefreshToken(user.getId());
+        String accessToken =
+                tokenProvider.generateAccessToken(user.getId(), user.getRole().name(), user.getTokenVersion());
+        String refreshToken = tokenProvider.generateRefreshToken(user.getId(), user.getTokenVersion());
         return AuthResponse.of(accessToken, refreshToken, 900L, toDto(user));
     }
 
@@ -74,6 +75,9 @@ public class UserService {
                 .orElseThrow(() -> new InvalidTokenException("Token subject does not exist."));
         if (!user.isActive()) {
             throw new AccountInactiveException();
+        }
+        if (tokenProvider.getTokenVersion(refreshToken) != user.getTokenVersion()) {
+            throw new InvalidTokenException("Token has been revoked.");
         }
         return user;
     }

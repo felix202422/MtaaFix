@@ -44,20 +44,21 @@ public class JwtTokenProvider {
     public static final String TYPE_ACCESS = "access";
     public static final String TYPE_REFRESH = "refresh";
 
-    public String generateAccessToken(String subject, String role) {
-        return buildToken(subject, TYPE_ACCESS, role, accessTokenExpiration);
+    public String generateAccessToken(String subject, String role, int tokenVersion) {
+        return buildToken(subject, TYPE_ACCESS, role, tokenVersion, accessTokenExpiration);
     }
 
-    public String generateRefreshToken(String subject) {
-        return buildToken(subject, TYPE_REFRESH, null, refreshTokenExpiration);
+    public String generateRefreshToken(String subject, int tokenVersion) {
+        return buildToken(subject, TYPE_REFRESH, null, tokenVersion, refreshTokenExpiration);
     }
 
-    private String buildToken(String subject, String type, String role,
+    private String buildToken(String subject, String type, String role, int tokenVersion,
             long validityInMilliseconds) {
         Instant now = Instant.now();
         JwtBuilder builder = Jwts.builder()
                 .subject(subject)
                 .claim("typ", type)
+                .claim("tv", tokenVersion)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(validityInMilliseconds, ChronoUnit.MILLIS)));
         if (role != null) {
@@ -95,6 +96,20 @@ public class JwtTokenProvider {
 
     public boolean isAccessToken(String token) {
         return TYPE_ACCESS.equals(getType(token));
+    }
+
+    /**
+     * Token version carried in the "tv" claim (Phase 16 / D3). Tokens issued
+     * before versioning existed have no claim and read as 0, matching the
+     * column default, so they remain valid until the user's first password
+     * reset or change.
+     */
+    public int getTokenVersion(String token) {
+        Object value = parse(token).get("tv");
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        return 0;
     }
 
     public Instant getIssuedAt(String token) {
