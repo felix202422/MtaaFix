@@ -128,16 +128,26 @@ public class OrganisationService {
         return OrganisationDto.from(org, membershipService.countMembers(id));
     }
 
+    /** Phase 17: paginated member listing (NFR-7), users batch-loaded per page. */
     @Transactional(readOnly = true)
-    public List<MemberDto> listMembers(String id, User actor) {
+    public com.mtaafix.common.response.PagedResponse<MemberDto> listMembers(String id, User actor,
+            org.springframework.data.domain.Pageable pageable) {
         Organisation org = loadChecked(id, actor);
-        List<OrganisationMembership> members = membershipService.membersOf(org.getId());
-        return members.stream()
-                .map(m -> userRepository.findById(m.getUserId())
-                        .map(u -> MemberDto.from(u, m))
-                        .orElse(null))
+        org.springframework.data.domain.Page<OrganisationMembership> page =
+                membershipService.membersOf(org.getId(), pageable);
+        Map<String, User> usersById = userRepository.findAllById(page.getContent().stream()
+                .map(OrganisationMembership::getUserId)
+                .collect(java.util.stream.Collectors.toSet())).stream()
+                .collect(java.util.stream.Collectors.toMap(User::getId, u -> u));
+        List<MemberDto> content = page.getContent().stream()
+                .map(m -> {
+                    User u = usersById.get(m.getUserId());
+                    return u != null ? MemberDto.from(u, m) : null;
+                })
                 .filter(java.util.Objects::nonNull)
                 .toList();
+        return com.mtaafix.common.response.PagedResponse.of((int) page.getTotalElements(),
+                page.getTotalPages(), page.getNumber(), page.getSize(), content);
     }
 
     /** Add member: validates scope, grants the org role (FR-5.4), creates membership. */

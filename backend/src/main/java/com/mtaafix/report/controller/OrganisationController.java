@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.mtaafix.user.domain.User;
 
@@ -81,12 +82,20 @@ public class OrganisationController {
         return ResponseEntity.ok(organisationService.setActive(id, request.active(), actor));
     }
 
-    @Operation(summary = "List organisation members (P21)")
+    @Operation(summary = "List organisation members (P21; paginated, NFR-7)")
     @GetMapping("/{id}/members")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','ORGANIZATION_ADMIN')")
-    public ResponseEntity<List<MemberDto>> listMembers(@PathVariable String id,
+    public ResponseEntity<com.mtaafix.common.response.PagedResponse<MemberDto>> listMembers(
+            @PathVariable String id,
+            @io.swagger.v3.oas.annotations.Parameter(description = "Page (0-based)")
+            @RequestParam(defaultValue = "0") int page,
+            @io.swagger.v3.oas.annotations.Parameter(description = "Page size (max 100)")
+            @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal User actor) {
-        return ResponseEntity.ok(organisationService.listMembers(id, actor));
+        int safeSize = Math.max(1, Math.min(size, 100));
+        return ResponseEntity.ok(organisationService.listMembers(id, actor,
+                org.springframework.data.domain.PageRequest.of(page, safeSize,
+                        org.springframework.data.domain.Sort.by("joinedAt"))));
     }
 
     @Operation(summary = "Add a member (grants org role, audited)")

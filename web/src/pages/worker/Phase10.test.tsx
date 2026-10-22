@@ -157,7 +157,8 @@ describe('field-worker route guards', () => {
     signIn(worker);
     stubFetch({
       '/auth/me': () => json(worker),
-      '/assignments/me': () => json([assignmentPending]),
+      '/assignments/me': () =>
+        json({ totalElements: 1, totalPages: 1, page: 0, size: 100, content: [assignmentPending] }),
     });
     renderRoute('/worker');
     expect(
@@ -202,7 +203,14 @@ describe('worker dashboard (P25)', () => {
     signIn(worker);
     stubFetch({
       '/auth/me': () => json(worker),
-      '/assignments/me': () => json([assignmentPending, assignmentInProgress, assignmentCompleted]),
+      '/assignments/me': () =>
+        json({
+          totalElements: 3,
+          totalPages: 1,
+          page: 0,
+          size: 100,
+          content: [assignmentPending, assignmentInProgress, assignmentCompleted],
+        }),
     });
     renderRoute('/worker');
     expect(await screen.findByRole('heading', { name: /new assignments/i })).toBeInTheDocument();
@@ -220,7 +228,8 @@ describe('worker dashboard (P25)', () => {
     signIn(worker);
     stubFetch({
       '/auth/me': () => json(worker),
-      '/assignments/me': () => json([]),
+      '/assignments/me': () =>
+        json({ totalElements: 0, totalPages: 1, page: 0, size: 100, content: [] }),
     });
     renderRoute('/worker');
     expect(await screen.findByText(/no assignments yet/i)).toBeInTheDocument();

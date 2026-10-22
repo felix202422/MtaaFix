@@ -1,0 +1,112 @@
+[
+    {
+        "Endpoint":  "GET /reports/public (list, size=20)",
+        "N":  30,
+        "P50_ms":  149.9,
+        "P95_ms":  169.5,
+        "Max_ms":  467.9,
+        "Min_ms":  126.6,
+        "Pass":  true,
+        "ServerHdr":  false
+    },
+    {
+        "Endpoint":  "GET /reports/public (map, size=100)",
+        "N":  30,
+        "P50_ms":  298.2,
+        "P95_ms":  336.4,
+        "Max_ms":  352.1,
+        "Min_ms":  283.1,
+        "Pass":  true,
+        "ServerHdr":  false
+    },
+    {
+        "Endpoint":  "GET /reports/public (bbox filter)",
+        "N":  30,
+        "P50_ms":  312.5,
+        "P95_ms":  397.2,
+        "Max_ms":  708,
+        "Min_ms":  272.7,
+        "Pass":  true,
+        "ServerHdr":  false
+    },
+    {
+        "Endpoint":  "GET /reports/public (q search)",
+        "N":  30,
+        "P50_ms":  120.5,
+        "P95_ms":  128.7,
+        "Max_ms":  130.4,
+        "Min_ms":  82,
+        "Pass":  true,
+        "ServerHdr":  false
+    },
+    {
+        "Endpoint":  "GET /reports (staff list, size=20)",
+        "N":  30,
+        "P50_ms":  113.9,
+        "P95_ms":  127.4,
+        "Max_ms":  224.2,
+        "Min_ms":  80.8,
+        "Pass":  true,
+        "ServerHdr":  false
+    },
+    {
+        "Endpoint":  "GET /reports (staff status filter)",
+        "N":  30,
+        "P50_ms":  113.5,
+        "P95_ms":  149.7,
+        "Max_ms":  983.9,
+        "Min_ms":  90.9,
+        "Pass":  true,
+        "ServerHdr":  false
+    },
+    {
+        "Endpoint":  "GET /categories/public",
+        "N":  30,
+        "P50_ms":  58.4,
+        "P95_ms":  63.3,
+        "Max_ms":  65.6,
+        "Min_ms":  45.7,
+        "Pass":  true,
+        "ServerHdr":  false
+    },
+    {
+        "Endpoint":  "GET /stats/public (cached)",
+        "N":  30,
+        "P50_ms":  59.3,
+        "P95_ms":  63.5,
+        "Max_ms":  106.6,
+        "Min_ms":  52.7,
+        "Pass":  true,
+        "ServerHdr":  false
+    },
+    {
+        "Endpoint":  "GET /dashboard/admin (cached)",
+        "N":  30,
+        "P50_ms":  69.7,
+        "P95_ms":  122.8,
+        "Max_ms":  141.3,
+        "Min_ms":  47.8,
+        "Pass":  true,
+        "ServerHdr":  false
+    },
+    {
+        "Endpoint":  "GET /assignments/me",
+        "N":  30,
+        "P50_ms":  69.8,
+        "P95_ms":  77.8,
+        "Max_ms":  80.5,
+        "Min_ms":  56.3,
+        "Pass":  true,
+        "ServerHdr":  false
+    },
+    {
+        "Endpoint":  "GET /notifications (size=20)",
+        "N":  30,
+        "P50_ms":  64.6,
+        "P95_ms":  71.5,
+        "Max_ms":  73.4,
+        "Min_ms":  56.1,
+        "Pass":  true,
+        "ServerHdr":  false
+    }
+]

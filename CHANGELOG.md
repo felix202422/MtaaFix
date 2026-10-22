@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.18.0] — 2026-10-22
+### Phase 17 - Performance and reliability
+N+1 elimination, index review, pagination of user-growable lists, justified
+caching, and first NFR-7 measurement (report:
+`docs/standards/PERFORMANCE_REVIEW.md`), per owner-approved scope Q1–Q4
+(2026-10-22). Live measurement against a seeded 5,038-report dataset:
+**11/11 endpoints p95 < 500 ms → NFR-7 MET** (local hardware; caveat and
+methodology in the review).
+**Approved by owner 2026-10-22.**
+
+**Backend**
+- N+1 fix: `ReportDto.listItem` lean factory (list rows carry batch-fetched
+  media; empty statusHistory/comments — detail endpoint unchanged);
+  `findByScope` fetch-joins assignment (assignee/org); media batch query
+  `findMediaByReportIds`
+- Pagination (size ≤ 100): `GET /assignments/me` → `PagedResponse` (scalar
+  DTO, fetch-joined repos, explicit count queries); `GET
+  /organizations/{id}/members` → `PagedResponse` (batch user load);
+  `GET /notifications` size clamped to 100 (Page shape kept)
+- Flyway **V8**: composite btree `(status|organisation|category|user,
+  reported_at DESC)` on `reports` + `pg_trgm` GIN on
+  `lower(code/title/description)` (staff `q` filter); PG IT asserts all four
+  + trigram indexes
+- Caching (`spring-boot-starter-cache` + Caffeine, `expireAfterWrite=60s`):
+  `categories` (evicted on create/update/activate/reorder), `publicStats`,
+  `adminDashboard`; user dashboard deliberately uncached (freshness);
+  test profile `spring.cache.type: simple`
+- `RequestTimingFilter`: per-request DEBUG timing, WARN > `timing.warn-threshold-ms`
+  (default 500); `X-Response-Time-Ms` best-effort
+- `buildActivity14d`: SQL `GROUP BY (reported_at AT TIME ZONE
+  'Africa/Dar_es_Salaam')::date` on PostgreSQL; Java bucketing kept for H2
+- `scripts/seed-perf.sql` (5,000 reports, idempotent) +
+  `scripts/measure-perf.ps1` (5 warmup + 30 iterations/endpoint, p50/p95/max,
+  `perf-results.json`)
+- Suites: `mvn test` **148/148** H2 (+CachingTest 3, pagination assertions
+  updated); PG IT **9/9** (V8 assertions)
+
+**Web**
+- ExplorePage: map view fetches its own feed (`size=100`, own loading/error
+  states, marker-count note) — list stays paginated at 10
+- `api.getMyAssignments`/`listOrganisationMembers` unwrap `PagedResponse.content`
+  (fetch `size=100`); Phase10 mocks return paged shape
+- `tsc --noEmit` 0, `vitest run` **68/68**
+
+**Mobile**
+- `publicList` default `size` 50 → 100 (map markers)
+- `flutter test` **171/171**
+
+**NFR-7 measurement** (local PG 18 + PostGIS, 5,038 reports, loopback HTTP)
+- 11/11 endpoints pass p95 < 500 ms; worst p95 = 397.2 ms (public bbox
+  size=100); cached stats p95 63.5 ms; staff list p95 127.4 ms
+- Server-side: 3 slow-request WARNs, all one-time startup/JIT warmup
+
+**Docs**
+- `docs/standards/PERFORMANCE_REVIEW.md` (findings, changes, methodology,
+  results table, index EXPLAIN evidence, deferrals); API_DESIGN rate-limit row
+  corrected (shipped Phase 16) + pagination exemptions + list-row note;
+  ROADMAP/BACKLOG/BOARD synced
+
+**Deferred (owner-endorsed)**: marker clustering (Phase 18/19), Micrometer/
+Prometheus (Phase 19), Redis, user-dashboard caching, reference-data
+pagination (bounded exemption), search/bbox caching (high key cardinality).
+
 ## [0.17.0] — 2026-10-22
 ### Phase 16 - Security review and hardening
 Structured security review across the ten master-spec areas (review record:

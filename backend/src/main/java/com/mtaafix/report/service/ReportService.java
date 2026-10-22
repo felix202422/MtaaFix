@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -156,8 +157,17 @@ public class ReportService {
         }
         Page<Report> page = reportRepository.findByScope(statusEnum, categoryId, scopedOrgId, userId,
                 assigneeId, pattern, assigned, pageable);
-        List<ReportDto> content = page.getContent().stream()
-                .map(ReportMapper::toDto)
+        // Phase 17 (NFR-7): one batch media query per page instead of per-row
+        // lazy loads; history/comments are omitted from list rows (no list UI
+        // reads them) — detail endpoints keep the full mapping.
+        List<Report> reports = page.getContent();
+        Map<String, List<ReportMedia>> mediaByReport = reports.isEmpty() ? Map.of()
+                : reportRepository.findMediaByReportIds(
+                        reports.stream().map(Report::getId).toList()).stream()
+                        .collect(Collectors.groupingBy(m -> m.getReport().getId()));
+        List<ReportDto> content = reports.stream()
+                .map(r -> ReportDto.listItem(r,
+                        mediaByReport.getOrDefault(r.getId(), List.of())))
                 .toList();
         return PagedResponse.of((int) page.getTotalElements(), page.getTotalPages(), page.getNumber(),
                 (int) page.getSize(), content);
@@ -617,6 +627,7 @@ public class ReportService {
                     "Attachments can no longer be changed: report is " + status.name().toLowerCase() + ".");
         }
     }
+
     private static boolean matchesMagicBytes(byte[] head, String contentType) {
         return switch (contentType.toLowerCase()) {
             case "image/png" -> (head[0] & 0xFF) == 0x89 && head[1] == 'P' && head[2] == 'N'

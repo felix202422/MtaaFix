@@ -104,7 +104,8 @@ class ReportsApi {
     String? categoryId,
     String? bbox,
     int page = 0,
-    int size = 50,
+    // Phase 17 (NFR-7): map markers fetch a wider page (was 50).
+    int size = 100,
   }) async {
     final params = <String, String>{
       'page': '$page',

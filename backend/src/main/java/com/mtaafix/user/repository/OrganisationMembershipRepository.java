@@ -16,6 +16,10 @@ public interface OrganisationMembershipRepository extends JpaRepository<Organisa
 
     List<OrganisationMembership> findByOrganisationIdOrderByJoinedAtAsc(String organisationId);
 
+    /** Phase 17: paginated member listing (NFR-7). */
+    org.springframework.data.domain.Page<OrganisationMembership> findByOrganisationId(
+            String organisationId, org.springframework.data.domain.Pageable pageable);
+
     long countByOrganisationId(String organisationId);
 
     @Modifying

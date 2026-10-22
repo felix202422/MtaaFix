@@ -13,8 +13,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,12 +42,17 @@ public class NotificationController {
         this.pushAvailable = pushAvailable;
     }
 
-    @Operation(summary = "Get my notifications")
+    @Operation(summary = "Get my notifications (paginated, size capped at 100 — NFR-7)")
     @GetMapping
     public ResponseEntity<Page<NotificationDto>> list(
             @AuthenticationPrincipal User user,
-            @PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(notificationService.listByUser(user, pageable));
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size) {
+        int safeSize = Math.max(1, Math.min(size, 100));
+        return ResponseEntity.ok(notificationService.listByUser(user,
+                org.springframework.data.domain.PageRequest.of(page, safeSize,
+                        org.springframework.data.domain.Sort.by(
+                                org.springframework.data.domain.Sort.Direction.DESC, "createdAt"))));
     }
 
     @Operation(summary = "Get my unread notification count (badges)")

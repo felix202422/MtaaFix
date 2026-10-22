@@ -26,15 +26,21 @@ public class CategoryService {
     }
 
     /** Active categories only (default list for pickers, FR-5.1 deactivation). */
+    @org.springframework.cache.annotation.Cacheable(cacheNames = "categories", key = "'active'")
     public List<CategoryDto> listAll() {
-        return list(true);
+        return listInternal(true);
     }
 
     /**
      * @param activeOnly true = only active categories; false = every category
      *                   (administrators only — enforced by the controller).
      */
+    @org.springframework.cache.annotation.Cacheable(cacheNames = "categories", key = "#activeOnly")
     public List<CategoryDto> list(boolean activeOnly) {
+        return listInternal(activeOnly);
+    }
+
+    private List<CategoryDto> listInternal(boolean activeOnly) {
         return categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "displayOrder")
                         .and(Sort.by(Sort.Direction.ASC, "name")))
                 .stream()
@@ -43,6 +49,7 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.cache.annotation.CacheEvict(cacheNames = "categories", allEntries = true)
     public CategoryDto create(CategoryDto dto, User actor) {
         if (categoryRepository.findBySlug(dto.slug().trim()).isPresent()) {
             throw new IllegalStateException("Category slug already exists: " + dto.slug());
@@ -70,6 +77,7 @@ public class CategoryService {
         return CategoryDto.from(category);
     }
 
+    @org.springframework.cache.annotation.CacheEvict(cacheNames = "categories", allEntries = true)
     public CategoryDto update(String id, CategoryDto dto, User actor) {
         ReportCategory category = load(id);
         if (!category.getSlug().equals(dto.slug().trim())
@@ -95,6 +103,7 @@ public class CategoryService {
         return CategoryDto.from(category);
     }
 
+    @org.springframework.cache.annotation.CacheEvict(cacheNames = "categories", allEntries = true)
     public CategoryDto setActive(String id, boolean active, User actor) {
         ReportCategory category = load(id);
         category.setActive(active);
@@ -104,6 +113,7 @@ public class CategoryService {
         return CategoryDto.from(category);
     }
 
+    @org.springframework.cache.annotation.CacheEvict(cacheNames = "categories", allEntries = true)
     public CategoryDto setOrder(String id, Integer displayOrder, User actor) {
         if (displayOrder == null) {
             throw new IllegalArgumentException("displayOrder is required.");

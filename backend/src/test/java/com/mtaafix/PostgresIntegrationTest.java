@@ -54,7 +54,30 @@ class PostgresIntegrationTest {
                 "Phase 14 V6 migration must be applied");
         assertTrue(rows.stream().anyMatch(r -> "7".equals(String.valueOf(r[0]))),
                 "Phase 16 V7 migration must be applied");
+        assertTrue(rows.stream().anyMatch(r -> "8".equals(String.valueOf(r[0]))),
+                "Phase 17 V8 migration must be applied");
         assertTrue(rows.stream().allMatch(r -> Boolean.TRUE.equals(r[2])));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void phase17ListIndexesExist() {
+        List<String> composite = entityManager.createNativeQuery(
+                        "SELECT indexname FROM pg_indexes WHERE tablename = 'reports' "
+                                + "AND indexname IN ('idx_reports_status_reported_at', "
+                                + "'idx_reports_organisation_reported_at', "
+                                + "'idx_reports_category_reported_at', "
+                                + "'idx_reports_user_reported_at')")
+                .getResultList();
+        assertEquals(4, composite.size(),
+                "V8 must create the four composite list indexes on reports");
+
+        List<String> trgm = entityManager.createNativeQuery(
+                        "SELECT indexname FROM pg_indexes WHERE tablename = 'reports' "
+                                + "AND indexdef ILIKE '%gin_trgm_ops%'")
+                .getResultList();
+        assertTrue(trgm.size() >= 3,
+                "V8 must create pg_trgm GIN indexes for code/title/description search");
     }
 
     @Test

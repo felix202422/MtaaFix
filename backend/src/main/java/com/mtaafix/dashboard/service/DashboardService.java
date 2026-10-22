@@ -45,17 +45,21 @@ public class DashboardService {
     private final ReportCategoryRepository categoryRepository;
     private final OrganisationRepository organisationRepository;
     private final UserRepository userRepository;
+    private final boolean postgres;
 
     public DashboardService(ReportRepository reportRepository,
             OrganisationMembershipService membershipService,
             ReportCategoryRepository categoryRepository,
             OrganisationRepository organisationRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            @org.springframework.beans.factory.annotation.Value(
+                    "${spring.jpa.database-platform:}") String databasePlatform) {
         this.reportRepository = reportRepository;
         this.membershipService = membershipService;
         this.categoryRepository = categoryRepository;
         this.organisationRepository = organisationRepository;
         this.userRepository = userRepository;
+        this.postgres = databasePlatform != null && databasePlatform.contains("PostgreSQL");
     }
 
     public UserDashboardDto getUserDashboard(User user) {
@@ -146,7 +150,9 @@ public class DashboardService {
         );
     }
 
-    /** P14 admin dashboard: every figure derived from live queries (FR-7.4). */
+    /** P14 admin dashboard: every figure derived from live queries (FR-7.4).
+     *  Phase 17: TTL-cached 60s (global dashboard — single cache key). */
+    @org.springframework.cache.annotation.Cacheable(cacheNames = "adminDashboard")
     @Transactional(readOnly = true)
     public AdminDashboardDto getAdminDashboard() {
         Map<String, Long> byStatus = new HashMap<>();
@@ -183,10 +189,21 @@ public class DashboardService {
     private List<AdminDashboardDto.DailyCount> buildActivity14d() {
         Instant since = Instant.now().minus(Duration.ofDays(14));
         Map<LocalDate, Long> buckets = new HashMap<>();
-        reportRepository.findReportedAtSince(since).forEach(instant -> {
-            LocalDate day = instant.atZone(APP_ZONE).toLocalDate();
-            buckets.merge(day, 1L, Long::sum);
-        });
+        if (postgres) {
+            // Phase 17: GROUP BY day in SQL (bucketed in the app zone) instead
+            // of loading every reported_at Instant for the window.
+            for (Object[] row : reportRepository.countGroupedByAppDaySince(since)) {
+                LocalDate day = toLocalDate(row[0]);
+                if (day != null) {
+                    buckets.put(day, ((Number) row[1]).longValue());
+                }
+            }
+        } else {
+            reportRepository.findReportedAtSince(since).forEach(instant -> {
+                LocalDate day = instant.atZone(APP_ZONE).toLocalDate();
+                buckets.merge(day, 1L, Long::sum);
+            });
+        }
         List<AdminDashboardDto.DailyCount> series = new ArrayList<>();
         LocalDate today = LocalDate.now(APP_ZONE);
         for (int i = 13; i >= 0; i--) {
@@ -194,6 +211,28 @@ public class DashboardService {
             series.add(new AdminDashboardDto.DailyCount(day, buckets.getOrDefault(day, 0L)));
         }
         return series;
+    }
+
+    private static LocalDate toLocalDate(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof LocalDate d) {
+            return d;
+        }
+        if (value instanceof java.sql.Date d) {
+            return d.toLocalDate();
+        }
+        if (value instanceof java.sql.Timestamp ts) {
+            return ts.toInstant().atZone(APP_ZONE).toLocalDate();
+        }
+        if (value instanceof java.time.LocalDateTime ldt) {
+            return ldt.atZone(APP_ZONE).toLocalDate();
+        }
+        if (value instanceof Instant i) {
+            return i.atZone(APP_ZONE).toLocalDate();
+        }
+        return null;
     }
 
     private List<AdminDashboardDto.CategoryCount> buildCategoryDistribution() {

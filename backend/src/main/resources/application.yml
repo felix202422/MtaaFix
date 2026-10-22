@@ -44,6 +44,10 @@ spring:
     port: ${SPRING_MAIL_PORT:587}
     username: ${SPRING_MAIL_USERNAME:}
     password: ${SPRING_MAIL_PASSWORD:}
+  cache:
+    type: caffeine
+    caffeine:
+      spec: expireAfterWrite=60s
 
 jwt:
   secret: ${JWT_SECRET:min-32-char-secret}
@@ -59,6 +63,10 @@ rate-limit:
   enabled: ${RATE_LIMIT_ENABLED:true}
   auth-per-minute: ${RATE_LIMIT_AUTH_PER_MINUTE:30}
   report-per-minute: ${RATE_LIMIT_REPORT_PER_MINUTE:20}
+
+# Phase 17 (NFR-7): request timing — WARN above threshold; always logged.
+timing:
+  warn-threshold-ms: ${TIMING_WARN_THRESHOLD_MS:500}
 
 media:
   max-file-size-bytes: ${MEDIA_MAX_FILE_SIZE_BYTES:20971520}

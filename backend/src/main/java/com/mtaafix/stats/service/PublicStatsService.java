@@ -19,6 +19,8 @@ public class PublicStatsService {
         this.categoryRepository = categoryRepository;
     }
 
+    /** Phase 17: TTL-cached (60s) — 4 COUNT queries per call was wasteful. */
+    @org.springframework.cache.annotation.Cacheable(cacheNames = "publicStats")
     @Transactional(readOnly = true)
     public PublicStatsDto getStats() {
         return new PublicStatsDto(

@@ -20,7 +20,7 @@
 | Roles | Enforced server-side per [ROLE_PERMISSION_MATRIX](../design/ROLE_PERMISSION_MATRIX.md); Phase 4: role resolved from DB per request (revocation/role change effective immediately), JWT role claim informational only |
 | IDs | Internal UUIDs in authorized API surfaces; public references `MTF-YYYY-NNNNNN` for citizen/public display |
 | Timestamps | ISO-8601 UTC instant strings |
-| Pagination | Query `page` (0-based), `size` (default 20, max 100); response `PagedResponse { totalElements, totalPages, page, size, content }` |
+| Pagination | Query `page` (0-based), `size` (default 20, max 100); response `PagedResponse { totalElements, totalPages, page, size, content }` — applies to every user-growable list (reports, assignments, org members, users, audit, notifications); bounded reference data (`/categories*`, `/organizations` list) may return a top-level array (Phase 17 exemption, NFR-7) |
 | Sorting | `sort=field,dir` where supported (Phase 5+) |
 | Error envelope | `ApiError { timestamp, status, code, message, path, details? }` — `code` machine-readable (e.g. `VALIDATION_ERROR`, `INVALID_STATUS_TRANSITION`, `RESOURCE_NOT_FOUND`) |
 | Validation | Bean Validation on DTOs → 400 `VALIDATION_ERROR` with field details |
@@ -28,7 +28,7 @@
 | Not found | 404 `RESOURCE_NOT_FOUND` |
 | Payload too large | 413 `PAYLOAD_TOO_LARGE` (Spring multipart limit, Phase 7); files ≤ container limit but > 20 MiB → 400 from service check |
 | Unauthorized / forbidden | 401 (no/invalid token; codes `INVALID_TOKEN`, `INVALID_CREDENTIALS`, `UNAUTHORIZED`) / 403 (insufficient role or scope; codes `FORBIDDEN`, `ACCOUNT_INACTIVE`) |
-| Rate limits | Not yet implemented; assessment Phase 17 (NFR-7) |
+| Rate limits | Per-IP fixed one-minute windows on `POST /auth/**` (30/min) and `POST /reports` (20/min); 429 + `Retry-After` + `RATE_LIMITED` (Phase 16, shipped); tuning/telemetry Phase 19 |
 | CORS | Configured origins only (`CORS_ALLOWED_ORIGINS`) |
 
 ## 2. Implemented endpoints (verified in code, 2026-10-17)
@@ -50,7 +50,7 @@
 | Method & path | Auth | Role | Notes |
 | ------------- | ---- | ---- | ----- |
 | POST `/reports` | Bearer | Any authenticated (citizen flow) | Creates SUBMITTED; returns code (FR-2.2); `categoryId` required (Phase 5); `location` validated ±90/±180 and implausible (0,0) → 400 (FR-11.2); optional `Idempotency-Key` `[A-Za-z0-9_-]{16,64}` (Phase 14): first use → 201 + stored response; same key + identical payload → replayed 201 (same report id, no duplicate); same key + different payload → 409 `IDEMPOTENCY_CONFLICT`; concurrent first use → 409 `IDEMPOTENCY_IN_PROGRESS` (stale intent 2 min); invalid key → 400; keys purged after 24 h |
-| GET `/reports` | Bearer | Scoped by role (citizen=own, worker=assigned, org admin=org, mod/admin=all) | Filters: `status`, `categoryId`, `orgId`; staff (mod/admin/org/worker) also `q` (code/title/description text search) + `assignment`=`assigned|unassigned` (P15, Phase 9); `page`/`size` (0-based, size ≤ 100) (Phase 5) |
+| GET `/reports` | Bearer | Scoped by role (citizen=own, worker=assigned, org admin=org, mod/admin=all) | Filters: `status`, `categoryId`, `orgId`; staff (mod/admin/org/worker) also `q` (code/title/description text search) + `assignment`=`assigned|unassigned` (P15, Phase 9); `page`/`size` (0-based, size ≤ 100) (Phase 5); list rows are lean (Phase 17 NFR-7): `statusHistory`/`comments` empty (detail endpoint carries them), `media` batch-fetched |
 | GET `/reports/{id}` | Bearer | Scoped (matrix area 1) | Includes statusHistory, comments, media; response carries **exact** `location` + `geoJson` (authorized surfaces only, FR-11.5) |
 | PUT `/reports/{id}` | Bearer | Owner, state-limited (FR-2.6) | Only SUBMITTED/NEEDS_INFORMATION (Phase 5); note: PUT not PATCH — deviation from legacy API.md, accepted |
 | POST `/reports/{id}/submit` | Bearer | Moderator/admin (T2/T17) | Enforced (Phase 4): MODERATOR or ADMINISTRATOR; also claims REOPENED→UNDER_REVIEW |
@@ -102,12 +102,12 @@
 | GET `/organizations/{id}` | Bearer | Admin / org admin | Own-scope enforced |
 | PUT `/organizations/{id}` | Bearer | ADMINISTRATOR | Update; audited |
 | PUT `/organizations/{id}/active` | Bearer | ADMINISTRATOR | `{active}`; audited; inactive org → 409 on assignment |
-| GET `/organizations/{id}/members` | Bearer | Admin / org admin | Top-level array of members |
+| GET `/organizations/{id}/members` | Bearer | Admin / org admin | `PagedResponse<MemberDto>` (`page`/`size`, size ≤ 100; Phase 17) |
 | POST `/organizations/{id}/members` | Bearer | Admin / org admin | `{userId, role=ORGANIZATION_ADMIN|FIELD_WORKER}` — creates membership **and** grants the org role (201, audited) |
 | DELETE `/organizations/{id}/members/{userId}` | Bearer | Admin / org admin | 204; removes affiliation only — role kept (documented) |
 
 ### Assignments — `AssignmentController`
-| GET `/assignments/me` | Bearer | Field worker | Own assignments |
+| GET `/assignments/me` | Bearer | Field worker | Own assignments; `PagedResponse<AssignmentDto>` (`page`/`size`, size ≤ 100; Phase 17) |
 | GET `/assignments/organizations/{orgId}/reports` | Bearer | Org scope | Org reports |
 
 ### Dashboard — `DashboardController`

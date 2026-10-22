@@ -15,11 +15,18 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReportRepository extends JpaRepository<Report, String> {
 
+    // Phase 17 (NFR-7): assignment + assignee are join-FETCHed so list mapping
+    // never lazy-loads them per row (staff lists read assigneeId). Media is
+    // batch-loaded separately by ReportService.list (one IN-query per page);
+    // statusHistory/comments are intentionally not fetched — list responses
+    // carry empty arrays for them (detail endpoints keep the full mapping).
     @Query("""
             select r from Report r
             left join fetch r.category
             left join fetch r.organisation o
-            left join r.assignment a
+            left join fetch r.assignment a
+            left join fetch a.assignee
+            left join fetch a.organisation
             where (:status is null or r.status = :status)
             and (:categoryId is null or r.category.id = :categoryId)
             and (:orgId is null or o.id = :orgId)
@@ -35,6 +42,10 @@ public interface ReportRepository extends JpaRepository<Report, String> {
             @Param("userId") String userId, @Param("assigneeId") String assigneeId,
             @Param("pattern") String pattern, @Param("assigned") Boolean assigned,
             Pageable pageable);
+
+    /** Phase 17: one batch media load per list page (replaces per-row lazy loads). */
+    @Query("select m from ReportMedia m where m.report.id in :ids")
+    List<ReportMedia> findMediaByReportIds(@Param("ids") java.util.Collection<String> ids);
 
     @Query("select c from ReportCategory c where c.id = :id")
     Optional<ReportCategory> findCategoryById(@Param("id") String id);
@@ -174,11 +185,36 @@ public interface ReportRepository extends JpaRepository<Report, String> {
             + "where r.code like 'MTF-%'")
     Integer findMaxReportSerial();
 
-    @Query("select r from Report r left join fetch r.assignment a where a.assignee.id = :assigneeId")
-    List<Report> findReportsByAssigneeId(@Param("assigneeId") String assigneeId);
+    // Phase 17: assignment endpoints are paginated (NFR-7); assignee +
+    // organisation are join-FETCHed so AssignmentDto mapping stays N+1-free.
+    // Ordering is declared in the SQL; callers pass an unsorted Pageable
+    // (same convention as the public spatial queries above).
+    @Query(value = """
+            select r from Report r
+            left join fetch r.assignment a
+            left join fetch a.assignee
+            left join fetch a.organisation
+            where a.assignee.id = :assigneeId
+            order by a.assignedAt desc
+            """, countQuery = """
+            select count(r) from Report r
+            where r.assignment.assignee.id = :assigneeId
+            """)
+    Page<Report> findReportsByAssigneeId(@Param("assigneeId") String assigneeId,
+            Pageable pageable);
 
-    @Query("select r from Report r left join fetch r.assignment a where r.organisation.id = :organisationId")
-    List<Report> findReportsByOrganisationIdWithAssignment(@Param("organisationId") String organisationId);
+    @Query(value = """
+            select r from Report r
+            left join fetch r.assignment a
+            left join fetch a.assignee
+            left join fetch a.organisation
+            where r.organisation.id = :organisationId
+            order by a.assignedAt desc
+            """, countQuery = """
+            select count(r) from Report r where r.organisation.id = :organisationId
+            """)
+    Page<Report> findReportsByOrganisationIdWithAssignment(
+            @Param("organisationId") String organisationId, Pageable pageable);
 
     // ---- Phase 9 admin dashboard / analytics (P14, P23) ----
 
@@ -189,6 +225,22 @@ public interface ReportRepository extends JpaRepository<Report, String> {
 
     @Query("select r.reportedAt from Report r where r.reportedAt >= :since order by r.reportedAt asc")
     List<java.time.Instant> findReportedAtSince(@Param("since") java.time.Instant since);
+
+    /**
+     * Phase 17: dashboard activity bucketed by day in SQL (app zone), replacing
+     * the load-every-Instant + Java bucketing path. PostgreSQL-only — the H2
+     * test profile never runs Flyway and the service keeps the Java fallback
+     * for non-PostgreSQL dialects.
+     */
+    @Query(value = """
+            select (reported_at at time zone 'Africa/Dar_es_Salaam')::date as day,
+                   count(*) as cnt
+            from reports
+            where reported_at >= :since
+            group by 1
+            order by 1
+            """, nativeQuery = true)
+    List<Object[]> countGroupedByAppDaySince(@Param("since") java.time.Instant since);
 
     @Query("select r.category.id, count(r) from Report r group by r.category.id")
     List<Object[]> countGroupByCategory();

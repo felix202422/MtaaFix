@@ -26,13 +26,16 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
+    private final com.mtaafix.common.web.RequestTimingFilter requestTimingFilter;
     private final List<String> allowedOrigins;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
             RateLimitFilter rateLimitFilter,
+            com.mtaafix.common.web.RequestTimingFilter requestTimingFilter,
             @Value("${cors.allowed-origins}") String allowedOrigins) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.rateLimitFilter = rateLimitFilter;
+        this.requestTimingFilter = requestTimingFilter;
         this.allowedOrigins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isEmpty())
@@ -56,7 +59,8 @@ public class SecurityConfig {
                         .accessDeniedHandler((request, response, accessDeniedException) -> response.setStatus(403))
                         .authenticationEntryPoint((request, response, authException) -> response.setStatus(401)))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(rateLimitFilter, JwtAuthenticationFilter.class);
+                .addFilterBefore(rateLimitFilter, JwtAuthenticationFilter.class)
+                .addFilterBefore(requestTimingFilter, RateLimitFilter.class);
 
         return http.build();
     }

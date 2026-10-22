@@ -8,6 +8,13 @@
 
 ## Version History
 
+- **[0.18.0]** — Phase 17: Performance and reliability (N+1 elimination,
+  Flyway V8 composite + trigram indexes, pagination of assignments/members/
+  notifications clamp, Caffeine TTL caches, separate map feeds, SQL activity
+  bucketing, RequestTimingFilter; NFR-7 measured: 11/11 endpoints p95 < 500 ms
+  on a seeded 5,038-report dataset — record in
+  `docs/standards/PERFORMANCE_REVIEW.md`; suites 148 H2 + 9 PG / 68 web /
+  171 mobile) — **APPROVED 2026-10-22**
 - **[0.17.0]** — Phase 16: Security review and hardening (10-area review
   record in `docs/standards/SECURITY_REVIEW.md`; 415/405 error contracts,
   JWT revocation via `users.token_version` incl. rotating password-change
@@ -554,10 +561,44 @@ record at `docs/standards/SECURITY_REVIEW.md`.
 
 **Gate: APPROVED by owner 2026-10-22 — Phase 17 may start**
 
-## Phase 17 — Performance and Reliability (NOT STARTED)
+## Phase 17 — Performance and Reliability (COMPLETE - APPROVED 2026-10-22)
 
 Query/index review, pagination, API measurement, map rendering, caching where
-justified (NFR-7 targets).
+justified (NFR-7 targets). Owner-approved scope Q1–Q4 (2026-10-22): Caffeine
+caching; paginate user-growable lists (assignments, org members) +
+notifications cap; ~5,000-report local seed for measurement; workstreams A–H.
+
+- **N+1 elimination**: `ReportDto.listItem` lean list factory (empty
+  statusHistory/comments, batch-fetched media); `findByScope` fetch-joins
+  assignment; media batch query; assignment service → scalar DTOs
+- **Indexes (Flyway V8)**: composite btree on `reports (status|organisation|
+  category|user, reported_at DESC)` + `pg_trgm` GIN on
+  `lower(code/title/description)` for the staff `q` filter; PG IT assertions
+- **Pagination**: `GET /assignments/me` and `GET /organizations/{id}/members`
+  → `PagedResponse` (size ≤ 100); `GET /notifications` size clamped; web
+  clients unwrap `.content`; reference data (categories/org list) documented
+  bounded exemptions
+- **Caching**: Caffeine `expireAfterWrite=60s` — `categories` (evicted on
+  admin writes), `publicStats`, `adminDashboard`; user dashboard uncached by
+  design (freshness); `CachingTest` proves hit/evict via `@MockitoSpyBean`
+- **Map rendering**: web ExplorePage separate map feed (size=100, own
+  loading/error states); mobile `publicList` default 50 → 100; marker
+  clustering deferred
+- **Timing**: `RequestTimingFilter` (DEBUG per request, WARN > 500 ms,
+  `timing.warn-threshold-ms`)
+- **Activity bucketing**: dashboard 14-day series now `GROUP BY … AT TIME
+  ZONE 'Africa/Dar_es_Salaam'::date` in SQL (Java fallback kept for H2)
+- **Measurement**: `scripts/seed-perf.sql` (5,000 reports) +
+  `scripts/measure-perf.ps1` (5 warmup + 30 iterations, p50/p95/max) —
+  **11/11 endpoints p95 < 500 ms → NFR-7 MET**; worst p95 397.2 ms; review at
+  `docs/standards/PERFORMANCE_REVIEW.md`
+- **Suites**: backend `mvn test` **148/148** H2 (+CachingTest); PG IT **9/9**
+  (V8 assertions); web `tsc` 0 / `vitest` **68/68**; Flutter **171/171**
+- **Deferred (owner-endorsed)**: marker clustering, Micrometer/Prometheus
+  (Phase 19), Redis, user-dashboard caching, reference-data pagination,
+  search/bbox caching
+
+**Gate: APPROVED by owner 2026-10-22 — Phase 18 may start**
 
 ## Phase 18 — Deployment and CI/CD (NOT STARTED)
 
@@ -611,4 +652,5 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 14 | Complete (approved 2026-10-21) |
 | 15 | Complete (approved 2026-10-21) |
 | 16 | Complete (approved 2026-10-22) |
-| 17–23 | Not started |
+| 17 | Complete (approved 2026-10-22) |
+| 18–23 | Not started |

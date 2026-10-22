@@ -22,6 +22,10 @@ const STATUS_OPTIONS: ReportStatus[] = [
 ];
 
 const PAGE_SIZE = 10;
+// Phase 17 (NFR-7): the map fetches a wider, separate page so markers are not
+// limited to the visible list page. Marker clustering is a later phase — for
+// now we cap at 100 points per fetch (documented in PERFORMANCE_REVIEW.md).
+const MAP_SIZE = 100;
 
 type FeedState =
   | { kind: 'loading' }
@@ -33,6 +37,27 @@ type FeedState =
       page: number;
     }
   | { kind: 'error'; message: string };
+
+const loadingFeed: FeedState = { kind: 'loading' };
+
+function toFeedState(data: {
+  content: PublicReportSummary[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+}): FeedState {
+  return {
+    kind: 'ready',
+    content: data.content,
+    totalElements: data.totalElements,
+    totalPages: data.totalPages,
+    page: data.page,
+  };
+}
+
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
 
 export function ExplorePage() {
   const [searchInput, setSearchInput] = useState('');
@@ -46,7 +71,8 @@ export function ExplorePage() {
   const [view, setView] = useState<'list' | 'map'>('list');
   const [page, setPage] = useState(0);
   const [categories, setCategories] = useState<PublicCategory[]>([]);
-  const [feed, setFeed] = useState<FeedState>({ kind: 'loading' });
+  const [feed, setFeed] = useState<FeedState>(loadingFeed);
+  const [mapFeed, setMapFeed] = useState<FeedState>(loadingFeed);
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
@@ -60,30 +86,40 @@ export function ExplorePage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    setFeed({ kind: 'loading' });
+    setFeed(loadingFeed);
     api
       .getPublicReports(
         { q, status, categoryId, dateFrom, dateTo, bbox: bbox || undefined, page, size: PAGE_SIZE },
         { signal: controller.signal },
       )
-      .then((data) =>
-        setFeed({
-          kind: 'ready',
-          content: data.content,
-          totalElements: data.totalElements,
-          totalPages: data.totalPages,
-          page: data.page,
-        }),
-      )
+      .then(toFeedState)
+      .then(setFeed)
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
-        setFeed({
-          kind: 'error',
-          message: error instanceof Error ? error.message : 'Could not load reports.',
-        });
+        setFeed({ kind: 'error', message: errorMessage(error, 'Could not load reports.') });
       });
     return () => controller.abort();
   }, [q, status, categoryId, dateFrom, dateTo, bbox, page, retryKey]);
+
+  // Phase 17: map markers use their own wider fetch (MAP_SIZE), so the list
+  // page no longer limits what the map shows.
+  useEffect(() => {
+    if (view !== 'map') return;
+    const controller = new AbortController();
+    setMapFeed(loadingFeed);
+    api
+      .getPublicReports(
+        { q, status, categoryId, dateFrom, dateTo, bbox: bbox || undefined, page: 0, size: MAP_SIZE },
+        { signal: controller.signal },
+      )
+      .then(toFeedState)
+      .then(setMapFeed)
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setMapFeed({ kind: 'error', message: errorMessage(error, 'Could not load map points.') });
+      });
+    return () => controller.abort();
+  }, [view, q, status, categoryId, dateFrom, dateTo, bbox, retryKey]);
 
   const submitSearch = useCallback(
     (event: FormEvent) => {
@@ -119,8 +155,8 @@ export function ExplorePage() {
     dateTo !== '' ||
     bbox !== '';
 
-  const mapPoints = feed.kind === 'ready'
-    ? feed.content
+  const mapPoints = view === 'map' && mapFeed.kind === 'ready'
+    ? mapFeed.content
         .filter((report) => report.latitude !== null && report.longitude !== null)
         .map((report) => ({
           code: report.code,
@@ -291,11 +327,28 @@ export function ExplorePage() {
                   </Button>
                 </div>
               )}
-              <ReportMap
-                points={mapPoints}
-                onBoundsChange={setPendingBbox}
-                ariaLabel="Map of community reports (generalized locations)"
-              />
+              {mapFeed.kind === 'loading' && <LoadingState label="Loading map points…" />}
+              {mapFeed.kind === 'error' && (
+                <ErrorState
+                  message={mapFeed.message}
+                  onRetry={() => setRetryKey((key) => key + 1)}
+                />
+              )}
+              {mapFeed.kind === 'ready' && (
+                <>
+                  <ReportMap
+                    points={mapPoints}
+                    onBoundsChange={setPendingBbox}
+                    ariaLabel="Map of community reports (generalized locations)"
+                  />
+                  <p className="mt-2 text-xs text-muted" role="status">
+                    Showing {mapPoints.length} marker{mapPoints.length === 1 ? '' : 's'}
+                    {mapFeed.totalElements > mapPoints.length &&
+                      ` of ${mapFeed.totalElements} reports (first ${MAP_SIZE} by newest first)`}
+                    .
+                  </p>
+                </>
+              )}
               <p className="mt-2 text-xs text-muted">
                 Marker positions are generalized for privacy (FR-11.4) and may be up to
                 several hundred metres from the actual location. Pan or zoom, then use

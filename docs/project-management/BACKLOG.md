@@ -707,6 +707,22 @@ follow-ups owned by later phases:
 | B-16.4 | Phase 18 handoffs: activate `prod` profile with real secrets (`ProdSecretsGuard`); forwarded-header/proxy config so the rate limiter sees real client IPs | Phase 18 | Boot under `prod` refuses weak defaults; 429 buckets keyed by true client IP behind the proxy |
 | B-16.5 | Full NVD dependency scan (skipped per owner: network/API friction) | Ops phase if scanner provisioned | Recorded scan output attached to a future review refresh |
 
+### Phase 17 outcomes + deferrals
+Exit criterion met 2026-10-22 (review record:
+`docs/standards/PERFORMANCE_REVIEW.md`; NFR-7 measured: 11/11 endpoints
+p95 < 500 ms on the seeded 5,038-report dataset). Deferrals and follow-ups
+owned by later phases:
+
+| ID | Item | Target | AC summary |
+| -- | ---- | ------ | ---------- |
+| B-17.1 | Marker clustering (web + mobile maps) | Phase 18/19 | Cluster at low zoom; 100-marker fetch cap in place meanwhile (ExplorePage map feed, mobile `publicList`) |
+| B-17.2 | Micrometer/Prometheus metrics + histogram per endpoint | Phase 19 | Scrape endpoint live; p50/p95 dashboards replace ad-hoc `measure-perf.ps1` runs; `RequestTimingFilter` is the interim evidence |
+| B-17.3 | Redis / distributed cache | Ops scale-out if multi-node | Only when running >1 node; Caffeine TTL sufficient single-node |
+| B-17.4 | User dashboard caching | — (rejected by design) | Citizens must see just-created reports immediately; revisit only if `/dashboard/me` measurement regresses |
+| B-17.5 | Paginate reference data (`/categories*`, `/organizations` list) | Only if datasets grow | Currently bounded admin-managed rows (tens) — documented exemption in API_DESIGN |
+| B-17.6 | Cache high-cardinality queries (`q` search, bbox/map) | Only if measurement regresses | Filtered keys defeat TTL caching; current p95 already within NFR-7 |
+| B-17.7 | Larger-N / repeat NFR-7 measurement | Phase 19 | Re-run `scripts/measure-perf.ps1` after schema/dep changes; record deltas in PERFORMANCE_REVIEW |
+
 ---
 
 ## Cross-cutting (scheduled, not MVP-blocking)

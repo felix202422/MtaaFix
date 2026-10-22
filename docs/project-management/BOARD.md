@@ -5,7 +5,26 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-22.
 
-## Current phase: Phase 16 APPROVED (2026-10-22) — next: Phase 17 (not started)
+## Current phase: Phase 17 APPROVED (2026-10-22) — next: Phase 18 (not started)
+
+## Phase 17 — Performance and Reliability (COMPLETE — APPROVED 2026-10-22)
+
+| Task | Status | Notes |
+| ---- | ------ | ----- |
+| Owner-approved scope | DONE | Q1 Caffeine caching; Q2a paginate user-growable lists (assignments, org members) + notifications cap, categories/organisations documented bounded exemptions; Q3 ~5,000-report direct-SQL seed; Q4 workstreams A–H |
+| A — N+1 elimination | DONE | `ReportDto.listItem` lean factory (batch media, empty history/comments; detail `from()` unchanged); `findByScope` fetch-joins assignment (assignee/org); `findMediaByReportIds` batch; assignment service returns scalar DTOs via `PagedResponse` with explicit count queries |
+| B — Index review | DONE | Flyway **V8**: composite btree `(status\|organisation\|category\|user, reported_at DESC)` + `pg_trgm` GIN on `lower(code/title/description)`; PG IT asserts 4 composite + ≥3 trigram indexes; live `EXPLAIN` shows composite used for selective statuses |
+| C — Pagination | DONE | `GET /assignments/me` + `GET /organizations/{id}/members` → `PagedResponse` (page/size, size ≤ 100, members batch-load users); `GET /notifications` size clamped (Page shape kept); web `api.ts` unwraps `.content` (fetch size=100); tests updated (AdministrationApiTest, ReportLifecycleTest, Phase10 mocks) |
+| D — Timing + measurement | DONE | `RequestTimingFilter` (DEBUG per request, WARN > `timing.warn-threshold-ms` 500, best-effort `X-Response-Time-Ms`) wired before `RateLimitFilter`; `scripts/seed-perf.sql` (5,000 reports, idempotent) + `scripts/measure-perf.ps1` (5 warmup + 30 iterations, p50/p95/max → `perf-results.json`) |
+| E — Caching | DONE | `spring-boot-starter-cache` + Caffeine, `expireAfterWrite=60s`; `categories` evicted on create/update/activate/reorder; `publicStats` + `adminDashboard` TTL; user dashboard uncached (freshness); test profile `type: simple` (`none` broke `@EnableCaching` — no CacheManager bean); `CachingTest` ×3 via `@MockitoSpyBean` proves hit/evict |
+| F — Map feeds | DONE | ExplorePage separate map fetch (`size=100`, own loading/error, marker-count note, privacy note always visible); mobile `publicList` default 50 → 100 |
+| G — Activity bucketing | DONE | `buildActivity14d` → SQL `GROUP BY (reported_at AT TIME ZONE 'Africa/Dar_es_Salaam')::date` when `database-platform` = PostgreSQL (set in application.yml); Java fallback kept for H2 tests |
+| H — Docs sync | DONE | `docs/standards/PERFORMANCE_REVIEW.md` (new); API_DESIGN (rate-limit row corrected → shipped Phase 16, pagination exemptions, list-row note, members/assignments paged rows); CHANGELOG 0.18.0; ROADMAP Phase 17 + version history; BACKLOG B-17.1–7; BOARD this table |
+| Suites | DONE | backend `mvn test` **148/148** H2 (+CachingTest); PG IT **9/9** (`MTAAFIX_PG_IT=true`, V8 asserted); web `tsc` 0 / `vitest` **68/68**; Flutter `flutter test` **171/171** |
+| NFR-7 measurement | DONE | Seeded 5,038-report dataset, live jar on :8085 — **11/11 endpoints p95 < 500 ms → MET**; worst p95 397.2 ms (public bbox size=100); server WARNs = 3 one-time startup spikes only; results in `scripts/perf-results.json` + review §4 |
+| Phase 17 report + approval gate | DONE | Report delivered 2026-10-22; **approved by owner 2026-10-22** — Phase 18 may start |
+
+**Known deferrals:** marker clustering (B-17.1); Micrometer/Prometheus (B-17.2 → Phase 19); Redis (B-17.3); user-dashboard caching rejected by design (B-17.4); reference-data pagination exemption (B-17.5); search/bbox caching (B-17.6); repeat larger-N measurement (B-17.2/B-17.7 → Phase 19).
 
 ## Phase 16 — Security Review and Hardening (COMPLETE — APPROVED 2026-10-22)
 
@@ -316,6 +335,7 @@ Last updated: 2026-10-22.
 | Phase 14 - Offline capabilities | Complete (approved 2026-10-21) | Backend idempotency (V6), mobile draft/outbox/pending-queue with foreground retry, categories cache, sign-out clear; 133+8 PG / 68 web / 167 mobile; live battery 67/67 |
 | Phase 15 - Quality assurance | Complete (approved 2026-10-21) | Gap-fill tests (critical journey, 320×640 no-overflow, semantics), 5 responsive fixes, lazy map mount + test tile provider, role-boundary/lifecycle live battery 63/63 |
 | Phase 16 - Security review and hardening | Complete (approved 2026-10-22) | 10-area review record; 415/405 contracts (D1/D2), JWT revocation via token_version incl. rotating password change (D3), media status gate (D4), per-IP rate limiting, prod secrets guard; 144+8 PG / 68 web / 171 mobile + live battery 23/23 |
+| Phase 17 - Performance and reliability | Complete (approved 2026-10-22) | N+1 elimination, V8 composite + trigram indexes, assignments/members pagination + notifications clamp, Caffeine TTL caches, separate map feeds (100 markers), SQL activity bucketing, RequestTimingFilter; NFR-7 measured 11/11 p95 < 500 ms (5,038-report seed); 148+9 PG / 68 web / 171 mobile |
 
 ## Environment notes
 

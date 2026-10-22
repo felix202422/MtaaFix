@@ -51,6 +51,13 @@ public class OrganisationMembershipService {
         return membershipRepository.findByOrganisationIdOrderByJoinedAtAsc(organisationId);
     }
 
+    /** Phase 17: paginated member page (NFR-7). */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<OrganisationMembership> membersOf(
+            String organisationId, org.springframework.data.domain.Pageable pageable) {
+        return membershipRepository.findByOrganisationId(organisationId, pageable);
+    }
+
     @Transactional(readOnly = true)
     public long countMembers(String organisationId) {
         return membershipRepository.countByOrganisationId(organisationId);

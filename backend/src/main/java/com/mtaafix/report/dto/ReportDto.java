@@ -3,6 +3,7 @@ package com.mtaafix.report.dto;
 import com.mtaafix.common.geo.GeoJsonPoint;
 import com.mtaafix.report.domain.Report;
 import com.mtaafix.report.domain.Report.Status;
+import com.mtaafix.report.domain.ReportMedia;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
@@ -29,9 +30,7 @@ public record ReportDto(
         @Schema(description = "Comments") List<ReportCommentDto> comments) {
 
     public static ReportDto from(Report r) {
-        LocationDto location = r.getLocation() != null
-                ? new LocationDto(r.getLocation().getY(), r.getLocation().getX(), null)
-                : null;
+        LocationDto location = locationOf(r);
         return new ReportDto(
                 r.getId(), r.getCode(), r.getTitle(), r.getDescription(),
                 location,
@@ -53,6 +52,41 @@ public record ReportDto(
                 r.getComments().stream()
                         .map(ReportCommentDto::from)
                         .collect(Collectors.toList()));
+    }
+
+    /**
+     * Phase 17 list-row mapping (NFR-7): same scalar contract as {@link #from}
+     * but never touches the statusHistory/comments lazy collections and takes
+     * the media collection pre-fetched by the caller (one batch query per
+     * page). No list UI reads statusHistory or comments (Phase 17 audit);
+     * media is included because list UIs render photo counts from it.
+     * Detail endpoints keep the full {@link #from} mapping.
+     */
+    public static ReportDto listItem(Report r, List<ReportMedia> media) {
+        LocationDto location = locationOf(r);
+        return new ReportDto(
+                r.getId(), r.getCode(), r.getTitle(), r.getDescription(),
+                location,
+                location != null ? GeoJsonPoint.of(location.latitude(), location.longitude()) : null,
+                r.getReportedAt(), r.getStatus(), r.getScore(),
+                r.getCategory() != null ? r.getCategory().getId() : null,
+                r.getAssignment() != null ? r.getAssignment().getId() : null,
+                r.getOrganisation() != null ? r.getOrganisation().getId() : null,
+                r.getAssignment() != null ? r.getAssignment().getAssignee() != null
+                        ? r.getAssignment().getAssignee().getId() : null
+                        : null,
+                r.getDuplicateOf() != null ? r.getDuplicateOf().getId() : null,
+                List.of(),
+                media.stream()
+                        .map(ReportMediaDto::from)
+                        .collect(Collectors.toList()),
+                List.of());
+    }
+
+    private static LocationDto locationOf(Report r) {
+        return r.getLocation() != null
+                ? new LocationDto(r.getLocation().getY(), r.getLocation().getX(), null)
+                : null;
     }
 
     public static ReportDto of(Report report) {

@@ -1,17 +1,17 @@
 package com.mtaafix.assignment.service;
 
 import com.mtaafix.assignment.dto.AssignmentDto;
-import com.mtaafix.report.domain.Assignment;
+import com.mtaafix.common.response.PagedResponse;
 import com.mtaafix.report.domain.Report;
-import com.mtaafix.report.mapper.ReportMapper;
 import com.mtaafix.report.repository.ReportRepository;
 import com.mtaafix.user.domain.User;
 import com.mtaafix.user.service.OrganisationMembershipService;
+import java.util.Objects;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AssignmentService {
@@ -25,13 +25,17 @@ public class AssignmentService {
         this.membershipService = membershipService;
     }
 
-    public List<AssignmentDto> getAssignmentsByAssignee(String assigneeId) {
-        return reportRepository.findReportsByAssigneeId(assigneeId).stream()
-                .map(this::toAssignmentDto)
-                .collect(Collectors.toList());
+    /** Phase 17: paginated (NFR-7) — capped at size 100 by the controller. */
+    @Transactional(readOnly = true)
+    public PagedResponse<AssignmentDto> getAssignmentsByAssignee(String assigneeId,
+            Pageable pageable) {
+        Page<Report> page = reportRepository.findReportsByAssigneeId(assigneeId, pageable);
+        return toPagedResponse(page);
     }
 
-    public List<AssignmentDto> getReportsByOrganisation(String organisationId, User user) {
+    @Transactional(readOnly = true)
+    public PagedResponse<AssignmentDto> getReportsByOrganisation(String organisationId, User user,
+            Pageable pageable) {
         if (user.getRole() == User.Role.ORGANIZATION_ADMIN) {
             String ownOrgId = membershipService.orgIdOfOrNull(user);
             if (ownOrgId == null || !ownOrgId.equals(organisationId)) {
@@ -39,15 +43,19 @@ public class AssignmentService {
                         "Organisation assignments are outside your organisation scope.");
             }
         }
-        return reportRepository.findReportsByOrganisationIdWithAssignment(organisationId).stream()
-                .map(this::toAssignmentDto)
-                .collect(Collectors.toList());
+        Page<Report> page = reportRepository.findReportsByOrganisationIdWithAssignment(
+                organisationId, pageable);
+        return toPagedResponse(page);
     }
 
-    private AssignmentDto toAssignmentDto(Report report) {
-        if (report.getAssignment() == null) {
-            return null;
-        }
-        return AssignmentDto.from(report.getAssignment(), report);
+    private static PagedResponse<AssignmentDto> toPagedResponse(Page<Report> page) {
+        // Reports without an assignment (organisation query) are not assignments.
+        java.util.List<AssignmentDto> content = page.getContent().stream()
+                .filter(r -> r.getAssignment() != null)
+                .map(r -> AssignmentDto.from(r.getAssignment(), r))
+                .filter(Objects::nonNull)
+                .toList();
+        return PagedResponse.of((int) page.getTotalElements(), page.getTotalPages(),
+                page.getNumber(), page.getSize(), content);
     }
 }

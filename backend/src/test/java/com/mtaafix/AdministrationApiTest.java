@@ -402,7 +402,7 @@ class AdministrationApiTest {
         mockMvc.perform(get("/api/v1/organizations/" + orgA.getId() + "/members")
                         .header("Authorization", login(orgAdminA)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray());
 
         mockMvc.perform(get("/api/v1/assignments/me")
                         .header("Authorization", login(recruit)))
@@ -420,7 +420,7 @@ class AdministrationApiTest {
         mockMvc.perform(get("/api/v1/organizations/" + orgA.getId() + "/members")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].userId").value(org.hamcrest.Matchers
+                .andExpect(jsonPath("$.content[*].userId").value(org.hamcrest.Matchers
                         .not(org.hamcrest.Matchers.hasItem(recruit.getId()))));
     }
 

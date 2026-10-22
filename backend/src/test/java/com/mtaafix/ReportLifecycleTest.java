@@ -696,11 +696,11 @@ class ReportLifecycleTest {
         mockMvc.perform(get("/api/v1/assignments/me")
                         .header("Authorization", w1Token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)));
+                .andExpect(jsonPath("$.content", hasSize(1)));
         mockMvc.perform(get("/api/v1/assignments/me")
                         .header("Authorization", w2Token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+                .andExpect(jsonPath("$.content", hasSize(0)));
 
         // Worker A retains full permitted access to their own assignment.
         mockMvc.perform(get("/api/v1/reports/" + id)

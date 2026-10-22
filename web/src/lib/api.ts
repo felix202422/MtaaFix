@@ -534,8 +534,12 @@ export const api = {
   },
 
   // P19 user management (ADMINISTRATOR only).
+  // Phase 17: endpoint is paginated (NFR-7); the worker dashboard shows a
+  // bounded list, so we fetch one page of 100 and unwrap the content.
   getMyAssignments(options: RequestOptions = {}): Promise<Assignment[]> {
-    return request<Assignment[]>('/assignments/me', options);
+    return request<PagedResponse<Assignment>>('/assignments/me?page=0&size=100', options).then(
+      (page) => page.content,
+    );
   },
   searchUsers(
     filters: { q?: string; role?: string; active?: boolean; page?: number; size?: number } = {},
@@ -647,10 +651,12 @@ export const api = {
     id: string,
     options: RequestOptions = {},
   ): Promise<OrganisationMember[]> {
-    return request<OrganisationMember[]>(
-      `/organizations/${encodeURIComponent(id)}/members`,
+    // Phase 17: paginated (NFR-7); org member lists are bounded, fetch one
+    // page of 100 and unwrap.
+    return request<PagedResponse<OrganisationMember>>(
+      `/organizations/${encodeURIComponent(id)}/members?page=0&size=100`,
       options,
-    );
+    ).then((page) => page.content);
   },
   addOrganisationMember(
     id: string,
