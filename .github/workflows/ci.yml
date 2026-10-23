@@ -123,21 +123,21 @@ jobs:
               (prints[e.testID]=prints[e.testID]||[]).push(String(e.message||""));
           }
           for(const f of failures)console.log("::error title=Flutter test failed ["+f.result+"]::"+esc(f.name));
-          for(const e of errors.slice(0,5))console.log("::error title=Flutter test exception::"+esc(().slice(0,)));
+          for(const e of errors.slice(0,5))console.log("::error title=Flutter test exception::"+esc((e.name+" -- "+e.msg).slice(0,1500)));
           let printCount=0;
           for(const id of failIds){
             for(const p of (prints[id]||[]).slice(0,25)){
               printCount++;
-              console.log("::error title=Flutter test log ("+esc(names[id]||id)+")::"+esc(().slice(0,)));
+              console.log("::error title=Flutter test log ("+esc(names[id]||id)+")::"+esc((p).slice(0,1400)));
             }
           }
           if(failures.length===0&&errors.length===0){
             const tail=serr.split("\n").filter(Boolean).slice(-15).join(" | ");
-            console.log("::error title=Flutter suite failed, no test event parsed::"+esc(().slice(0,)));
+            console.log("::error title=Flutter suite failed, no test event parsed::"+esc(("stderr tail: "+tail).slice(0,1500)));
           }
           if(printCount===0&&errors.length===0){
             const tail=serr.split("\n").filter(Boolean).slice(-20).join(" | ");
-            console.log("::error title=No captured output, stderr tail::"+esc(().slice(0,)));
+            console.log("::error title=No captured output, stderr tail::"+esc((tail).slice(0,1500)));
           }
           let out="### Flutter test results\n\nFailed tests: "+failures.length+", error events: "+errors.length+", captured print lines: "+printCount+"\n\n";
           for(const f of failures)out+="- ["+f.result+"] "+f.name+"\n";
