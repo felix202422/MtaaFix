@@ -11,6 +11,7 @@ Deployment readiness per owner-approved scope Q1–Q4 (2026-10-22): prod
 profile, runbook + local production-profile drill, hardened CI, release
 pipeline. Deployment target remains a plain systemd/JAR host (readiness
 only; no remote server provisioned).
+**Approved by owner 2026-10-22.**
 
 **Backend**
 - `application-prod.yml`: `server.forward-headers-strategy: framework`

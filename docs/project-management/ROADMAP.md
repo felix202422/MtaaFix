@@ -14,7 +14,7 @@
   runbook + verified local boot on a fresh database, CI: 4 jobs incl.
   PostgreSQL/PostGIS service + flutter test + gitleaks, release.yml tag
   pipeline; suites 155 (146 H2 + 9 PG) / 68 web / 171 mobile) —
-  **pending approval**
+  **APPROVED 2026-10-22**
 - **[0.18.0]** — Phase 17: Performance and reliability (N+1 elimination,
   Flyway V8 composite + trigram indexes, pagination of assignments/members/
   notifications clamp, Caffeine TTL caches, separate map feeds, SQL activity
@@ -607,7 +607,7 @@ notifications cap; ~5,000-report local seed for measurement; workstreams A–H.
 
 **Gate: APPROVED by owner 2026-10-22 — Phase 18 may start**
 
-## Phase 18 — Deployment and CI/CD (COMPLETE - PENDING APPROVAL 2026-10-22)
+## Phase 18 — Deployment and CI/CD (COMPLETE - APPROVED 2026-10-22)
 
 Master spec Phase 18: production configuration, deploy/rollback
 documentation, CI/CD pipeline, and secret protection. Owner-approved
@@ -639,7 +639,7 @@ gitleaks); Q4 git = commit Phases 16-18, owner pushes.
   public API 200; suites 155/155 backend (146 H2 + 9 PG) / 68 web /
   171 mobile
 
-**Gate: Phase 18 complete 2026-10-22 - owner approval pending**
+**Gate: APPROVED by owner 2026-10-22 — Phase 19 may start**
 
 ## Phase 19 — Observability and Operations (NOT STARTED)
 
@@ -689,5 +689,5 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 15 | Complete (approved 2026-10-21) |
 | 16 | Complete (approved 2026-10-22) |
 | 17 | Complete (approved 2026-10-22) |
-| 18 | Complete (pending approval 2026-10-22) |
+| 18 | Complete (approved 2026-10-22) |
 | 19–23 | Not started |
