@@ -81,6 +81,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: 3.47.7
           channel: stable
           cache: true
 
@@ -94,7 +95,29 @@ jobs:
 
       - name: Tests
         working-directory: mobile
-        run: flutter test
+        run: |
+          EXIT=0
+          flutter test --reporter json > test-results.json 2> test-stderr.log || EXIT=$?
+          node -e '
+          const fs=require("fs");
+          const names={};const failures=[];
+          let raw="";try{raw=fs.readFileSync("test-results.json","utf8")}catch(e){}
+          for(const line of raw.split("\n")){
+            if(!line.startsWith("{"))continue;
+            let e;try{e=JSON.parse(line)}catch(e){continue}
+            if(e.type==="testStart")names[e.test.id]=e.test.name;
+            if(e.type==="testDone"&&e.result!=="success"&&!e.hidden)failures.push(names[e.testID]||("#"+e.testID));
+          }
+          let out="### Flutter test results\n\nFailed: "+failures.length+"\n\n";
+          for(const f of failures){out+="- "+f.name+"\n";console.log("::error title=Flutter test failed::"+f.name);}
+          try{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,out)}catch(e){}
+          console.log("Parsed failing tests: "+failures.length);
+          '
+          if [ "$EXIT" -ne 0 ]; then
+            echo "--- flutter test stderr tail ---"
+            tail -n 80 test-stderr.log
+          fi
+          exit $EXIT
 
   secrets:
     name: Gitleaks secret scan
