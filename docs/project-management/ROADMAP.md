@@ -6,6 +6,42 @@
 > (master spec Part 16). Local tracking: [BOARD.md](BOARD.md) ·
 > Work items: [BACKLOG.md](BACKLOG.md) · Requirements: [../requirements/SRS.md](../requirements/SRS.md)
 
+## Phase Status Overview (updated 2026-10-23)
+
+**Where we are:** Phases 0–18 are complete and owner-approved (latest:
+Phase 18, approved 2026-10-22, pushed to `origin/master`). Next up:
+**Phase 19 — Observability and Operations**; Phases 19–23 are not
+started. CI (4-job pipeline) runs on every push — first run #31: backend
+(H2 + PostGIS IT), web and gitleaks green, mobile 170/171 (one test under
+investigation). Deferred commitments live in [BACKLOG.md](BACKLOG.md).
+
+| Phase | Status | What it delivered / what it covers |
+| ----- | ------ | ---------------------------------- |
+| 0 | ✅ Complete | Repo reconstruction from a contaminated home-dir tree: canonical structure, green backend/mobile baselines, root `.gitignore`/CI guards |
+| 1 | ✅ Complete (2026-10-13) | Requirements + design spine: SRS, role-permission matrix, 12-state lifecycle spec, domain model, API design, backlog, ROADMAP restructured to Phases 0–23 |
+| 2 | ✅ Complete (2026-10-13) | Design system: tokens, Tailwind v4, ESLint 9 + jsx-a11y, component library, `/design` gallery, DESIGN_SYSTEM.md, Flutter theme groundwork |
+| 3 | ✅ Complete (2026-10-14) | Backend foundation: PostGIS 3.6 on PostgreSQL 18, Flyway V1 repair, Boot 4 dependency fixes, H2+PG test matrix, OpenAPI export, DEVELOPMENT.md |
+| 4 | ✅ Complete (2026-10-14) | AuthN/Z: method security enabled, JWT filter hardening, register CITIZEN-only, role/org scoping, audit writes, 41 H2 + 3 PG tests |
+| 5 | ✅ Complete (2026-10-14) | Core reporting: Flyway V2, central 12-state machine (T1–T17, 409 on bad transitions), unique `MTF-<year>-<6-digit>` codes, category-driven create, full lifecycle endpoints |
+| 6 | ✅ Complete (2026-10-15) | Public website: 4 public pages + public APIs (list/detail/categories/stats) + privacy review; web test harness established |
+| 7 | ✅ Complete (2026-10-15) | Citizen web: auth layer, dashboard, 4-step report wizard, my-reports/tracking/notifications/profile, multipart media upload, `PUT /auth/me`, T8 cancel |
+| 8 | ✅ Complete (2026-10-15) | Geographic capabilities: PostGIS bbox/near queries, GeoJSON + HMAC coordinate fuzzing, Leaflet map interactions, V3 GIST index |
+| 9 | ✅ Complete (2026-10-17) | Administration: V4 org memberships, user/org/category admin, filtered audit, admin dashboard + analytics + read-only settings, 11 admin pages |
+| 10 | ✅ Complete (2026-10-17) | Field-worker web: worker dashboard, task details, evidence upload, reviewer return action, worker-scoping tests |
+| 11 | ✅ Complete (2026-10-17) | Flutter foundation: router/guards, ApiClient with refresh+rotation, AuthController, shared theme, Android/iOS config, 29 tests + debug APK |
+| 12 | ✅ Complete (2026-10-18) | Citizen mobile: onboarding → shell → create → detail → map → notifications → profile; emulator-verified, 111 tests |
+| 13 | ✅ Complete (2026-10-18) | Notifications + media: V5 preferences/deliveries/reset-tokens, forgot/reset/change password, email delivery + kill-switch, media MIME/size caps, web + mobile UIs |
+| 14 | ✅ Complete (2026-10-21) | Offline capabilities: Flyway V6 idempotency keys, mobile drafts/outbox/pending queue with foreground retry, categories cache, sign-out clear |
+| 15 | ✅ Complete (2026-10-21) | Quality assurance: gap-fill tests (critical journey, 320×640 overflow, semantics), 5 responsive fixes, live battery 63/63, defect plan D1–D14 |
+| 16 | ✅ Complete (2026-10-22) | Security hardening: 415/405 contracts, JWT revocation via V7 `token_version` (rotating password change), media status gate, per-IP rate limiting, ProdSecretsGuard, 10-area review record |
+| 17 | ✅ Complete (2026-10-22) | Performance + reliability: N+1 elimination, V8 composite + trigram indexes, pagination of user lists, Caffeine caches, RequestTimingFilter; NFR-7 **MET** 11/11 p95 < 500 ms on 5,038 reports |
+| 18 | ✅ Complete (2026-10-22) | Deployment + CI/CD: `application-prod.yml` + refusals/boot drills, DEPLOYMENT.md runbook, 4-job CI (PostGIS service IT, web, mobile, gitleaks) + `release.yml`, forwarded-IP + guard tests |
+| 19 | **Not started — next** | Observability and operations: Micrometer/Prometheus per-endpoint metrics + histograms (B-17.2), backup automation + PITR with restore drill (B-16.3), repeat NFR-7 measurement (B-17.7), structured logging, alerts, troubleshooting docs. Entry: Phase 18 gate passed |
+| 20 | Not started | Beta release: critical-workflow verification, test data, known-limitations doc, structured feedback, release criteria; carries offline-storage encryption (B-16.1) |
+| 21 | Not started | Approved advanced features — each with its own acceptance criteria: analytics, Swahili, multi-org improvements, duplicate detection, AI assistance (never silently replacing human review), integrations |
+| 22 | Not started | Production readiness + version 1.0: defect closure, security/privacy verification, backup/restore verification, documentation finalization, release notes |
+| 23 | Not started | Post-release development: feedback- and data-driven iteration under the same approval-gated process |
+
 ## Version History
 
 - **[0.19.0]** — Phase 18: Deployment and CI/CD (prod profile with

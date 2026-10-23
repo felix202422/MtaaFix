@@ -1,11 +1,20 @@
 # MtaaFix — Local Task Board
 
-Local tracking board (GitHub `gh` CLI unavailable; revisit if auth is fixed).
+Local tracking board (`gh` CLI still unauthenticated; run status read via the unauthenticated GitHub REST API).
 Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
-Last updated: 2026-10-22.
+Last updated: 2026-10-23.
 
 ## Current phase: Phase 18 APPROVED (2026-10-22) — next: Phase 19 (not started)
+
+Phases 0–18 delivered and approved (all pushed to `origin/master`).
+
+**CI (GitHub Actions, run #31 on `a76c470` — first with the 4-job pipeline):**
+backend (H2 + PostGIS service IT) ✅ · web (lint + tests + build) ✅ ·
+gitleaks ✅ · **mobile ❌ 170/171** — first-ever CI `flutter test` run;
+log download requires GitHub auth. Under investigation 2026-10-23: local
+Flutter upgraded 3.47.1 → 3.47.7 to match CI’s unpinned `stable` channel;
+the runner is `ubuntu-latest` and no local Linux repro exists (no WSL/Docker).
 
 ## Phase 18 — Deployment and CI/CD (COMPLETE — APPROVED 2026-10-22)
 
@@ -332,10 +341,14 @@ Last updated: 2026-10-22.
 | OpenAPI regenerated | DONE | `docs/api/openapi.json` via OpenApiExportTest |
 | Phase 5 report + approval gate | DONE | Approved by owner 2026-10-14; docs flipped to APPROVED |
 
-## Next phases
+## Phase delivery summary (0–23, updated 2026-10-23)
 
 | Phase | Status | Notes |
 |-------|--------|-------|
+| Phase 0 - Project audit & foundation | Complete | Contaminated home-dir repo extracted to a canonical tree; green backend/mobile baselines; root `.gitignore`/CI guards; pushed to the MtaaFix remote |
+| Phase 1 - Requirements & system design | Complete (approved 2026-10-13) | SRS, role-permission matrix, 12-state lifecycle spec, domain model, API design, decisions D1–D4, backlog, ROADMAP restructured to Phases 0–23 |
+| Phase 2 - Design system & UI foundation | Complete (approved 2026-10-13) | Tailwind v4 + tokens, ESLint 9 + jsx-a11y, component library, `/design` gallery, DESIGN_SYSTEM.md, Flutter theme groundwork |
+| Phase 3 - Backend foundation | Complete (approved 2026-10-14) | PostGIS 3.6 on PostgreSQL 18, Flyway V1 repair, Boot 4 dependency fixes, H2+PG test matrix, OpenAPI export, DEVELOPMENT.md runbook |
 | Phase 4 - AuthN/Z | Complete (approved 2026-10-14) | Matrix enforcement + scoping + audit + tests done |
 | Phase 5 - Core reporting workflow | Complete (approved 2026-10-14) | 12-state machine, unique codes, comments/media, lifecycle endpoints; deferrals noted in report |
 | Phase 6 - Public website | Complete (approved 2026-10-15) | 4 public pages + public APIs + privacy; real-PG smoke caught/fixed H2-masked query bug |
@@ -351,10 +364,15 @@ Last updated: 2026-10-22.
 | Phase 16 - Security review and hardening | Complete (approved 2026-10-22) | 10-area review record; 415/405 contracts (D1/D2), JWT revocation via token_version incl. rotating password change (D3), media status gate (D4), per-IP rate limiting, prod secrets guard; 144+8 PG / 68 web / 171 mobile + live battery 23/23 |
 | Phase 17 - Performance and reliability | Complete (approved 2026-10-22) | N+1 elimination, V8 composite + trigram indexes, assignments/members pagination + notifications clamp, Caffeine TTL caches, separate map feeds (100 markers), SQL activity bucketing, RequestTimingFilter; NFR-7 measured 11/11 p95 < 500 ms (5,038-report seed); 148+9 PG / 68 web / 171 mobile |
 | Phase 18 - Deployment and CI/CD | Complete (approved 2026-10-22) | Prod profile (forwarded headers, health-only actuator) + guard/forwarded-IP tests; DEPLOYMENT.md runbook; CI 4 jobs (PG service IT, web, mobile, gitleaks) + release.yml; drills: refusal + fresh-DB boot health UP Flyway V1-V8; 155 (146+9 PG) / 68 web / 171 mobile |
+| Phase 19 - Observability and operations | **Not started — next** | Micrometer/Prometheus per-endpoint metrics + histograms (B-17.2), backup automation + PITR with restore drill (B-16.3), repeat NFR-7 measurement (B-17.7), structured logging, alerts, troubleshooting docs |
+| Phase 20 - Beta release | Not started | Critical-workflow verification, test data, known-limitations doc, structured feedback, release criteria; carries offline-storage encryption (B-16.1) |
+| Phase 21 - Approved advanced features | Not started | Analytics, Swahili, multi-org improvements, duplicate detection, human-reviewed AI assistance, integrations — each with own acceptance criteria |
+| Phase 22 - Production readiness / v1.0 | Not started | Defect closure, security/privacy verification, backup/restore verification, documentation finalization, release notes |
+| Phase 23 - Post-release development | Not started | Feedback- and data-driven iteration under the same approval-gated process |
 
 ## Environment notes
 
-- Java 25.0.4, Maven 3.9.16, Node 24.13.1, Flutter 3.47.1, PostgreSQL 18 running
+- Java 25.0.4, Maven 3.9.16, Node 24.13.1, Flutter 3.47.7 (upgraded 2026-10-23), PostgreSQL 18 running
 - PostGIS 3.6.2 installed for PG 18 (OSGeo bundle overlay, Phase 3)
 - No Docker; no Testcontainers
 - `gh` CLI token invalid; git push works via Windows Credential Manager
