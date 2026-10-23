@@ -9,12 +9,20 @@ Last updated: 2026-10-23.
 
 Phases 0–18 delivered and approved (all pushed to `origin/master`).
 
-**CI (GitHub Actions, run #31 on `a76c470` — first with the 4-job pipeline):**
-backend (H2 + PostGIS service IT) ✅ · web (lint + tests + build) ✅ ·
-gitleaks ✅ · **mobile ❌ 170/171** — first-ever CI `flutter test` run;
-log download requires GitHub auth. Under investigation 2026-10-23: local
-Flutter upgraded 3.47.1 → 3.47.7 to match CI’s unpinned `stable` channel;
-the runner is `ubuntu-latest` and no local Linux repro exists (no WSL/Docker).
+**CI (GitHub Actions): run #36 (2026-10-23, `78a90ee`) — all four green ✅**
+backend (H2 + PostGIS service IT) · web (lint + tests + build) · mobile
+(flutter analyze + 171/171) · gitleaks. History: first 4-job run #31
+(`a76c470`) failed mobile 170/171; runs #31–35 each failed a *different*
+single test → flaky CI-scheduling races, not product bugs. Diagnosed
+without auth via public check-runs annotations (JSON-reporter parser in
+`ci.yml`; `flutter-version` pinned to 3.47.7 — version drift ruled out).
+Root causes fixed in `78a90ee`: (1) the queue-persistence test restarted
+while *online*, so the fresh controller's fire-and-forget auto-flush raced
+its own assertions — CI's stretched event loop let the drain win; the test
+now restarts offline. (2) `settleReal`'s fixed 320 ms real budget couldn't
+absorb CI I/O latency at the three submit sites — it now supports an
+optional condition wait bounded at 1 s (defaults unchanged). Local after
+fix: analyze clean, mobile 171/171 ×2.
 
 ## Phase 18 — Deployment and CI/CD (COMPLETE — APPROVED 2026-10-22)
 

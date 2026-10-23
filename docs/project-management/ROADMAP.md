@@ -11,9 +11,12 @@
 **Where we are:** Phases 0–18 are complete and owner-approved (latest:
 Phase 18, approved 2026-10-22, pushed to `origin/master`). Next up:
 **Phase 19 — Observability and Operations**; Phases 19–23 are not
-started. CI (4-job pipeline) runs on every push — first run #31: backend
-(H2 + PostGIS IT), web and gitleaks green, mobile 170/171 (one test under
-investigation). Deferred commitments live in [BACKLOG.md](BACKLOG.md).
+started. CI (4-job pipeline) runs on every push — run #36 (2026-10-23,
+`78a90ee`): **all four jobs green** (backend H2 + PostGIS IT, web, mobile
+171/171, gitleaks). Runs #31–35 each failed a *different* single mobile
+test — flaky CI-scheduling races, root-caused and fixed in `78a90ee`
+(details in [BOARD.md](BOARD.md)). Deferred commitments live in
+[BACKLOG.md](BACKLOG.md).
 
 | Phase | Status | What it delivered / what it covers |
 | ----- | ------ | ---------------------------------- |
