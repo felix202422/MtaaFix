@@ -100,18 +100,31 @@ jobs:
           flutter test --reporter json > test-results.json 2> test-stderr.log || EXIT=$?
           node -e '
           const fs=require("fs");
-          const names={};const failures=[];
-          let raw="";try{raw=fs.readFileSync("test-results.json","utf8")}catch(e){}
+          const names={},failures=[],errors=[];
+          const esc=s=>String(s).replace(/%/g,"%25").replace(/\r/g,"%0D").replace(/\n/g,"%0A");
+          let raw="",serr="";
+          try{raw=fs.readFileSync("test-results.json","utf8")}catch(e){}
+          try{serr=fs.readFileSync("test-stderr.log","utf8")}catch(e){}
           for(const line of raw.split("\n")){
             if(!line.startsWith("{"))continue;
             let e;try{e=JSON.parse(line)}catch(e){continue}
-            if(e.type==="testStart")names[e.test.id]=e.test.name;
-            if(e.type==="testDone"&&e.result!=="success"&&!e.hidden)failures.push(names[e.testID]||("#"+e.testID));
+            if(e.type==="testStart"&&e.test)names[e.test.id]=e.test.name;
+            if(e.type==="testDone"&&e.result!=="success"&&!e.hidden)
+              failures.push({name:names[e.testID]||("unknown-id-"+e.testID),result:e.result});
+            if(e.type==="error")
+              errors.push({name:names[e.testID]||("unknown-id-"+e.testID),msg:String(e.error||"").split("\n").slice(0,6).join(" | ")});
           }
-          let out="### Flutter test results\n\nFailed: "+failures.length+"\n\n";
-          for(const f of failures){out+="- "+f.name+"\n";console.log("::error title=Flutter test failed::"+f.name);}
+          for(const f of failures)console.log("::error title=Flutter test failed ["+f.result+"]::"+esc(f.name));
+          for(const e of errors.slice(0,10))console.log("::error title=Flutter test error::"+esc(e.name+" -- "+e.msg).slice(0,900));
+          if(failures.length===0&&errors.length===0){
+            const tail=serr.split("\n").filter(Boolean).slice(-15).join(" | ");
+            console.log("::error title=Flutter suite failed, no test event parsed::"+esc("stderr tail: "+tail).slice(0,1500));
+          }
+          let out="### Flutter test results\n\nFailed tests: "+failures.length+", error events: "+errors.length+"\n\n";
+          for(const f of failures)out+="- ["+f.result+"] "+f.name+"\n";
+          for(const e of errors)out+="- error: "+e.name+": "+e.msg+"\n";
           try{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,out)}catch(e){}
-          console.log("Parsed failing tests: "+failures.length);
+          console.log("Parsed failing tests: "+failures.length+" error events: "+errors.length);
           '
           if [ "$EXIT" -ne 0 ]; then
             echo "--- flutter test stderr tail ---"
