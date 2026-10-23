@@ -117,6 +117,10 @@ void main() {
   });
 
   test('enqueue persists the queue for the next app start', () async {
+    // Restart while offline: an online controller auto-flushes the reloaded
+    // queue from start() (fire-and-forget), which would drain it before the
+    // assertions below — a race that CI's loaded event loop reliably loses.
+    fake.online = false;
     final first = makeController();
     await first.start();
     await first.enqueue(item());

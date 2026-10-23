@@ -38,12 +38,19 @@ void main() {
 
   /// Lets real dart:io work started by widget code (drafts, outbox writes)
   /// finish: [runAsync] turns let I/O complete, [pump] flushes the callbacks
-  /// queued in the test's fake-async zone.
-  Future<void> settleReal(WidgetTester tester, {int rounds = 8}) async {
-    for (var i = 0; i < rounds; i++) {
+  /// queued in the test's fake-async zone. With [until], rounds keep going
+  /// (bounded by a one-second wall-clock deadline) so real I/O can land on a
+  /// loaded CI runner whose event loop stretches the fixed-round budget.
+  Future<void> settleReal(WidgetTester tester,
+      {int rounds = 8, bool Function()? until}) async {
+    final deadline = DateTime.now().add(const Duration(milliseconds: 1000));
+    var i = 0;
+    while (i < rounds ||
+        (until != null && !until() && DateTime.now().isBefore(deadline))) {
       await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 40)));
       await tester.pump();
+      i++;
     }
     await tester.pumpAndSettle();
   }
@@ -310,7 +317,9 @@ void main() {
     await tester.pump();
     await tester.tap(find.widgetWithText(ElevatedButton, 'Submit report'));
     await tester.pump();
-    await settleReal(tester);
+    // Wait for the pop rather than assuming it fits in the fixed budget.
+    await settleReal(tester,
+        until: () => find.byType(ReportFormScreen).evaluate().isEmpty);
 
     // Back on the base route — the form popped itself.
     expect(find.byType(ReportFormScreen), findsNothing);
@@ -353,7 +362,8 @@ void main() {
     await tester.pump();
     await tester.tap(find.widgetWithText(ElevatedButton, 'Submit report'));
     await tester.pump();
-    await settleReal(tester);
+    await settleReal(tester,
+        until: () => find.byType(ReportFormScreen).evaluate().isEmpty);
 
     expect(find.text('Report MTF-0001 submitted.'), findsOneWidget);
     expect(offline.items, isEmpty,
@@ -397,7 +407,8 @@ void main() {
     await tester.pump();
     await tester.tap(find.widgetWithText(ElevatedButton, 'Submit report'));
     await tester.pump();
-    await settleReal(tester);
+    await settleReal(tester,
+        until: () => find.byType(ReportFormScreen).evaluate().isEmpty);
 
     expect(find.text('Report MTF-0001 submitted.'), findsOneWidget);
     final draft = await tester.runAsync(offline.loadDraft);
