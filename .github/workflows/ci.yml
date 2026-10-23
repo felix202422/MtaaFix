@@ -5,14 +5,39 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   JAVA_VERSION: '25'
+  NODE_VERSION: '22'
   MVN_OPTS: '-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.client=warn'
 
 jobs:
-  build:
+  backend:
+    name: Backend (H2 + PostgreSQL/PostGIS)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_PASSWORD: change-me
+          POSTGRES_DB: mtaafix
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d mtaafix"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      MTAAFIX_PG_IT: 'true'
+      # Default-profile context for the PG IT: needs a >=32-char JWT secret
+      # (JwtTokenProvider) - the service password matches the app default.
+      JWT_SECRET: 'mtaafix-ci-integration-jwt-secret-2026-0123456789abc'
     steps:
       - uses: actions/checkout@v4
 
@@ -21,32 +46,65 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: temurin
+          cache: maven
 
-      - name: Cache Maven
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: maven-
-
-      - name: Compile backend
-        run: mvn -B -f backend/pom.xml compile $MVN_OPTS
-
-      - name: Run unit tests
+      - name: Unit + integration tests (H2 + PostgreSQL/PostGIS)
         run: mvn -B -f backend/pom.xml test $MVN_OPTS
 
-      - name: Verify web build
-        run: |
-          if [ -d web/src ]; then
-            cd web
-            if command -v npm &>/dev/null; then npm ci && npm run lint && npm run test && npm run build; else echo "npm not installed, skipping"; fi
-            cd ..
-          else
-            echo "web/src not present (scaffold only); skipping web build"
-          fi
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Verify mobile build
-        run: |
-          if [ -f mobile/pubspec.yaml ]; then
-            if command -v flutter &>/dev/null; then flutter pub get && flutter analyze; else echo "flutter not installed, skipping"; fi
-          fi
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install
+        working-directory: web
+        run: npm ci
+
+      - name: Lint, typecheck, tests, production build
+        working-directory: web
+        run: npm run lint && npm run test && npm run build
+
+  mobile:
+    name: Mobile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: mobile
+        run: flutter analyze
+
+      - name: Tests
+        working-directory: mobile
+        run: flutter test
+
+  secrets:
+    name: Gitleaks secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

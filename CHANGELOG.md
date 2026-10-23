@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.19.0] — 2026-10-22
+### Phase 18 - Deployment and CI/CD
+Deployment readiness per owner-approved scope Q1–Q4 (2026-10-22): prod
+profile, runbook + local production-profile drill, hardened CI, release
+pipeline. Deployment target remains a plain systemd/JAR host (readiness
+only; no remote server provisioned).
+
+**Backend**
+- `application-prod.yml`: `server.forward-headers-strategy: framework`
+  (X-Forwarded-* honoured - B-16.4), `ddl-auto: validate` explicit,
+  actuator exposes **health only** with `show-details: never`
+- `ForwardedIpRateLimitTest`: proxy `X-Forwarded-For` rewrite keyed at
+  `HIGHEST_PRECEDENCE` before the security chain - client A exhausts
+  2/min on forgot-password (429 + Retry-After + `RATE_LIMITED`), client
+  B behind the same socket passes (B-16.4 discriminator)
+- `ProdSecretsGuardTest` x6: shipped defaults (incl. rotated), blanks,
+  short JWT, prod-only `@Profile` scope, real values accepted
+
+**CI/CD (.github/workflows)**
+- `ci.yml` rewritten - four parallel jobs: **backend** full `mvn test`
+  (H2 suite + PG IT `MTAAFIX_PG_IT=true` against `postgis/postgis:18-3.6`
+  service, `JWT_SECRET` >=32 for the default-profile context), **web**
+  (lint + vitest + tsc/vite build), **mobile** (`flutter analyze` +
+  `flutter test`), **secrets** (gitleaks over full history); concurrency
+  cancellation + workflow_dispatch
+- `release.yml` new - on tag `v*`: package jar (tests rerun), build
+  `web/dist`, attach executable jar + `web-dist.zip` to the GitHub Release
+
+**Docs**
+- `docs/operations/DEPLOYMENT.md` runbook (env/secrets, build, prod boot,
+  nginx forwarded-header example, CI/release, rollback, scope notes;
+  Docker skipped per owner - no container runtime in this environment)
+- `.env.example`: corrected `RATE_LIMIT_AUTH_PER_MINUTE` /
+  `RATE_LIMIT_REPORT_PER_MINUTE` names (documented vars did not match
+  `application.yml`), added `GEO_FUZZ_SECRET` + `TIMING_WARN_THRESHOLD_MS`
+- DEVELOPMENT.md CI section matches the new pipeline
+
+**Live drill (local, evidence)**
+- Refusal: `prod` + shipped JWT default -> boot fails with
+  `JWT secret must be at least 32 characters`; with real JWT/DB but
+  default `GEO_FUZZ_SECRET` -> `ProdSecretsGuard: Refusing to start with
+  the prod profile: geo.fuzz-secret still holds a shipped development
+  default` (exit 1)
+- Boot: `prod` + real secrets vs fresh scratch DB -> Flyway **V1-V8**
+  applied, `validate` passes, `/actuator/health` = **UP** in ~10 s,
+  `GET /api/v1/reports/public?size=5` 200; scratch DB dropped after
+- Suites: backend **155/155** (146 H2 + 9 PG IT) / web lint +
+  **68/68** + production build / mobile analyze + **171/171**
+- B-16.4 closed; D11 closed (suites wired into CI); Docker image skipped
+  per owner decision; backups remain Phase 19; commits only - owner
+  pushes to trigger CI
 ## [0.18.0] — 2026-10-22
 ### Phase 17 - Performance and reliability
 N+1 elimination, index review, pagination of user-growable lists, justified

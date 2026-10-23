@@ -5,7 +5,21 @@ Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1).
 Last updated: 2026-10-22.
 
-## Current phase: Phase 17 APPROVED (2026-10-22) — next: Phase 18 (not started)
+## Current phase: Phase 18 COMPLETE (2026-10-22) — owner approval pending; next: Phase 19 after gate
+
+## Phase 18 — Deployment and CI/CD (COMPLETE — PENDING APPROVAL 2026-10-22)
+
+| Task | Status | Notes |
+| ---- | ------ | ----- |
+| Owner-approved scope | DONE | Q1 deployment = readiness only (no remote host); Q2 Docker = skip + document rationale (no container runtime here); Q3 CI depth = all four (PG service + IT, flutter test, release workflow, gitleaks); Q4 commit Phases 16–18, owner pushes |
+| A — Prod profile + guard tests | DONE | `application-prod.yml`: `server.forward-headers-strategy: framework` (B-16.4), explicit `ddl-auto: validate`, actuator health-only (`show-details: never`); `ForwardedIpRateLimitTest` (XFF rewrite at `HIGHEST_PRECEDENCE` before the security chain: client A exhausts 2/min → 429 + Retry-After + `RATE_LIMITED`, client B behind same socket passes); `ProdSecretsGuardTest` ×6 |
+| B — Runbook | DONE | `docs/operations/DEPLOYMENT.md`: prerequisites, secrets/env, build, prod boot, nginx `X-Forwarded-*` example, CI/release, stop/rollback, scope notes (Docker skipped, backups Phase 19) |
+| C — CI/CD | DONE | `ci.yml` 4 parallel jobs: backend (`postgis/postgis:18-3.6` service, `MTAAFIX_PG_IT=true`, `JWT_SECRET` ≥32 for the default-profile IT context), web (lint + vitest + tsc/vite build), mobile (`flutter analyze` + `flutter test`), gitleaks (full history); concurrency cancel + `workflow_dispatch`; `release.yml` on `v*` → jar (tests rerun) + `web-dist.zip` on the GitHub Release |
+| D — Verification battery | DONE | Refusal: `prod` + shipped `JWT_SECRET` → exit 1 (`JWT secret must be at least 32 characters`); real JWT/DB + default `GEO_FUZZ_SECRET` → `ProdSecretsGuard: Refusing to start with the prod profile: geo.fuzz-secret still holds a shipped development default`. Boot: fresh scratch DB → Flyway **V1–V8**, validate passed, health **UP ~10 s**, public API 200, scratch dropped. Suites: backend **155/155** (146 H2 + 9 PG) / web lint + **68/68** + build / mobile analyze + **171/171** |
+| E — Docs sync | DONE | CHANGELOG 0.19.0; ROADMAP Phase 18 section + version history + delivery row; BACKLOG D11 + B-16.4 closed, Phase 18 outcomes (B-18.1/2); BOARD this table; DEVELOPMENT §8 (new pipeline + local PG IT env); `.env.example` (`RATE_LIMIT_*_PER_MINUTE` names, `GEO_FUZZ_SECRET`, timing var); DEPLOYMENT §6 drill evidence |
+| Phase 18 report + approval gate | DONE | Report delivered 2026-10-22 — **owner approval pending** |
+
+**Known deferrals:** Docker image/compose (owner decision — B-18.1); remote host provisioning (readiness only — B-18.2); backup automation + PITR → Phase 19 (B-16.3).
 
 ## Phase 17 — Performance and Reliability (COMPLETE — APPROVED 2026-10-22)
 
@@ -336,6 +350,7 @@ Last updated: 2026-10-22.
 | Phase 15 - Quality assurance | Complete (approved 2026-10-21) | Gap-fill tests (critical journey, 320×640 no-overflow, semantics), 5 responsive fixes, lazy map mount + test tile provider, role-boundary/lifecycle live battery 63/63 |
 | Phase 16 - Security review and hardening | Complete (approved 2026-10-22) | 10-area review record; 415/405 contracts (D1/D2), JWT revocation via token_version incl. rotating password change (D3), media status gate (D4), per-IP rate limiting, prod secrets guard; 144+8 PG / 68 web / 171 mobile + live battery 23/23 |
 | Phase 17 - Performance and reliability | Complete (approved 2026-10-22) | N+1 elimination, V8 composite + trigram indexes, assignments/members pagination + notifications clamp, Caffeine TTL caches, separate map feeds (100 markers), SQL activity bucketing, RequestTimingFilter; NFR-7 measured 11/11 p95 < 500 ms (5,038-report seed); 148+9 PG / 68 web / 171 mobile |
+| Phase 18 - Deployment and CI/CD | Complete (pending approval 2026-10-22) | Prod profile (forwarded headers, health-only actuator) + guard/forwarded-IP tests; DEPLOYMENT.md runbook; CI 4 jobs (PG service IT, web, mobile, gitleaks) + release.yml; drills: refusal + fresh-DB boot health UP Flyway V1-V8; 155 (146+9 PG) / 68 web / 171 mobile |
 
 ## Environment notes
 

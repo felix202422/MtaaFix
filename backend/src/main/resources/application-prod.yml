@@ -1,0 +1,26 @@
+# Phase 18 (deployment readiness): production profile.
+# Real secrets are intentionally NOT defined here - ProdSecretsGuard fails
+# startup while JWT_SECRET, SPRING_DATASOURCE_PASSWORD or GEO_FUZZ_SECRET
+# are blank or still hold shipped development defaults. Provide them via the
+# environment (runbook: docs/operations/DEPLOYMENT.md).
+
+server:
+  # Behind the terminating proxy, honour X-Forwarded-* headers so redirects
+  # and the per-IP rate limiter see the real client address (B-16.4).
+  forward-headers-strategy: framework
+
+spring:
+  jpa:
+    hibernate:
+      # Flyway owns the schema; Hibernate validates it on startup.
+      ddl-auto: validate
+
+management:
+  # Health check only - no environment/bean/metrics endpoints without auth.
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

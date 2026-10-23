@@ -8,6 +8,13 @@
 
 ## Version History
 
+- **[0.19.0]** — Phase 18: Deployment and CI/CD (prod profile with
+  forwarded headers + health-only actuator, ProdSecretsGuard drill,
+  ForwardedIpRateLimitTest for proxy-keyed buckets, DEPLOYMENT.md
+  runbook + verified local boot on a fresh database, CI: 4 jobs incl.
+  PostgreSQL/PostGIS service + flutter test + gitleaks, release.yml tag
+  pipeline; suites 155 (146 H2 + 9 PG) / 68 web / 171 mobile) —
+  **pending approval**
 - **[0.18.0]** — Phase 17: Performance and reliability (N+1 elimination,
   Flyway V8 composite + trigram indexes, pagination of assignments/members/
   notifications clamp, Caffeine TTL caches, separate map feeds, SQL activity
@@ -600,10 +607,39 @@ notifications cap; ~5,000-report local seed for measurement; workstreams A–H.
 
 **Gate: APPROVED by owner 2026-10-22 — Phase 18 may start**
 
-## Phase 18 — Deployment and CI/CD (NOT STARTED)
+## Phase 18 — Deployment and CI/CD (COMPLETE - PENDING APPROVAL 2026-10-22)
 
-Docker (owner environment permitting), production config, migrations in deploy,
-health checks, rollback docs, secret protection.
+Master spec Phase 18: production configuration, deploy/rollback
+documentation, CI/CD pipeline, and secret protection. Owner-approved
+scope (2026-10-22): Q1 deployment = readiness only (no remote host);
+Q2 Docker = skip + document rationale (no container runtime here);
+Q3 CI depth = all four (PG service + IT, flutter test, release workflow,
+gitleaks); Q4 git = commit Phases 16-18, owner pushes.
+
+- **Prod profile** (`application-prod.yml`):
+  `server.forward-headers-strategy: framework` (true client IP for the
+  Phase 16 rate limiter - B-16.4), explicit `ddl-auto: validate`,
+  actuator health-only (`show-details: never`); secrets stay in the
+  environment, guarded by `ProdSecretsGuard`
+- **Tests**: `ForwardedIpRateLimitTest` (XFF bucket isolation,
+  ForwardedHeaderFilter at HIGHEST_PRECEDENCE) + `ProdSecretsGuardTest`
+  x6 (defaults/blanks/length/profile scope)
+- **Runbook**: `docs/operations/DEPLOYMENT.md` - env/secrets, build,
+  prod boot, nginx X-Forwarded-* example, CI/release, rollback, scope
+  decisions (Docker skipped, backups Phase 19)
+- **CI** (`ci.yml`): backend job with `postgis/postgis:18-3.6` service
+  (`MTAAFIX_PG_IT=true` + `JWT_SECRET` >=32), web lint/test/build,
+  mobile analyze + test, gitleaks; concurrency cancel + dispatch
+- **Release** (`release.yml`): tag `v*` -> jar (tests rerun) +
+  `web-dist.zip` attached to the GitHub Release
+- **`.env.example`**: rate-limit var names corrected to
+  `RATE_LIMIT_*_PER_MINUTE`, `GEO_FUZZ_SECRET` + timing var added
+- **Live drill**: refusal verified (JWT default + guard message, exit
+  1); fresh scratch DB boot: Flyway V1-V8, validate, health UP ~10 s,
+  public API 200; suites 155/155 backend (146 H2 + 9 PG) / 68 web /
+  171 mobile
+
+**Gate: Phase 18 complete 2026-10-22 - owner approval pending**
 
 ## Phase 19 — Observability and Operations (NOT STARTED)
 
@@ -653,4 +689,5 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 15 | Complete (approved 2026-10-21) |
 | 16 | Complete (approved 2026-10-22) |
 | 17 | Complete (approved 2026-10-22) |
-| 18–23 | Not started |
+| 18 | Complete (pending approval 2026-10-22) |
+| 19–23 | Not started |

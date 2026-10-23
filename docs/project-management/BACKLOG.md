@@ -689,7 +689,7 @@ section below for the verification evidence):
 | D8 | FR-2.4 report date filter unsupported by backend | Since Phase 12 | Low (feature gap) | Deferred; Phase 21 advanced features |
 | D9 | Web narrow-width header nav wraps instead of collapsing (no hamburger) | Phase 15 audit | Low (UX polish) | All destinations remain reachable via wrap; refine with real-device feedback in Phase 20 |
 | D10 | iOS build unexecutable on Windows host | B-X.4 | Medium (platform) | `ios/Runner` scaffolded; macOS CI/device verification required before Phase 20 release |
-| D11 | Suites not wired into CI (backend/web/mobile run manually) | Structural | Medium (process) | Phase 18 CI/CD pipeline |
+| D11 | Suites not wired into CI (backend/web/mobile run manually) | Structural | Medium (process) | **Resolved Phase 18** - `ci.yml`: backend job runs H2 suite + PG IT against a PostGIS service, web lint/test/build, mobile analyze/test, gitleaks; `release.yml` on `v*` tags |
 | D12 | jsdom cannot assert CSS-driven responsive visibility | Phase 15 audit | Info (tooling) | Covered by lint + semantics tests + documented audit; real-browser check in Phase 20 |
 | D13 | SRS table rows 14-26 (device/section listing) stale vs current feature set | Carried | Low (docs) | SRS sync pass in Phase 20 release prep |
 | D14 | Phase 14 deferrals: offline browsing/map tiles, background sync | Owner-approved deferral | Low | Remains approved scope; reconsider Phase 21 |
@@ -704,7 +704,7 @@ follow-ups owned by later phases:
 | B-16.1 | Encrypt mobile offline drafts/outbox at rest (D5) | Phase 20 | Keystore-backed key; encrypted `DraftStore`/`OutboxStore` files; device testing; tokens already covered by `flutter_secure_storage` |
 | B-16.2 | Web dev-toolchain majors (`npm audit` dev-only advisories: vitest 5, vite 8 / esbuild, tinypool) | Scheduled toolchain task | `npm audit` clean including dev; suites stay green after the breaking upgrades |
 | B-16.3 | Backup automation + PITR (runbook documented in SECURITY_REVIEW) | Ops/deploy phase | Scheduled `pg_dump` + `uploads/` backup; restore drill evidence; retention policy |
-| B-16.4 | Phase 18 handoffs: activate `prod` profile with real secrets (`ProdSecretsGuard`); forwarded-header/proxy config so the rate limiter sees real client IPs | Phase 18 | Boot under `prod` refuses weak defaults; 429 buckets keyed by true client IP behind the proxy |
+| B-16.4 | Phase 18 handoffs: activate `prod` profile with real secrets (`ProdSecretsGuard`); forwarded-header/proxy config so the rate limiter sees real client IPs | Phase 18 | Boot under `prod` refuses weak defaults; 429 buckets keyed by true client IP behind the proxy - **DONE Phase 18** (`application-prod.yml` + drills: refusal proven live; `ForwardedIpRateLimitTest` proves XFF bucket isolation) |
 | B-16.5 | Full NVD dependency scan (skipped per owner: network/API friction) | Ops phase if scanner provisioned | Recorded scan output attached to a future review refresh |
 
 ### Phase 17 outcomes + deferrals
@@ -722,6 +722,17 @@ owned by later phases:
 | B-17.5 | Paginate reference data (`/categories*`, `/organizations` list) | Only if datasets grow | Currently bounded admin-managed rows (tens) — documented exemption in API_DESIGN |
 | B-17.6 | Cache high-cardinality queries (`q` search, bbox/map) | Only if measurement regresses | Filtered keys defeat TTL caching; current p95 already within NFR-7 |
 | B-17.7 | Larger-N / repeat NFR-7 measurement | Phase 19 | Re-run `scripts/measure-perf.ps1` after schema/dep changes; record deltas in PERFORMANCE_REVIEW |
+
+### Phase 18 outcomes + deferrals
+Exit criterion met 2026-10-22 (runbook: `docs/operations/DEPLOYMENT.md`;
+live drills: prod refusal + fresh-DB boot with health UP; suites 155/155
+backend (146 H2 + 9 PG) / 68 web / 171 mobile). Deferrals and follow-ups
+owned by later phases:
+
+| ID | Item | Target | AC summary |
+| -- | ---- | ------ | ---------- |
+| B-18.1 | Docker image + compose (owner decision: skip - no container runtime in this environment) | Only if a container platform appears | Image builds reproducibly; compose up honours the DEPLOYMENT.md env contract |
+| B-18.2 | Remote host provisioning + first production deploy | When a host exists | Execute DEPLOYMENT.md end-to-end; health UP behind TLS proxy; rate limiter keys on real client IP |
 
 ---
 

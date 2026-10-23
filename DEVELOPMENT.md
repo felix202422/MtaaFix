@@ -123,7 +123,26 @@ flutter run
 
 ## 8. CI
 
-`.github/workflows/ci.yml`: backend compile + `mvn test` (H2 path; PG
-integration suite skipped — no database service in CI), web lint + build,
-mobile `flutter analyze`. PostgreSQL+PostGIS verification runs on the
-developer machine per this guide.
+`.github/workflows/ci.yml` runs on push/PR to `master` (plus manual
+`workflow_dispatch`) with four parallel jobs:
+
+- **backend** - `mvn test`: full H2 suite plus PostgreSQL+PostGIS
+  integration tests (`MTAAFIX_PG_IT=true`) against a
+  `postgis/postgis:18-3.6` service container (`JWT_SECRET` is set to a
+  >=32-char CI value for the default-profile IT context)
+- **web** - `npm run lint && npm run test && npm run build`
+- **mobile** - `flutter analyze` + `flutter test`
+- **secrets** - gitleaks scan over full history
+
+`.github/workflows/release.yml` runs on tags `v*`: packages the jar
+(tests re-run) and the web bundle, attaching `mtaafix-*.jar` +
+`web-dist.zip` to the GitHub Release.
+
+Local PostgreSQL IT (developer machine):
+
+```bash
+set MTAAFIX_PG_IT=true
+set SPRING_DATASOURCE_PASSWORD=<local db password>
+set JWT_SECRET=<32+-char value for the default profile>
+mvn -B -f backend/pom.xml test
+```
