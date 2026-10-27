@@ -5,6 +5,74 @@ All notable changes to this project will be documented in this file.
 Statuses below reflect what was **verified in this repository** (compile, tests,
 analyzer, or file presence) — not intentions.
 
+## [0.20.0] — 2026-10-27
+### Phase 19 - Observability and Operations
+Scope per owner decisions 2026-10-23: Q1 metrics = same port + nginx
+allowlist for `/actuator/prometheus`; Q2 depth = full PITR + dump drill on
+a scratch PG 18 cluster; Q3 alerts = rules as code + docs (no live
+Prometheus/Grafana here). Delivered 2026-10-27 — **owner approval pending**.
+
+**Backend - metrics (B-17.2)**
+- `micrometer-registry-prometheus`; `management.endpoints.web.exposure:
+  health,prometheus` (default + prod), `application` tag on every series,
+  percentiles [0.5/0.95/0.99] + percentile histograms for
+  `http.server.requests`; `SecurityConfig` permits `/actuator/prometheus`
+- `PrometheusMetricsTest` x2: unauthenticated scrape 200 with
+  `application="mtaafix"` + histogram buckets, 404s recorded under a bounded
+  uri tag (raw path never leaks), `/actuator/env` still 401
+- Live verification on PG 18 + PostGIS: scrape returns
+  `http_server_requests_seconds_*`, `hikaricp_connections_*` series
+
+**Backend - structured logging (request correlation)**
+- `RequestTimingFilter` assigns `X-Request-Id`: inbound header honoured when
+  it matches `[A-Za-z0-9._-]{1,64}` (else UUID), placed in the SLF4J MDC as
+  `requestId`, echoed on the response, cleared after the request; prod logs
+  are structured JSON (`logging.structured.format.console: logstash`) so
+  `requestId` becomes a JSON key; dev console pattern carries `[requestId]`
+- `RequestTimingFilterTest` x3 (generate / honour / reject injection); live
+  WARN lines verified carrying the correlation id
+
+**Ops - alerts as code + runbook**
+- `ops/prometheus/alerting-rules.yml`: 9 rules (target down, scrape missing,
+  5xx ratio > 5%, p95 > 1 s, Hikari saturation/queueing, heap > 90%,
+  CPU > 85%, disk < 10%) with severities and runbook pointers; metric names
+  verified against a live scrape
+- `docs/operations/TROUBLESHOOTING.md` (new): alert triage table, log
+  correlation via `X-Request-Id`, scrape security/nginx allowlist, slow
+  request budgets, DB/backup/PITR runbook, quick reference
+
+**Backup + PITR (B-16.3)**
+- `backend/scripts/backup.ps1`: `pg_dump -Fc` + `uploads/` + SHA-256
+  manifest + age retention (default 14 days); `PGPASSWORD` from env only
+- `backend/scripts/restore-database.ps1`: restores into a scratch DB by
+  default, refuses the live `mtaafix` without `-Force`
+- **Dump/restore drill PASSED**: backup -> restore into `mtaafix_restore`
+  (5,038 reports + PostGIS landed)
+- **PITR drill PASSED** (`backend/scripts/pitr-drill.ps1`, scratch cluster on
+  ports 55432/55433): WAL archiving -> `pg_basebackup -X stream` -> recovery
+  with `restore_command` + `recovery_target_time` + promote -> markers A+B
+  recovered, C absent; evidence incl. `SHOW archive_command` round-trip and
+  per-segment archive/restore logs in `pitr-drill-evidence.txt`
+
+**NFR-7 re-run (B-17.7)**
+- `measure-perf.ps1` on the seeded 5,038-report dataset with the Phase 19
+  build: **11/11 endpoints p95 < 500 ms, worst p95 152.2 ms** (vs 397.2 ms
+  in Phase 17), no iteration above 500 ms; deltas + methodology in
+  `docs/standards/PERFORMANCE_REVIEW.md` §8; results in
+  `backend/scripts/perf-results.json`
+
+**Docs**
+- ROADMAP Phase 19 section + version history + delivery rows; BACKLOG
+  B-17.2/B-16.3/B-17.7 closed + Phase 19 outcomes; BOARD Phase 19 table +
+  delivery summary; DEPLOYMENT metrics allowlist, backup/PITR and alerting
+  sections; DEVELOPMENT observability notes; `.env.example` Phase 19 block;
+  `.gitignore` for `backend/scripts/backups/`
+
+**Suites**
+- backend `mvn test` **151/151 H2** (160 run, 9 PG auto-skipped) incl.
+  `PrometheusMetricsTest` x2 + `RequestTimingFilterTest` x3; PG IT
+  `MTAAFIX_PG_IT=true` **9/9**; web `tsc --noEmit` 0 + vitest **68/68**;
+  mobile analyze 0 + **171/171**
 ## [0.19.0] — 2026-10-22
 ### Phase 18 - Deployment and CI/CD
 Deployment readiness per owner-approved scope Q1–Q4 (2026-10-22): prod

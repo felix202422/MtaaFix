@@ -1,0 +1,35 @@
+cleanup: stopping leftover recovered cluster from a previous run
+drill start (UTC 2026-10-27T09:52:15.0459530Z)
+psql: psql (PostgreSQL) 18.6
+workdir: C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill (scratch cluster on ports 55432/55433)
+initdb: scratch cluster created (auth=trust, UTF8)
+config: port=55432 wal_level=replica archive_mode=on archive_command=wrapper (C:/Users/PC/AppData/Local/Temp/mtaafix_pitr_drill/archive-command.ps1)
+port 55432 ready (after 1 s)
+SHOW archive_command: powershell -NoProfile -ExecutionPolicy Bypass -File "C:/Users/PC/AppData/Local/Temp/mtaafix_pitr_drill/archive-command.ps1" "%p" "%f"
+marker A: phase-a-before-base inserted
+base backup: pg_basebackup -X stream -> 1276 files
+marker B: phase-b-after-base inserted; target time = 2026-10-27 12:54:22.740472+03; switch_wal -> 0/3000318; archive held 3 file(s) pre-switch
+wal switch: archive grew 3 -> 4 (B's segment confirmed in archive)
+marker C: phase-c-must-not-recover inserted; switch_wal -> 0/4000268; archive held 4 file(s) pre-switch
+archive grew 4 -> 5 (C's segment confirmed in archive)
+source cluster stopped
+recovery copy: restore_command -> archive, recovery_target_time = 2026-10-27 12:54:22.740472+03, action=promote
+port 55433 ready (after 1 s)
+recovery promoted (pg_is_in_recovery()=f after 4 s)
+recovery: cluster promoted and accepting connections
+recovered rows: [phase-a-before-base, phase-b-after-base]
+assertions: A recovered=True (expect True), B recovered=True (expect True), C recovered=False (expect False)
+DRILL PASSED - point-in-time recovery stopped between B and C
+--- archive-command.log (one line per archived WAL segment) ---
+[12:52:29.659] cwd=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\pgdata] src=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\pgdata\pg_wal\000000010000000000000001] exists=True dstExists=True bytes=16777216
+[12:54:20.838] cwd=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\pgdata] src=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\pgdata\pg_wal\000000010000000000000002] exists=True dstExists=True bytes=16777216
+[12:54:21.557] cwd=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\pgdata] src=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\pgdata\pg_wal\000000010000000000000002.00000028.backup] exists=True dstExists=True bytes=338
+[12:54:23.994] cwd=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\pgdata] src=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\pgdata\pg_wal\000000010000000000000003] exists=True dstExists=True bytes=16777216
+[12:54:25.520] cwd=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\pgdata] src=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\pgdata\pg_wal\000000010000000000000004] exists=True dstExists=True bytes=16777216
+--- restore-command.log (one line per WAL segment replayed in recovery) ---
+[12:54:37.232] name=[00000002.history] src=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\archive\00000002.history] exists=False dst=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\recovered\pg_wal\RECOVERYHISTORY] MISS
+[12:54:37.831] name=[000000010000000000000002] src=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\archive\000000010000000000000002] exists=True dst=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\recovered\pg_wal\RECOVERYXLOG] restored
+[12:54:38.716] name=[000000010000000000000003] src=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\archive\000000010000000000000003] exists=True dst=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\recovered\pg_wal\RECOVERYXLOG] restored
+[12:54:39.556] name=[000000010000000000000004] src=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\archive\000000010000000000000004] exists=True dst=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\recovered\pg_wal\RECOVERYXLOG] restored
+[12:54:40.245] name=[00000002.history] src=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\archive\00000002.history] exists=False dst=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\recovered\pg_wal\RECOVERYHISTORY] MISS
+[12:54:40.950] name=[00000001.history] src=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\archive\00000001.history] exists=False dst=[C:\Users\PC\AppData\Local\Temp\mtaafix_pitr_drill\recovered\pg_wal\RECOVERYHISTORY] MISS

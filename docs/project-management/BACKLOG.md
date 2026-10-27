@@ -703,7 +703,7 @@ follow-ups owned by later phases:
 | -- | ---- | ------ | ---------- |
 | B-16.1 | Encrypt mobile offline drafts/outbox at rest (D5) | Phase 20 | Keystore-backed key; encrypted `DraftStore`/`OutboxStore` files; device testing; tokens already covered by `flutter_secure_storage` |
 | B-16.2 | Web dev-toolchain majors (`npm audit` dev-only advisories: vitest 5, vite 8 / esbuild, tinypool) | Scheduled toolchain task | `npm audit` clean including dev; suites stay green after the breaking upgrades |
-| B-16.3 | Backup automation + PITR (runbook documented in SECURITY_REVIEW) | Ops/deploy phase | Scheduled `pg_dump` + `uploads/` backup; restore drill evidence; retention policy |
+| B-16.3 | Backup automation + PITR (runbook documented in SECURITY_REVIEW) | Ops/deploy phase | Scheduled `pg_dump` + `uploads/` backup; restore drill evidence; retention policy - **DONE Phase 19** (`backend/scripts/backup.ps1` + `restore-database.ps1`; dump/restore drill PASSED into `mtaafix_restore` with 5,038 reports + PostGIS; PITR drill PASSED, evidence `backend/scripts/pitr-drill-evidence.txt`; retention default 14 days) |
 | B-16.4 | Phase 18 handoffs: activate `prod` profile with real secrets (`ProdSecretsGuard`); forwarded-header/proxy config so the rate limiter sees real client IPs | Phase 18 | Boot under `prod` refuses weak defaults; 429 buckets keyed by true client IP behind the proxy - **DONE Phase 18** (`application-prod.yml` + drills: refusal proven live; `ForwardedIpRateLimitTest` proves XFF bucket isolation) |
 | B-16.5 | Full NVD dependency scan (skipped per owner: network/API friction) | Ops phase if scanner provisioned | Recorded scan output attached to a future review refresh |
 
@@ -716,12 +716,12 @@ owned by later phases:
 | ID | Item | Target | AC summary |
 | -- | ---- | ------ | ---------- |
 | B-17.1 | Marker clustering (web + mobile maps) | Phase 18/19 | Cluster at low zoom; 100-marker fetch cap in place meanwhile (ExplorePage map feed, mobile `publicList`) |
-| B-17.2 | Micrometer/Prometheus metrics + histogram per endpoint | Phase 19 | Scrape endpoint live; p50/p95 dashboards replace ad-hoc `measure-perf.ps1` runs; `RequestTimingFilter` is the interim evidence |
+| B-17.2 | Micrometer/Prometheus metrics + histogram per endpoint | Phase 19 | Scrape endpoint live; p50/p95 dashboards replace ad-hoc `measure-perf.ps1` runs; `RequestTimingFilter` is the interim evidence - **DONE Phase 19** (`/actuator/prometheus` live with `application` tag, percentiles + histograms, `PrometheusMetricsTest` x2; nginx-allowlisted per owner decision; alert rules read these series) |
 | B-17.3 | Redis / distributed cache | Ops scale-out if multi-node | Only when running >1 node; Caffeine TTL sufficient single-node |
 | B-17.4 | User dashboard caching | — (rejected by design) | Citizens must see just-created reports immediately; revisit only if `/dashboard/me` measurement regresses |
 | B-17.5 | Paginate reference data (`/categories*`, `/organizations` list) | Only if datasets grow | Currently bounded admin-managed rows (tens) — documented exemption in API_DESIGN |
 | B-17.6 | Cache high-cardinality queries (`q` search, bbox/map) | Only if measurement regresses | Filtered keys defeat TTL caching; current p95 already within NFR-7 |
-| B-17.7 | Larger-N / repeat NFR-7 measurement | Phase 19 | Re-run `scripts/measure-perf.ps1` after schema/dep changes; record deltas in PERFORMANCE_REVIEW |
+| B-17.7 | Larger-N / repeat NFR-7 measurement | Phase 19 | Re-run `scripts/measure-perf.ps1` after schema/dep changes; record deltas in PERFORMANCE_REVIEW - **DONE Phase 19** (re-run 11/11 p95 < 500 ms, worst 152.2 ms vs 397.2 ms in Phase 17, no iteration > 500 ms; deltas + methodology in PERFORMANCE_REVIEW §8) |
 
 ### Phase 18 outcomes + deferrals
 Exit criterion met 2026-10-22 (runbook: `docs/operations/DEPLOYMENT.md`;
@@ -733,6 +733,18 @@ owned by later phases:
 | -- | ---- | ------ | ---------- |
 | B-18.1 | Docker image + compose (owner decision: skip - no container runtime in this environment) | Only if a container platform appears | Image builds reproducibly; compose up honours the DEPLOYMENT.md env contract |
 | B-18.2 | Remote host provisioning + first production deploy | When a host exists | Execute DEPLOYMENT.md end-to-end; health UP behind TLS proxy; rate limiter keys on real client IP |
+
+### Phase 19 outcomes + deferrals
+Exit criterion met 2026-10-27 (metrics, structured logging, alerts as code,
+backup + PITR drills PASSED with evidence, NFR-7 re-run, TROUBLESHOOTING.md;
+suites 151 H2 + 9 PG / 68 web / 171 mobile). Deferrals and follow-ups owned
+by later phases:
+
+| ID | Item | Target | AC summary |
+| -- | ---- | ------ | ---------- |
+| B-19.1 | Live Prometheus + Grafana deployment (owner decision Q3: rules as code + docs only, no live instance here) | When a metrics host exists | Load `ops/prometheus/alerting-rules.yml`, scrape job per TROUBLESHOOTING.md, dashboards from `http_server_requests_seconds_*` percentiles |
+| B-19.2 | Backup scheduling (scripts are manual today) | With B-18.2 host provisioning | `backup.ps1` on a cron/systemd timer + off-host copy; alert `MtaaFixDiskAlmostFull` watches archive space; retention per `-RetentionDays` |
+| B-19.3 | Alert routing (email/chat receivers) | With B-19.1 | Prometheus `alerting` receivers wired to the 9 rules; runbook links resolve to TROUBLESHOOTING.md |
 
 ---
 

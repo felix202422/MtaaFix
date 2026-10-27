@@ -6,17 +6,19 @@
 > (master spec Part 16). Local tracking: [BOARD.md](BOARD.md) ·
 > Work items: [BACKLOG.md](BACKLOG.md) · Requirements: [../requirements/SRS.md](../requirements/SRS.md)
 
-## Phase Status Overview (updated 2026-10-23)
+## Phase Status Overview (updated 2026-10-27)
 
 **Where we are:** Phases 0–18 are complete and owner-approved (latest:
-Phase 18, approved 2026-10-22, pushed to `origin/master`). Next up:
-**Phase 19 — Observability and Operations**; Phases 19–23 are not
-started. CI (4-job pipeline) runs on every push — run #36 (2026-10-23,
-`78a90ee`): **all four jobs green** (backend H2 + PostGIS IT, web, mobile
-171/171, gitleaks). Runs #31–35 each failed a *different* single mobile
-test — flaky CI-scheduling races, root-caused and fixed in `78a90ee`
-(details in [BOARD.md](BOARD.md)). Deferred commitments live in
-[BACKLOG.md](BACKLOG.md).
+Phase 18, approved 2026-10-22, pushed to `origin/master`). **Phase 19 —
+Observability and Operations — was delivered 2026-10-27** (metrics,
+structured logging, alerts as code, backup/PITR drills, NFR-7 re-run,
+troubleshooting docs); it awaits owner review/approval before Phase 20.
+Phases 20–23 are not started. CI (4-job pipeline) runs on every push — last
+recorded all-green run #36 (2026-10-23, `78a90ee`): **all four jobs green**
+(backend H2 + PostGIS IT, web, mobile 171/171, gitleaks). Runs #31–35 each
+failed a *different* single mobile test — flaky CI-scheduling races,
+root-caused and fixed in `78a90ee` (details in [BOARD.md](BOARD.md)).
+Deferred commitments live in [BACKLOG.md](BACKLOG.md).
 
 | Phase | Status | What it delivered / what it covers |
 | ----- | ------ | ---------------------------------- |
@@ -39,7 +41,7 @@ test — flaky CI-scheduling races, root-caused and fixed in `78a90ee`
 | 16 | ✅ Complete (2026-10-22) | Security hardening: 415/405 contracts, JWT revocation via V7 `token_version` (rotating password change), media status gate, per-IP rate limiting, ProdSecretsGuard, 10-area review record |
 | 17 | ✅ Complete (2026-10-22) | Performance + reliability: N+1 elimination, V8 composite + trigram indexes, pagination of user lists, Caffeine caches, RequestTimingFilter; NFR-7 **MET** 11/11 p95 < 500 ms on 5,038 reports |
 | 18 | ✅ Complete (2026-10-22) | Deployment + CI/CD: `application-prod.yml` + refusals/boot drills, DEPLOYMENT.md runbook, 4-job CI (PostGIS service IT, web, mobile, gitleaks) + `release.yml`, forwarded-IP + guard tests |
-| 19 | **Not started — next** | Observability and operations: Micrometer/Prometheus per-endpoint metrics + histograms (B-17.2), backup automation + PITR with restore drill (B-16.3), repeat NFR-7 measurement (B-17.7), structured logging, alerts, troubleshooting docs. Entry: Phase 18 gate passed |
+| 19 | ✅ Complete (2026-10-27) — approval pending | Observability and operations: Micrometer/Prometheus per-endpoint metrics + histograms (B-17.2), backup automation + full PITR with dump/restore drills PASSED (B-16.3), repeat NFR-7 measurement 11/11 worst p95 152.2 ms (B-17.7), X-Request-Id/MDC structured logging, 9 alerts as code, TROUBLESHOOTING.md. Entry: Phase 18 gate passed |
 | 20 | Not started | Beta release: critical-workflow verification, test data, known-limitations doc, structured feedback, release criteria; carries offline-storage encryption (B-16.1) |
 | 21 | Not started | Approved advanced features — each with its own acceptance criteria: analytics, Swahili, multi-org improvements, duplicate detection, AI assistance (never silently replacing human review), integrations |
 | 22 | Not started | Production readiness + version 1.0: defect closure, security/privacy verification, backup/restore verification, documentation finalization, release notes |
@@ -47,6 +49,14 @@ test — flaky CI-scheduling races, root-caused and fixed in `78a90ee`
 
 ## Version History
 
+- **[0.20.0]** — Phase 19: Observability and operations
+  (Micrometer/Prometheus scrape with percentiles/histograms + nginx
+  allowlist decision, `X-Request-Id`/MDC correlation + structured prod logs,
+  9 alert rules as code, `backup.ps1`/`restore-database.ps1` + dump-restore
+  and **PITR drills both PASSED** with evidence, NFR-7 re-run 11/11 worst
+  p95 152.2 ms in PERFORMANCE_REVIEW §8, TROUBLESHOOTING.md runbook;
+  suites 151 H2 + 9 PG / 68 web / 171 mobile) — **delivered 2026-10-27,
+  approval pending**
 - **[0.19.0]** — Phase 18: Deployment and CI/CD (prod profile with
   forwarded headers + health-only actuator, ProdSecretsGuard drill,
   ForwardedIpRateLimitTest for proxy-keyed buckets, DEPLOYMENT.md
@@ -680,10 +690,46 @@ gitleaks); Q4 git = commit Phases 16-18, owner pushes.
 
 **Gate: APPROVED by owner 2026-10-22 — Phase 19 may start**
 
-## Phase 19 — Observability and Operations (NOT STARTED)
+## Phase 19 — Observability and Operations (COMPLETE — delivered 2026-10-27, approval pending)
 
-Structured logging, metrics, error reporting, alerts, backup/restore procedures,
-troubleshooting docs.
+Master spec Phase 19: metrics, structured logging, alerts, backup/restore,
+troubleshooting docs. Owner decisions (2026-10-23): Q1 metrics exposure =
+same port + nginx allowlist for `/actuator/prometheus`; Q2 depth = full PITR
++ dump drill on a scratch PG 18 cluster; Q3 alerts = rules as code + docs
+(no live Prometheus/Grafana in this environment).
+
+- **Metrics (B-17.2)**: `micrometer-registry-prometheus`; `health,prometheus`
+  exposure (default + prod), `application` tag, percentiles [0.5/0.95/0.99]
+  + histograms for `http.server.requests`; `SecurityConfig` permits
+  `/actuator/prometheus`; `PrometheusMetricsTest` x2 (unauth scrape 200,
+  bounded uri tag, `/actuator/env` 401); live scrape verified on PG 18
+- **Structured logging**: `RequestTimingFilter` assigns `X-Request-Id`
+  (inbound honoured when well-formed, else UUID) -> MDC `requestId` ->
+  response echo -> cleared; prod JSON logs (`logstash`) make `requestId` a
+  JSON key; `RequestTimingFilterTest` x3; live WARN lines verified
+- **Alerts as code (Q3)**: `ops/prometheus/alerting-rules.yml` - 9 rules
+  (target down, scrape missing, 5xx > 5%, p95 > 1 s, Hikari saturation/
+  queueing, heap > 90%, CPU > 85%, disk < 10%) with severities + runbook
+  pointers into TROUBLESHOOTING.md
+- **Backup automation (B-16.3)**: `backup.ps1` (`pg_dump -Fc` + uploads +
+  SHA-256 manifest + retention) and `restore-database.ps1` (scratch target
+  by default, live DB only with `-Force`); **dump/restore drill PASSED**
+  (5,038 reports + PostGIS into `mtaafix_restore`)
+- **PITR drill (Q2)**: `pitr-drill.ps1` on a scratch cluster - archiving ->
+  `pg_basebackup -X stream` -> recover to a time between markers -> promote;
+  **PASSED** (A+B recovered, C absent), evidence incl. per-segment
+  archive/restore logs in `backend/scripts/pitr-drill-evidence.txt`
+- **NFR-7 re-run (B-17.7)**: **11/11 endpoints p95 < 500 ms, worst p95
+  152.2 ms** (Phase 17: 397.2 ms), no iteration > 500 ms; deltas recorded in
+  `docs/standards/PERFORMANCE_REVIEW.md` §8
+- **Troubleshooting**: `docs/operations/TROUBLESHOOTING.md` - alert triage
+  table, `X-Request-Id` log correlation, scrape security, slow-request
+  budgets, DB/backup/PITR runbook
+- **Suites**: backend `mvn test` **151/151 H2** (160 run, 9 PG skipped;
+  +5 new tests) + PG IT **9/9**; web `tsc` 0 / `vitest` **68/68**; Flutter
+  analyze 0 + **171/171**
+
+**Gate: report delivered 2026-10-27 — owner review/approval pending**
 
 ## Phase 20 — Beta Release (NOT STARTED)
 
@@ -706,7 +752,7 @@ Feedback- and data-driven iteration under the same approval-gated process.
 
 ---
 
-## Delivery Targets (updated 2026-10-22)
+## Delivery Targets (updated 2026-10-27)
 
 | Phase | Status |
 | ----- | ------ |
@@ -729,4 +775,5 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 16 | Complete (approved 2026-10-22) |
 | 17 | Complete (approved 2026-10-22) |
 | 18 | Complete (approved 2026-10-22) |
-| 19–23 | Not started |
+| 19 | Complete (delivered 2026-10-27, approval pending) |
+| 20–23 | Not started |

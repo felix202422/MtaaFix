@@ -16,11 +16,20 @@ spring:
       ddl-auto: validate
 
 management:
-  # Health check only - no environment/bean/metrics endpoints without auth.
+  # Health on the app port for probes; /actuator/prometheus also exposed
+  # (Phase 19 owner decision 2026-10-23: same port + nginx allowlist - the
+  # runbook's nginx example denies it from public networks). Details stay off.
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,prometheus
   endpoint:
     health:
       show-details: never
+
+logging:
+  # Phase 19: structured JSON logs in production - one event per line,
+  # MDC fields (requestId) become JSON keys for log aggregation.
+  structured:
+    format:
+      console: logstash

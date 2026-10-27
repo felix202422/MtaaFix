@@ -146,3 +146,36 @@ set SPRING_DATASOURCE_PASSWORD=<local db password>
 set JWT_SECRET=<32+-char value for the default profile>
 mvn -B -f backend/pom.xml test
 ```
+
+## 9. Observability (Phase 19)
+
+**Metrics** — `micrometer-registry-prometheus` exposes
+`GET /actuator/prometheus` on the app port together with
+`/actuator/health` (`management.endpoints.web.exposure.include:
+health,prometheus`; everything else stays 401/404). Every series carries
+`application="mtaafix"`; `http.server.requests` gets p50/p95/p99
+percentiles + histograms; Hikari/JVM/CPU gauges come with the registry.
+Locally: `curl -s localhost:8080/actuator/prometheus`. In production the
+path is nginx-allowlisted to the metrics network
+(`docs/operations/DEPLOYMENT.md` §5/§7) — it has no auth by owner decision.
+
+**Request correlation** — `RequestTimingFilter` gives every request an
+`X-Request-Id` (inbound honoured when it matches `[A-Za-z0-9._-]{1,64}`,
+else a UUID), puts it in the SLF4J MDC as `requestId`, echoes it on the
+response, and clears it afterwards. The dev console pattern prints
+`[requestId]`; the `prod` profile logs structured JSON
+(`logging.structured.format.console: logstash`), so `requestId` is a JSON
+key and one user-reported id greps the whole request trail. Requests over
+`TIMING_WARN_THRESHOLD_MS` (default 500 ms) log a `Slow request` WARN.
+
+**Alerts** — 9 rules as code in `ops/prometheus/alerting-rules.yml`
+(target down, scrape missing, 5xx > 5%, p95 > 1 s, Hikari saturation/
+queueing, heap > 90%, CPU > 85%, disk < 10%), each pointing at
+`docs/operations/TROUBLESHOOTING.md#alert-triage`.
+
+**Ops scripts** (`backend/scripts/`) — `backup.ps1` /
+`restore-database.ps1` (pg_dump + uploads, scratch-restore by default),
+`pitr-drill.ps1` (scratch-cluster PITR proof), `measure-perf.ps1` +
+`seed-perf.sql` (NFR-7 measurement), `perf-results.json` (latest run:
+11/11 p95 < 500 ms). Runbooks: `docs/operations/DEPLOYMENT.md` §7–§8 and
+`docs/operations/TROUBLESHOOTING.md`.

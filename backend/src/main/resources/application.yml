@@ -99,11 +99,33 @@ logging:
   level:
     com.mtaafix: ${LOGGING_LEVEL_COM_MTAAFIX:INFO}
     org.springframework.security: WARN
+  pattern:
+    # Phase 19: the RequestTimingFilter puts a correlation id in MDC; every
+    # line carries it so log-based triage can follow a single request.
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId:-}] %logger{36} - %msg%n"
 
 # Phase 16 deployment review: SMTP is intentionally unconfigured while the
 # email channel is off - the mail health indicator would otherwise mark the
 # whole app DOWN. Re-enable automatically together with the channel.
+#
+# Phase 19 (B-17.2): /actuator/prometheus is exposed on the app port and
+# permitted without auth (owner decision 2026-10-23); the nginx example in
+# docs/operations/DEPLOYMENT.md restricts it to the metrics network.
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles: [0.5, 0.95, 0.99]
+      percentiles-histogram:
+        http.server.requests: true
   health:
     mail:
       enabled: ${NOTIFICATIONS_EMAIL_ENABLED:false}

@@ -2,6 +2,7 @@
 
 **Status:** Complete · **Date:** 2026-10-22 · **Gate:** NFR-7 (p95 < 500 ms list queries)
 **Scope:** Owner-approved scope Q1–Q4 (all workstreams A–H).
+**NFR-7 re-run (Phase 19, B-17.7):** 2026-10-27 — 11/11 pass, worst p95 152.2 ms → §8.
 
 ---
 
@@ -92,3 +93,37 @@ Notes:
 | Web (`tsc --noEmit` + vitest) | **typecheck clean, 68/68 pass** |
 | Mobile (`flutter test`) | **171/171 pass** |
 | NFR-7 live measurement | **11/11 endpoints p95 < 500 ms** |
+
+## 8. NFR-7 re-run — Phase 19 (B-17.7), 2026-10-27
+
+Repeat of the §3 methodology on the same dataset after the Phase 17–19 changes
+(observability stack shipped in Phase 19: Micrometer/Prometheus on the live
+path, `X-Request-Id`/MDC in `RequestTimingFilter`, structured-log config in
+`prod` — i.e. this run proves the instrumentation did not cost the gate):
+
+- **Server:** local Spring Boot on `:8085` (rebuilt jar incl. Phase 19), PG 18 + PostGIS.
+- **Dataset:** unchanged — 5,000 `MTF-2026-9xxxxx` + 38 = 5,038 reports.
+- **Tool:** `scripts/measure-perf.ps1` (5 warmup + 30 iterations), results overwritten to `scripts/perf-results.json`.
+- **Live metrics during the run:** `GET /actuator/prometheus` 200 unauthenticated on the app port (nginx-allowlisted in production per the owner decision), `application="mtaafix"`, `http_server_requests_seconds_*` histogram buckets recording every measured request.
+
+| Endpoint | Phase 17 p95 | **Phase 19 p95** | Δ (ms) | p95 < 500 ms |
+|---|---|---|---|---|
+| GET /reports/public (list, size=20) | 169.5 | **99.8** | −69.7 | ✅ |
+| GET /reports/public (map, size=100) | 336.4 | **152.2** | −184.2 | ✅ |
+| GET /reports/public (bbox filter, size=100) | 397.2 | **144.3** | −252.9 | ✅ |
+| GET /reports/public (q trigram search) | 128.7 | **82.4** | −46.3 | ✅ |
+| GET /reports (staff list, size=20) | 127.4 | **95.5** | −31.9 | ✅ |
+| GET /reports (staff status filter) | 149.7 | **90.2** | −59.5 | ✅ |
+| GET /categories/public (cached) | 63.3 | **33.4** | −29.9 | ✅ |
+| GET /stats/public (cached) | 63.5 | **27.9** | −35.6 | ✅ |
+| GET /dashboard/admin (cached) | 122.8 | **40.8** | −82.0 | ✅ |
+| GET /assignments/me (paged) | 77.8 | **40.9** | −36.9 | ✅ |
+| GET /notifications (size=20, clamped) | 71.5 | **34.6** | −36.9 | ✅ |
+
+**Verdict: 11/11 endpoints pass p95 < 500 ms → NFR-7 re-run: MET.**
+
+Notes:
+- Worst p95 152.2 ms (map size=100) — 3.3× margin to the 500 ms gate; **no single iteration exceeded 500 ms** this run (max 168.3 ms), unlike two Phase 17 tail outliers.
+- All endpoints faster than Phase 17 — expected: that run included first-touch costs this run's warmup absorbed; the point of B-17.7 is repeatability + zero regression from the Phase 19 instrumentation, both demonstrated.
+- Server-side `RequestTimingFilter` WARNs during this run: 3, all first-touch costs before/at the start of warmup (initial Prometheus scrape 1252 ms, first login 728 ms, first public list 1939 ms) — none in the measured window, mirroring Phase 17's finding; every WARN line now carries the `requestId` correlation id for log triage.
+- `X-Response-Time-Ms` was not observable on committed responses (known limitation documented on `RequestTimingFilter`); measurement remains client-side, and per-request server timings are now additionally available from Micrometer (`http_server_requests_seconds_*` percentiles/histograms) instead of log-diving.

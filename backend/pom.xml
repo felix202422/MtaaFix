@@ -67,6 +67,11 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
+    <!-- Phase 19 (B-17.2): Prometheus scrape endpoint (/actuator/prometheus) -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
     <!-- Phase 17 (NFR-7): TTL caches for categories/public stats/admin dashboard -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

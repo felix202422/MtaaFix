@@ -28,6 +28,9 @@ backend/target/
 # Runtime upload storage (local-disk placeholder, Phase 7)
 backend/uploads/
 
+# Backup artifacts (Phase 19) - regenerable dumps/zips, may contain data
+backend/scripts/backups/
+
 # Flutter / Dart
 mobile/.dart_tool/
 mobile/build/

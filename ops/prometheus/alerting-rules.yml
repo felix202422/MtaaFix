@@ -1,0 +1,110 @@
+# Phase 19 (owner decision 2026-10-23): alerts as code. Thresholds and
+# triage steps: docs/operations/TROUBLESHOOTING.md ("Alert triage").
+# Metric names verified against a live /actuator/prometheus scrape
+# (application="mtaafix" on every series; see PrometheusMetricsTest which
+# keeps a sample in target/prometheus-sample.txt).
+#
+# Loading when Prometheus exists:
+#   scrape_configs: job_name mtaafix -> localhost:8080/actuator/prometheus
+#   rule_files: [this file]
+groups:
+  - name: mtaafix-availability
+    rules:
+      - alert: MtaaFixTargetDown
+        expr: up{job="mtaafix"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MtaaFix scrape target is down"
+          description: "Prometheus cannot reach the app (job=mtaafix) for 1m - process crashed, port blocked, or health failing."
+          runbook: "docs/operations/TROUBLESHOOTING.md#alert-triage"
+      - alert: MtaaFixScrapeMissing
+        expr: absent(http_server_requests_seconds_count{application="mtaafix"})
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No MtaaFix metrics for 5m"
+          description: "The application tag series disappeared - app not serving, scrape misconfigured, or endpoint unreachable."
+          runbook: "docs/operations/TROUBLESHOOTING.md#alert-triage"
+
+  - name: mtaafix-latency
+    rules:
+      - alert: MtaaFixHighErrorRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5..",uri!~"/actuator.*"}[5m]))
+            / clamp_min(sum(rate(http_server_requests_seconds_count{uri!~"/actuator.*"}[5m])), 0.001)
+            > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "More than 5% of API responses are 5xx"
+          description: "Five-minute error ratio over API routes (actuator excluded) exceeds 5% for 5m."
+          runbook: "docs/operations/TROUBLESHOOTING.md#alert-triage"
+      - alert: MtaaFixSlowRequests
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le, uri, method) (
+              rate(http_server_requests_seconds_bucket{uri!~"/actuator.*|/error"}[5m])))
+            > 1.0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 above 1s for {{ $labels.uri }} {{ $labels.method }}"
+          description: "Sustained p95 > 1000ms on a route for 10m (NFR-7 budget is 500ms for list queries; alert doubles it to absorb spikes)."
+          runbook: "docs/operations/TROUBLESHOOTING.md#alert-triage"
+
+  - name: mtaafix-resources
+    rules:
+      - alert: MtaaFixDbPoolSaturated
+        expr: sum(hikaricp_connections_active) / clamp_min(sum(hikaricp_connections_max), 1) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HikariCP pool above 90% utilised"
+          description: "DB connections near the Hikari maximum for 5m - requests will queue (hikaricp_connections_pending) then time out."
+          runbook: "docs/operations/TROUBLESHOOTING.md#alert-triage"
+      - alert: MtaaFixDbPoolQueueing
+        expr: sum(hikaricp_connections_pending) > 10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Requests waiting for DB connections"
+          description: "More than 10 callers blocked on a free Hikari connection for 2m."
+          runbook: "docs/operations/TROUBLESHOOTING.md#alert-triage"
+      - alert: MtaaFixHeapPressure
+        expr: |
+          sum by (area) (
+            jvm_memory_used_bytes{area="heap"}
+              / clamp_min(jvm_memory_max_bytes{area="heap"}, 1))
+            > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Heap above 90% for 10m"
+          description: "Sustained heap pressure - check for leaks or raise -Xmx."
+          runbook: "docs/operations/TROUBLESHOOTING.md#alert-triage"
+      - alert: MtaaFixHighCpu
+        expr: process_cpu_usage > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Process CPU above 85% for 10m"
+          description: "Sustained CPU saturation - correlate with MtaaFixSlowRequests and request rate."
+          runbook: "docs/operations/TROUBLESHOOTING.md#alert-triage"
+      - alert: MtaaFixDiskAlmostFull
+        expr: disk_free_bytes / clamp_min(disk_total_bytes, 1) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "App filesystem below 10% free"
+          description: "Disk under 10% for 10m - uploads/ and WAL archiving need space (backup script fails when full)."
+          runbook: "docs/operations/TROUBLESHOOTING.md#alert-triage"

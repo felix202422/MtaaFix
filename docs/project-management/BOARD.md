@@ -4,11 +4,13 @@ Local tracking board (`gh` CLI still unauthenticated; run status read via the un
 Status values: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED`.
 Phase numbering: master spec Phases 0–23 (decision D1). Sections follow
 phase number ascending, matching ROADMAP.md.
-Last updated: 2026-10-23.
+Last updated: 2026-10-27.
 
-## Current phase: Phase 19 IN PROGRESS (started 2026-10-23) — Phase 18 approved 2026-10-22
+## Current phase: Phase 19 DELIVERED 2026-10-27 — approval pending · Phase 18 approved 2026-10-22
 
 Phases 0–18 delivered and approved (all pushed to `origin/master`).
+Phase 19 delivered 2026-10-27 and awaiting owner review/approval before
+Phase 20 starts.
 
 **CI (GitHub Actions): run #36 (2026-10-23, `78a90ee`) — all four green ✅**
 backend (H2 + PostGIS service IT) · web (lint + tests + build) · mobile
@@ -350,7 +352,7 @@ fix: analyze clean, mobile 171/171 ×2.
 
 **Known deferrals:** Docker image/compose (owner decision — B-18.1); remote host provisioning (readiness only — B-18.2); backup automation + PITR → Phase 19 (B-16.3).
 
-## Phase 19 — Observability and Operations (IN PROGRESS — started 2026-10-23)
+## Phase 19 — Observability and Operations (DELIVERED 2026-10-27 — approval pending)
 
 | Task | Status | Notes |
 | ---- | ------ | ----- |
@@ -359,13 +361,13 @@ fix: analyze clean, mobile 171/171 ×2.
 | B — Structured logging | DONE | prod JSON via `logging.structured.format.console: logstash`; `RequestTimingFilter` assigns `X-Request-Id` (inbound honoured when matching `[A-Za-z0-9._-]{1,64}`, else UUID), MDC + response echo + clear; dev console pattern carries `[requestId]`; `RequestTimingFilterTest` ×3 (generate, honour, reject-injection) |
 | C — Alerts as code | DONE | `ops/prometheus/alerting-rules.yml` — 9 rules (target down, scrape missing, 5xx ratio >5%, p95 >1s, Hikari saturation/queueing, heap >90%, CPU >85%, disk <10%) with severities + runbook pointers; metric names verified against a live scrape; YAML validated |
 | D — Backup automation (B-16.3) | DONE | `backend/scripts/backup.ps1` (pg_dump `-Fc` + uploads zip + SHA-256 manifest + retention pruning, default 14 days, PGPASSWORD-from-env only) + `backend/scripts/restore-database.ps1` (scratch target DB by default, refuses the live `mtaafix` without `-Force`) |
-| D2 — Drills | IN PROGRESS | **dump/restore drill PASSED** (backup → restore into `mtaafix_restore`: 5,038 reports + PostGIS tables landed); PITR drill script `backend/scripts/pitr-drill.ps1` written (scratch cluster, WAL archiving, pg_basebackup, recover-to-time between markers, promote + assert) — first run stalled waiting on the scratch cluster; hardening (connect timeouts, job-wrapped basebackup, step log) underway |
-| E — NFR-7 re-run (B-17.7) | TODO | Live app + seeded dataset, `scripts/measure-perf.ps1`, deltas recorded in `docs/standards/PERFORMANCE_REVIEW.md` |
-| F — Troubleshooting doc | TODO | `docs/operations/TROUBLESHOOTING.md` (alert triage table, log correlation via `X-Request-Id`, DB/backup/restore, slow requests) |
-| G — Docs sync | TODO | CHANGELOG 0.20.0; ROADMAP Phase 19 section + version history + delivery row; BACKLOG B-17.2/B-16.3/B-17.7 closed; BOARD this table; DEPLOYMENT (nginx allowlist, backup/PITR runbook, alerting); DEVELOPMENT (metrics/logging); `.env.example` |
-| Phase 19 report + approval gate | TODO | After suites green — owner reviews and approves |
+| D2 — Drills | DONE | **dump/restore drill PASSED** (backup → restore into `mtaafix_restore`: 5,038 reports + PostGIS tables landed); **PITR drill PASSED** (`backend/scripts/pitr-drill.ps1`: scratch PG 18 cluster, WAL archiving via logging wrapper, `pg_basebackup -X stream`, recovery with `restore_command` + `recovery_target_time` + promote → markers A+B recovered, C absent); evidence incl. `SHOW archive_command` round-trip + per-segment archive/restore logs in `backend/scripts/pitr-drill-evidence.txt`; hardened against GUC backslash escaping, archive-race, and hot-standby-replay verification races |
+| E — NFR-7 re-run (B-17.7) | DONE | Live app on `:8085` (rebuilt jar incl. Phase 19) + seeded 5,038-report dataset; `scripts/measure-perf.ps1` (5 warmup + 30 iters): **11/11 pass, worst p95 152.2 ms** (Phase 17: 397.2 ms), no iteration > 500 ms; deltas + methodology + first-touch WARN notes in `docs/standards/PERFORMANCE_REVIEW.md` §8; results `backend/scripts/perf-results.json` |
+| F — Troubleshooting doc | DONE | `docs/operations/TROUBLESHOOTING.md`: triage table for all 9 alert rules (severity/threshold/first moves), `X-Request-Id` MDC log-correlation workflow, scrape security + nginx allowlist, slow-request budgets (500 ms gate vs 1 s alert vs 500 ms WARN), backup/restore/PITR runbook, quick reference |
+| G — Docs sync | DONE | CHANGELOG 0.20.0; ROADMAP Phase 19 section + version history + delivery row; BACKLOG B-17.2/B-16.3/B-17.7 closed + Phase 19 outcomes (B-19.1–3); BOARD this table; DEPLOYMENT (metrics allowlist, backup/PITR, alerting + §4 health/prometheus correction); DEVELOPMENT §9 observability; `.env.example` Phase 19 block; `.gitignore` for `backend/scripts/backups/` |
+| Phase 19 report + approval gate | IN PROGRESS | Report delivered 2026-10-27 with suites green (backend 151 H2 + 9 PG / web 68 / mobile 171) and CI polled — **owner reviews and approves** |
 
-## Phase delivery summary (0–23, updated 2026-10-23)
+## Phase delivery summary (0–23, updated 2026-10-27)
 
 | Phase | Status | Notes |
 |-------|--------|-------|
@@ -388,7 +390,7 @@ fix: analyze clean, mobile 171/171 ×2.
 | Phase 16 - Security review and hardening | Complete (approved 2026-10-22) | 10-area review record; 415/405 contracts (D1/D2), JWT revocation via token_version incl. rotating password change (D3), media status gate (D4), per-IP rate limiting, prod secrets guard; 144+8 PG / 68 web / 171 mobile + live battery 23/23 |
 | Phase 17 - Performance and reliability | Complete (approved 2026-10-22) | N+1 elimination, V8 composite + trigram indexes, assignments/members pagination + notifications clamp, Caffeine TTL caches, separate map feeds (100 markers), SQL activity bucketing, RequestTimingFilter; NFR-7 measured 11/11 p95 < 500 ms (5,038-report seed); 148+9 PG / 68 web / 171 mobile |
 | Phase 18 - Deployment and CI/CD | Complete (approved 2026-10-22) | Prod profile (forwarded headers, health-only actuator) + guard/forwarded-IP tests; DEPLOYMENT.md runbook; CI 4 jobs (PG service IT, web, mobile, gitleaks) + release.yml; drills: refusal + fresh-DB boot health UP Flyway V1-V8; 155 (146+9 PG) / 68 web / 171 mobile |
-| Phase 19 - Observability and operations | **In progress (started 2026-10-23)** | Micrometer/Prometheus per-endpoint metrics + histograms (B-17.2), backup automation + PITR with restore drill (B-16.3), repeat NFR-7 measurement (B-17.7), structured logging, alerts, troubleshooting docs |
+| Phase 19 - Observability and operations | **Delivered 2026-10-27 (approval pending)** | Micrometer/Prometheus metrics + percentiles/histograms (B-17.2), X-Request-Id/MDC correlation + structured prod logs, 9 alerts as code, backup/restore scripts + dump and PITR drills both PASSED with evidence (B-16.3), NFR-7 re-run 11/11 worst p95 152.2 ms (B-17.7), TROUBLESHOOTING.md; 151 H2 + 9 PG / 68 web / 171 mobile |
 | Phase 20 - Beta release | Not started | Critical-workflow verification, test data, known-limitations doc, structured feedback, release criteria; carries offline-storage encryption (B-16.1) |
 | Phase 21 - Approved advanced features | Not started | Analytics, Swahili, multi-org improvements, duplicate detection, human-reviewed AI assistance, integrations — each with own acceptance criteria |
 | Phase 22 - Production readiness / v1.0 | Not started | Defect closure, security/privacy verification, backup/restore verification, documentation finalization, release notes |
