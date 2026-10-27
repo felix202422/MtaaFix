@@ -10,7 +10,7 @@ analyzer, or file presence) — not intentions.
 Scope per owner decisions 2026-10-23: Q1 metrics = same port + nginx
 allowlist for `/actuator/prometheus`; Q2 depth = full PITR + dump drill on
 a scratch PG 18 cluster; Q3 alerts = rules as code + docs (no live
-Prometheus/Grafana here). Delivered 2026-10-27 — **owner approval pending**.
+Prometheus/Grafana here). **Approved by owner 2026-10-27.**
 
 **Backend - metrics (B-17.2)**
 - `micrometer-registry-prometheus`; `management.endpoints.web.exposure:

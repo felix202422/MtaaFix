@@ -6,15 +6,15 @@ Phase numbering: master spec Phases 0–23 (decision D1). Sections follow
 phase number ascending, matching ROADMAP.md.
 Last updated: 2026-10-27.
 
-## Current phase: Phase 19 DELIVERED 2026-10-27 — approval pending · Phase 18 approved 2026-10-22
+## Current phase: Phase 19 APPROVED 2026-10-27 · Phase 18 approved 2026-10-22
 
-Phases 0–18 delivered and approved (all pushed to `origin/master`).
-Phase 19 delivered 2026-10-27 and awaiting owner review/approval before
-Phase 20 starts.
+Phases 0–19 are delivered and approved. **Next up: Phase 20 — Beta
+Release** (not started).
 
-**CI (GitHub Actions): run #36 (2026-10-23, `78a90ee`) — all four green ✅**
+**CI (GitHub Actions): run #39 (2026-10-27, `a9fc29f`) — all four green ✅**
 backend (H2 + PostGIS service IT) · web (lint + tests + build) · mobile
-(flutter analyze + 171/171) · gitleaks. History: first 4-job run #31
+(flutter analyze + tests) · gitleaks. Prior all-green: run #36 (2026-10-23,
+`78a90ee`). History: first 4-job run #31
 (`a76c470`) failed mobile 170/171; runs #31–35 each failed a *different*
 single test → flaky CI-scheduling races, not product bugs. Diagnosed
 without auth via public check-runs annotations (JSON-reporter parser in
@@ -352,7 +352,7 @@ fix: analyze clean, mobile 171/171 ×2.
 
 **Known deferrals:** Docker image/compose (owner decision — B-18.1); remote host provisioning (readiness only — B-18.2); backup automation + PITR → Phase 19 (B-16.3).
 
-## Phase 19 — Observability and Operations (DELIVERED 2026-10-27 — approval pending)
+## Phase 19 — Observability and Operations (COMPLETE — APPROVED 2026-10-27)
 
 | Task | Status | Notes |
 | ---- | ------ | ----- |
@@ -365,7 +365,7 @@ fix: analyze clean, mobile 171/171 ×2.
 | E — NFR-7 re-run (B-17.7) | DONE | Live app on `:8085` (rebuilt jar incl. Phase 19) + seeded 5,038-report dataset; `scripts/measure-perf.ps1` (5 warmup + 30 iters): **11/11 pass, worst p95 152.2 ms** (Phase 17: 397.2 ms), no iteration > 500 ms; deltas + methodology + first-touch WARN notes in `docs/standards/PERFORMANCE_REVIEW.md` §8; results `backend/scripts/perf-results.json` |
 | F — Troubleshooting doc | DONE | `docs/operations/TROUBLESHOOTING.md`: triage table for all 9 alert rules (severity/threshold/first moves), `X-Request-Id` MDC log-correlation workflow, scrape security + nginx allowlist, slow-request budgets (500 ms gate vs 1 s alert vs 500 ms WARN), backup/restore/PITR runbook, quick reference |
 | G — Docs sync | DONE | CHANGELOG 0.20.0; ROADMAP Phase 19 section + version history + delivery row; BACKLOG B-17.2/B-16.3/B-17.7 closed + Phase 19 outcomes (B-19.1–3); BOARD this table; DEPLOYMENT (metrics allowlist, backup/PITR, alerting + §4 health/prometheus correction); DEVELOPMENT §9 observability; `.env.example` Phase 19 block; `.gitignore` for `backend/scripts/backups/` |
-| Phase 19 report + approval gate | IN PROGRESS | Report delivered 2026-10-27 with suites green (backend 151 H2 + 9 PG / web 68 / mobile 171) and CI polled — **owner reviews and approves** |
+| Phase 19 report + approval gate | DONE | Report delivered 2026-10-27 with suites green (backend 151 H2 + 9 PG / web 68 / mobile 171) and CI run #39 all four green; **approved by owner 2026-10-27** — Phase 20 may start |
 
 ## Phase delivery summary (0–23, updated 2026-10-27)
 
@@ -390,7 +390,7 @@ fix: analyze clean, mobile 171/171 ×2.
 | Phase 16 - Security review and hardening | Complete (approved 2026-10-22) | 10-area review record; 415/405 contracts (D1/D2), JWT revocation via token_version incl. rotating password change (D3), media status gate (D4), per-IP rate limiting, prod secrets guard; 144+8 PG / 68 web / 171 mobile + live battery 23/23 |
 | Phase 17 - Performance and reliability | Complete (approved 2026-10-22) | N+1 elimination, V8 composite + trigram indexes, assignments/members pagination + notifications clamp, Caffeine TTL caches, separate map feeds (100 markers), SQL activity bucketing, RequestTimingFilter; NFR-7 measured 11/11 p95 < 500 ms (5,038-report seed); 148+9 PG / 68 web / 171 mobile |
 | Phase 18 - Deployment and CI/CD | Complete (approved 2026-10-22) | Prod profile (forwarded headers, health-only actuator) + guard/forwarded-IP tests; DEPLOYMENT.md runbook; CI 4 jobs (PG service IT, web, mobile, gitleaks) + release.yml; drills: refusal + fresh-DB boot health UP Flyway V1-V8; 155 (146+9 PG) / 68 web / 171 mobile |
-| Phase 19 - Observability and operations | **Delivered 2026-10-27 (approval pending)** | Micrometer/Prometheus metrics + percentiles/histograms (B-17.2), X-Request-Id/MDC correlation + structured prod logs, 9 alerts as code, backup/restore scripts + dump and PITR drills both PASSED with evidence (B-16.3), NFR-7 re-run 11/11 worst p95 152.2 ms (B-17.7), TROUBLESHOOTING.md; 151 H2 + 9 PG / 68 web / 171 mobile |
+| Phase 19 - Observability and operations | Complete (approved 2026-10-27) | Micrometer/Prometheus metrics + percentiles/histograms (B-17.2), X-Request-Id/MDC correlation + structured prod logs, 9 alerts as code, backup/restore scripts + dump and PITR drills both PASSED with evidence (B-16.3), NFR-7 re-run 11/11 worst p95 152.2 ms (B-17.7), TROUBLESHOOTING.md; 151 H2 + 9 PG / 68 web / 171 mobile |
 | Phase 20 - Beta release | Not started | Critical-workflow verification, test data, known-limitations doc, structured feedback, release criteria; carries offline-storage encryption (B-16.1) |
 | Phase 21 - Approved advanced features | Not started | Analytics, Swahili, multi-org improvements, duplicate detection, human-reviewed AI assistance, integrations — each with own acceptance criteria |
 | Phase 22 - Production readiness / v1.0 | Not started | Defect closure, security/privacy verification, backup/restore verification, documentation finalization, release notes |

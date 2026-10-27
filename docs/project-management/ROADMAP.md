@@ -8,14 +8,13 @@
 
 ## Phase Status Overview (updated 2026-10-27)
 
-**Where we are:** Phases 0–18 are complete and owner-approved (latest:
-Phase 18, approved 2026-10-22, pushed to `origin/master`). **Phase 19 —
-Observability and Operations — was delivered 2026-10-27** (metrics,
-structured logging, alerts as code, backup/PITR drills, NFR-7 re-run,
-troubleshooting docs); it awaits owner review/approval before Phase 20.
-Phases 20–23 are not started. CI (4-job pipeline) runs on every push — last
-recorded all-green run #36 (2026-10-23, `78a90ee`): **all four jobs green**
-(backend H2 + PostGIS IT, web, mobile 171/171, gitleaks). Runs #31–35 each
+**Where we are:** Phases 0–19 are complete and owner-approved (latest:
+**Phase 19 — Observability and Operations, approved 2026-10-27**, pushed to
+`origin/master`). Next up: **Phase 20 — Beta Release**; Phases 20–23 are
+not started. CI (4-job pipeline) runs on every push — latest all-green run
+#39 (2026-10-27, `a9fc29f`): **all four jobs green** (backend H2 + PostGIS
+IT, web, mobile, gitleaks); previous all-green #36 (2026-10-23, `78a90ee`).
+Runs #31–35 each
 failed a *different* single mobile test — flaky CI-scheduling races,
 root-caused and fixed in `78a90ee` (details in [BOARD.md](BOARD.md)).
 Deferred commitments live in [BACKLOG.md](BACKLOG.md).
@@ -41,7 +40,7 @@ Deferred commitments live in [BACKLOG.md](BACKLOG.md).
 | 16 | ✅ Complete (2026-10-22) | Security hardening: 415/405 contracts, JWT revocation via V7 `token_version` (rotating password change), media status gate, per-IP rate limiting, ProdSecretsGuard, 10-area review record |
 | 17 | ✅ Complete (2026-10-22) | Performance + reliability: N+1 elimination, V8 composite + trigram indexes, pagination of user lists, Caffeine caches, RequestTimingFilter; NFR-7 **MET** 11/11 p95 < 500 ms on 5,038 reports |
 | 18 | ✅ Complete (2026-10-22) | Deployment + CI/CD: `application-prod.yml` + refusals/boot drills, DEPLOYMENT.md runbook, 4-job CI (PostGIS service IT, web, mobile, gitleaks) + `release.yml`, forwarded-IP + guard tests |
-| 19 | ✅ Complete (2026-10-27) — approval pending | Observability and operations: Micrometer/Prometheus per-endpoint metrics + histograms (B-17.2), backup automation + full PITR with dump/restore drills PASSED (B-16.3), repeat NFR-7 measurement 11/11 worst p95 152.2 ms (B-17.7), X-Request-Id/MDC structured logging, 9 alerts as code, TROUBLESHOOTING.md. Entry: Phase 18 gate passed |
+| 19 | ✅ Complete (approved 2026-10-27) | Observability and operations: Micrometer/Prometheus per-endpoint metrics + histograms (B-17.2), backup automation + full PITR with dump/restore drills PASSED (B-16.3), repeat NFR-7 measurement 11/11 worst p95 152.2 ms (B-17.7), X-Request-Id/MDC structured logging, 9 alerts as code, TROUBLESHOOTING.md. Entry: Phase 18 gate passed |
 | 20 | Not started | Beta release: critical-workflow verification, test data, known-limitations doc, structured feedback, release criteria; carries offline-storage encryption (B-16.1) |
 | 21 | Not started | Approved advanced features — each with its own acceptance criteria: analytics, Swahili, multi-org improvements, duplicate detection, AI assistance (never silently replacing human review), integrations |
 | 22 | Not started | Production readiness + version 1.0: defect closure, security/privacy verification, backup/restore verification, documentation finalization, release notes |
@@ -55,8 +54,7 @@ Deferred commitments live in [BACKLOG.md](BACKLOG.md).
   9 alert rules as code, `backup.ps1`/`restore-database.ps1` + dump-restore
   and **PITR drills both PASSED** with evidence, NFR-7 re-run 11/11 worst
   p95 152.2 ms in PERFORMANCE_REVIEW §8, TROUBLESHOOTING.md runbook;
-  suites 151 H2 + 9 PG / 68 web / 171 mobile) — **delivered 2026-10-27,
-  approval pending**
+  suites 151 H2 + 9 PG / 68 web / 171 mobile) — **APPROVED 2026-10-27**
 - **[0.19.0]** — Phase 18: Deployment and CI/CD (prod profile with
   forwarded headers + health-only actuator, ProdSecretsGuard drill,
   ForwardedIpRateLimitTest for proxy-keyed buckets, DEPLOYMENT.md
@@ -690,7 +688,7 @@ gitleaks); Q4 git = commit Phases 16-18, owner pushes.
 
 **Gate: APPROVED by owner 2026-10-22 — Phase 19 may start**
 
-## Phase 19 — Observability and Operations (COMPLETE — delivered 2026-10-27, approval pending)
+## Phase 19 — Observability and Operations (COMPLETE — APPROVED 2026-10-27)
 
 Master spec Phase 19: metrics, structured logging, alerts, backup/restore,
 troubleshooting docs. Owner decisions (2026-10-23): Q1 metrics exposure =
@@ -729,7 +727,7 @@ same port + nginx allowlist for `/actuator/prometheus`; Q2 depth = full PITR
   +5 new tests) + PG IT **9/9**; web `tsc` 0 / `vitest` **68/68**; Flutter
   analyze 0 + **171/171**
 
-**Gate: report delivered 2026-10-27 — owner review/approval pending**
+**Gate: APPROVED by owner 2026-10-27 — Phase 20 may start**
 
 ## Phase 20 — Beta Release (NOT STARTED)
 
@@ -775,5 +773,5 @@ Feedback- and data-driven iteration under the same approval-gated process.
 | 16 | Complete (approved 2026-10-22) |
 | 17 | Complete (approved 2026-10-22) |
 | 18 | Complete (approved 2026-10-22) |
-| 19 | Complete (delivered 2026-10-27, approval pending) |
+| 19 | Complete (approved 2026-10-27) |
 | 20–23 | Not started |
